@@ -1,0 +1,3 @@
+from constant_density_acoustic_frequency_scalar_1D import *
+from constant_density_acoustic_frequency_scalar_2D import *
+from constant_density_acoustic_frequency_scalar_3D import *

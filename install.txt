@@ -1,0 +1,3 @@
+From top level directory:
+
+python setup.py install

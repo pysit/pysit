@@ -1,0 +1,3 @@
+From inside the docs directory, build with 
+sphinx-apidoc -F -o . ../pysit
+make html
