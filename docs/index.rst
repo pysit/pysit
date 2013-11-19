@@ -27,8 +27,8 @@ Research and PySIT
 
    research
 
-PySIT Documention: Mathematics and Implementation
--------------------------------------------------
+Code Documentation and Mathematics
+----------------------------------
 
 Code, derivations, and inversion interface documentation
 
