@@ -3,8 +3,8 @@
 # Portions licenesed under a 3-clause BSD style license - see
 # ASTROPY_SPHINXEXT_LICENSE.rst
 #
-# Astropy shared Sphinx settings.  These settings are shared between
-# astropy itself and affiliated packages.
+# PySIT shared Sphinx settings.  These settings are shared between
+# PySIT itself and PySIT Extension packages.
 #
 # Note that not all possible configuration values are present in this file.
 #
@@ -15,6 +15,7 @@ import warnings
 from os import path
 from distutils.version import LooseVersion
 import re
+import subprocess
 
 # from ..utils.compat import subprocess
 
@@ -28,28 +29,29 @@ import re
 # affiliated packages don't want this automatic determination, they
 # may simply override needs_sphinx in their local conf.py.
 
-# def get_graphviz_version():
-#     try:
-#         output = subprocess.check_output(
-#             ['dot', '-V'], stdin=subprocess.PIPE,
-#             stderr=subprocess.STDOUT,
-#             shell=True)
-#     except subprocess.CalledProcessError:
-#         return '0'
-#     tokens = output.split()
-#     for token in tokens:
-#         if re.match(b'[0-9.]*', token):
-#             return token.decode('ascii')
-#     return '0'
+def get_graphviz_version():
+    try:
+        output = subprocess.check_output(
+            ['dot', '-V'], stdin=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            shell=True)
+    except subprocess.CalledProcessError:
+        return '0'
+    tokens = output.split()
+    for token in tokens:
+        if re.match(b'[0-9.]*', token):
+            return token.decode('ascii')
+    return '0'
 
-# graphviz_found = LooseVersion(get_graphviz_version())
-# graphviz_broken = LooseVersion('0.30')
+graphviz_found = LooseVersion(get_graphviz_version())
+graphviz_broken = LooseVersion('0.30')
 
-# if graphviz_found >= graphviz_broken:
-#     needs_sphinx = '1.2b2'
-# else:
-#     needs_sphinx = '1.1'
+if graphviz_found >= graphviz_broken:
+    needs_sphinx = '1.2b2'
+else:
+    needs_sphinx = '1.1'
 
+# Ignore versioning, means inheritance diagrams don't work atm
 needs_sphinx = '1.1'
 
 # Configuration for intersphinx: refer to the Python standard library.
@@ -183,7 +185,7 @@ html_theme = 'cloud-pysit'
 # The name of an image file (within the static path) to use as favicon of the
 # docs.  This file should be a Windows icon file (.ico) being 16x16 or 32x32
 # pixels large.
-html_favicon = 'astropy_logo.ico'  # included in the bootstrap-astropy theme
+html_favicon = 'favicon.png'  # included in the cloud-pysit theme
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

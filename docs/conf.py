@@ -74,18 +74,8 @@ extensions += []
 
 # A NOTE ON HTML THEMES
 #
-# The global astropy configuration uses a custom theme,
-# 'bootstrap-astropy', which is installed along with astropy. The
-# theme has options for controlling the text of the logo in the upper
-# left corner. This is how you would specify the options in order to
-# override the theme defaults (The following options *are* the
-# defaults, so we do not actually need to set them here.)
-
-#html_theme_options = {
-#    'logotext1': 'astro',  # white,  semi-bold
-#    'logotext2': 'py',     # orange, light
-#    'logotext3': ':docs'   # white,  light
-#    }
+# The global PySIT configuration uses a custom theme,
+# 'cloud-pysit', which is installed along with PySIT.
 
 # A different theme can be used, or other parts of this theme can be
 # modified, by overriding some of the variables set in the global
@@ -144,7 +134,7 @@ latex_elements = {
 latex_documents = [('index', project + '.tex', project + u' Documentation',
                     author, 'manual')]
 
-latex_logo = '_static/astropy_logo.pdf'
+latex_logo = '_static/pysit_logo.pdf'
 
 
 # -- Options for manual page output --------------------------------------------
@@ -157,12 +147,14 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 
 # -- Options for the edit_on_github extension ----------------------------------------
 
-# extensions += ['astropy.sphinx.ext.edit_on_github']
+# Doesn't work, as PySIT uses bitbucket and hg
+
+# extensions += ['pysit._sphinx.from_astropy.ext.edit_on_github']
 
 # # Don't import the module as "version" or it will override the
 # # "version" configuration parameter
-# from astropy import version as versionmod
-# edit_on_github_project = "astropy/astropy"
+# from pysit import version as versionmod
+# edit_on_github_project = "pysit/pysit"
 # if versionmod.release:
 #     edit_on_github_branch = "v{0}.{1}.x".format(
 #         versionmod.major, versionmod.minor)

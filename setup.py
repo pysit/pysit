@@ -61,7 +61,7 @@ package_data.update({ 'pysit._sphinx': ['from_astropy/ext/templates/*/*',
                                         'themes/cloud-pysit/*.*',
                                         'themes/cloud-pysit/static/*.*',
                                         'themes/cloud/*.*',
-                                        'themes/cloud/static/*.*',,
+                                        'themes/cloud/static/*.*',
                                         ]})
 
 

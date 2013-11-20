@@ -34,7 +34,7 @@ class FakeApp(object):
 am_replacer_str = """
 This comes before
 
-.. automodapi:: astropy.sphinx.ext.tests.test_automodapi
+.. automodapi:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
 {options}
 
 This comes after
@@ -43,15 +43,15 @@ This comes after
 am_replacer_basic_expected = """
 This comes before
 
-astropy.sphinx.ext.tests.test_automodapi Module
+pysit._sphinx.from_astropy.ext.tests.test_automodapi Module
 -----------------------------------------------
 
-.. automodule:: astropy.sphinx.ext.tests.test_automodapi
+.. automodule:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
 
 Functions
 ^^^^^^^^^
 
-.. automodsumm:: astropy.sphinx.ext.tests.test_automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :functions-only:
     :toctree: api/
     {empty}
@@ -59,7 +59,7 @@ Functions
 Classes
 ^^^^^^^
 
-.. automodsumm:: astropy.sphinx.ext.tests.test_automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :classes-only:
     :toctree: api/
     {empty}
@@ -67,7 +67,7 @@ Classes
 Class Inheritance Diagram
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-.. automod-diagram:: astropy.sphinx.ext.tests.test_automodapi
+.. automod-diagram:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :private-bases:
 
 This comes after
@@ -90,15 +90,15 @@ def test_am_replacer_basic():
 am_replacer_noinh_expected = """
 This comes before
 
-astropy.sphinx.ext.tests.test_automodapi Module
------------------------------------------------
+pysit._sphinx.from_astropy.ext.tests.test_automodapi Module
+-----------------------------------------------------------
 
-.. automodule:: astropy.sphinx.ext.tests.test_automodapi
+.. automodule:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
 
 Functions
 ^^^^^^^^^
 
-.. automodsumm:: astropy.sphinx.ext.tests.test_automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :functions-only:
     :toctree: api/
     {empty}
@@ -106,7 +106,7 @@ Functions
 Classes
 ^^^^^^^
 
-.. automodsumm:: astropy.sphinx.ext.tests.test_automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :classes-only:
     :toctree: api/
     {empty}
@@ -133,15 +133,15 @@ def test_am_replacer_noinh():
 am_replacer_titleandhdrs_expected = """
 This comes before
 
-astropy.sphinx.ext.tests.test_automodapi Module
-&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
+pysit._sphinx.from_astropy.ext.tests.test_automodapi Module
+&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&
 
-.. automodule:: astropy.sphinx.ext.tests.test_automodapi
+.. automodule:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
 
 Functions
 *********
 
-.. automodsumm:: astropy.sphinx.ext.tests.test_automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :functions-only:
     :toctree: api/
     {empty}
@@ -149,7 +149,7 @@ Functions
 Classes
 *******
 
-.. automodsumm:: astropy.sphinx.ext.tests.test_automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :classes-only:
     :toctree: api/
     {empty}
@@ -157,7 +157,7 @@ Classes
 Class Inheritance Diagram
 *************************
 
-.. automod-diagram:: astropy.sphinx.ext.tests.test_automodapi
+.. automod-diagram:: pysit._sphinx.from_astropy.ext.tests.test_automodapi
     :private-bases:
 
 
@@ -183,7 +183,7 @@ def test_am_replacer_titleandhdrs():
 am_replacer_nomain_str = """
 This comes before
 
-.. automodapi:: astropy.sphinx.ext.automodapi
+.. automodapi:: pysit._sphinx.from_astropy.ext.automodapi
     :no-main-docstr:
 
 This comes after
@@ -192,15 +192,15 @@ This comes after
 am_replacer_nomain_expected = """
 This comes before
 
-astropy.sphinx.ext.automodapi Module
-------------------------------------
+pysit._sphinx.from_astropy.ext.automodapi Module
+------------------------------------------------
 
 
 
 Functions
 ^^^^^^^^^
 
-.. automodsumm:: astropy.sphinx.ext.automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.automodapi
     :functions-only:
     :toctree: api/
     {empty}
@@ -225,7 +225,7 @@ def test_am_replacer_nomain():
 am_replacer_skip_str = """
 This comes before
 
-.. automodapi:: astropy.sphinx.ext.automodapi
+.. automodapi:: pysit._sphinx.from_astropy.ext.automodapi
     :skip: something1
     :skip: something2
 
@@ -235,15 +235,15 @@ This comes after
 am_replacer_skip_expected = """
 This comes before
 
-astropy.sphinx.ext.automodapi Module
-------------------------------------
+pysit._sphinx.from_astropy.ext.automodapi Module
+------------------------------------------------
 
-.. automodule:: astropy.sphinx.ext.automodapi
+.. automodule:: pysit._sphinx.from_astropy.ext.automodapi
 
 Functions
 ^^^^^^^^^
 
-.. automodsumm:: astropy.sphinx.ext.automodapi
+.. automodsumm:: pysit._sphinx.from_astropy.ext.automodapi
     :functions-only:
     :toctree: api/
     :skip: something1,something2
@@ -268,7 +268,7 @@ def test_am_replacer_skip():
 am_replacer_invalidop_str = """
 This comes before
 
-.. automodapi:: astropy.sphinx.ext.automodapi
+.. automodapi:: pysit._sphinx.from_astropy.ext.automodapi
     :invalid-option:
 
 This comes after

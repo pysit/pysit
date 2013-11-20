@@ -62,6 +62,7 @@ from sphinx.ext.inheritance_diagram import InheritanceDiagram
 from docutils.parsers.rst.directives import flag
 
 # from ...utils.misc import find_mod_objs
+import sys
 
 def find_mod_objs(modname, onlylocals=False):
     """ Returns all the public attributes of a module referenced by name.
@@ -296,8 +297,8 @@ def automodsumm_to_autosummary_lines(fn, app):
     fullfn = os.path.join(app.builder.env.srcdir, fn)
 
     with open(fullfn) as fr:
-        if 'astropy.sphinx.ext.automodapi' in app._extensions:
-            from astropy.sphinx.ext.automodapi import automodapi_replace
+        if 'pysit._sphinx.from_astropy.ext.automodapi' in app._extensions:
+            from pysit._sphinx.from_astropy.ext.automodapi import automodapi_replace
             # Must do the automodapi on the source to get the automodsumm
             # that might be in there
             filestr = automodapi_replace(fr.read(), app, True, fn, False)
@@ -576,7 +577,7 @@ def generate_automodsumm_docs(lines, srcfn, suffix='.rst', warn=None,
 
 def setup(app):
     # need our autosummary
-    app.setup_extension('astropy.sphinx.ext.astropyautosummary')
+    app.setup_extension('pysit._sphinx.from_astropy.ext.astropyautosummary')
     # need inheritance-diagram for automod-diagram
     app.setup_extension('sphinx.ext.inheritance_diagram')
 

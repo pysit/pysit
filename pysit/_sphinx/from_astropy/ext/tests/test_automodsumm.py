@@ -30,7 +30,7 @@ class FakeApp(object):
         self.warnings = []
         self._extensions = []
         if automodapipresent:
-            self._extensions.append('astropy.sphinx.ext.automodapi')
+            self._extensions.append('pysit._sphinx.from_astropy.ext.automodapi')
 
     def info(self, msg, loc):
         self.info.append((msg, loc))
@@ -42,7 +42,7 @@ class FakeApp(object):
 ams_to_asmry_str = """
 Before
 
-.. automodsumm:: astropy.sphinx.ext.automodsumm
+.. automodsumm:: pysit._sphinx.from_astropy.ext.automodsumm
     :p:
 
 And After
@@ -51,12 +51,12 @@ And After
 ams_to_asmry_expected = """.. autosummary::
     :p:
 
-    ~astropy.sphinx.ext.automodsumm.Automoddiagram
-    ~astropy.sphinx.ext.automodsumm.Automodsumm
-    ~astropy.sphinx.ext.automodsumm.automodsumm_to_autosummary_lines
-    ~astropy.sphinx.ext.automodsumm.generate_automodsumm_docs
-    ~astropy.sphinx.ext.automodsumm.process_automodsumm_generation
-    ~astropy.sphinx.ext.automodsumm.setup"""
+    ~pysit._sphinx.from_astropy.ext.automodsumm.Automoddiagram
+    ~pysit._sphinx.from_astropy.ext.automodsumm.Automodsumm
+    ~pysit._sphinx.from_astropy.ext.automodsumm.automodsumm_to_autosummary_lines
+    ~pysit._sphinx.from_astropy.ext.automodsumm.generate_automodsumm_docs
+    ~pysit._sphinx.from_astropy.ext.automodsumm.process_automodsumm_generation
+    ~pysit._sphinx.from_astropy.ext.automodsumm.setup"""
 
 
 def test_ams_to_asmry(tmpdir):
