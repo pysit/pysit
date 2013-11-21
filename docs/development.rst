@@ -41,7 +41,7 @@ new to distributed version control (DVCS) or Mercurial,
     tool.  On Windows, we've also had success with `TortoiseHg
     <http://tortoisehg.bitbucket.org/>`_.
 
-PySIT's `documentation <>`_ is hosted by ReadTheDocs.
+PySIT's `documentation <http://example.com>`_ is hosted by ReadTheDocs.
 
 
 Forking PySIT
@@ -94,40 +94,41 @@ in PySIT, please ask or use a PySIT Extension package.
 
 Roughly, the procedure for adding a new feature or fixing a bug is:
 
-1) In your local clone of *your* fork of the main PySIT repository, create a  
-branch for the feature or bug.  If the bug has been `reported   
-<https://bitbucket.org/pysit/pysit/issues?status=new&status=open>`_,
-reference the issue number in the branch name.
+1) In your local clone of *your* fork of the main PySIT repository, create a
+   branch for the feature or bug.  If the bug has been `reported
+   <https://bitbucket.org/pysit/pysit/issues?status=new&status=open>`_,
+   reference the issue number in the branch name.
 
 2) Develop your feature or fix the bug.  In this branch, avoid any other
-changes that are not related.
+   changes that are not related.
 
 3) When you think your change is complete, or  you have a question and want to
-initiate code review, pull the latest version of the `develop` branch in main
-PySIT repository into your local branch and resolve any merge conflicts.
+   initiate code review, pull the latest version of the `develop` branch in 
+   main PySIT repository into your local branch and resolve any merge 
+   conflicts.
 
 4) Push your changes to your fork on BitBucket.
 
 5) From BitBucket, issue a "pull request" from your feature branch to the
-`develop` branch of the main PySIT repository.
+   `develop` branch of the main PySIT repository.
 
 6) Comments may be given.  Address them locally and push them to your
-repository on BitBucket.  The pull request will update automatically.
+   repository on BitBucket.  The pull request will update automatically.
 
-7) Once the pull request is accepted and merged, you may close your branch.  
+7) Once the pull request is accepted and merged, you may close your branch.
 
 8) Pull the upstream `develop` branch into your local `develop` branch.
 
 .. note::
 
-    This is roughly the standard procedure used in most DVCS hosted projects. 
+    This is roughly the standard procedure used in most DVCS hosted projects.
     Improvements to the process are always welcome.
 
 Coding Standards
 ================
 
-* We follow the Python `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_
-style guide.
+* We follow the Python `PEP8 <http://www.python.org/dev/peps/pep-0008/>`_ style
+  guide.
 
     .. note::
 
@@ -136,11 +137,11 @@ style guide.
         careful to not mix conventions.
 
 * Class and function docstrings should follow the `numpydoc conventions
-<https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_.
+  <https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt>`_.
 
 * Test coverage is sparse.  Try to include unit tests on new code and on bug
-fixes to help catch regression bugs.  Improvement of test coverage is a major
-focus going forward.
+  fixes to help catch regression bugs.  Improvement of test coverage is a major
+  focus going forward.
 
 * Pull requests **must** include updates to the documentation.  Run a spell
-checker.
+  checker.
