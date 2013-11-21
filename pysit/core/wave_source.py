@@ -20,13 +20,6 @@ class SourceWaveletBase(object):
 	This is implemented as a function object, so the magic happens in the
 	`__call__` member function.
 
-	Attributes
-	----------
-	time_source : bool
-		Indicates if wavelet is defined in time domain
-	frequency_source : bool
-		Indicates if wavelet is defined in frequency domain
-
 	Methods
 	-------
 
@@ -36,11 +29,12 @@ class SourceWaveletBase(object):
 
 	@property
 	def time_source(self):
-		"""Indicates if wavelet is defined in time domain."""
+		"""bool, Indicates if wavelet is defined in time domain."""
 		return False
 
 	@property
 	def frequency_source(self):
+		"""bool, Indicates if wavelet is defined in frequency domain."""
 		return False
 
 	def __init__(self, *args, **kwargs):
@@ -109,10 +103,12 @@ class DerivativeGaussianPulse(SourceWaveletBase):
 
 	@property
 	def time_source(self):
+		"""bool, Indicates if wavelet is defined in time domain."""
 		return True
 
 	@property
 	def frequency_source(self):
+		"""bool, Indicates if wavelet is defined in frequency domain."""
 		return True
 
 	def __init__(self, peak_frequency, order=0, threshold=1e-6, shift_deviations=6, t_shift=None):
@@ -232,10 +228,12 @@ class WhiteNoiseSource(SourceWaveletBase):
 
 	@property
 	def time_source(self):
+		"""bool, Indicates if wavelet is defined in time domain."""
 		return True
 
 	@property
 	def frequency_source(self):
+		"""bool, Indicates if wavelet is defined in frequency domain."""
 		return True
 
 	def __init__(self, seed=None, variance=1.0, **kwargs):
