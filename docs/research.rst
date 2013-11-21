@@ -1,9 +1,5 @@
 .. _research_guide:
 
-*******************
-Research with PySIT
-*******************
-
 PySIT is an open platform for reproducible research in seismic imaging and
 inversion.  We recognize that intellectual property concerns can be a
 minefield in this research area, so PySIT has been designed to respect this.

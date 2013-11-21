@@ -74,11 +74,8 @@ Examples
 Support and Bug Reporting
 -------------------------
 
-- E-mail list/User group
-- Bitbucket issues
-
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    support
 
@@ -86,15 +83,8 @@ Support and Bug Reporting
 Developer's Documentation
 -------------------------
 
-- Development workflow
-- Coding guidelines
-- Documentation guidelines
-- (Testing guidelines)
-- PySIT Extensions
-- Changelog
-
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    development
    extensions
