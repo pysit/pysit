@@ -1,5 +1,6 @@
-numpy
-scipy
-pyamg
-obspy
-matplotlib
+numpy>=1.7
+scipy>=0.12
+pyamg>=2.0.5
+obspy>=0.8.4
+matplotlib>=1.3
+mpi4py
