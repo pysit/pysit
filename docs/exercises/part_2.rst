@@ -146,7 +146,7 @@ have been produced by *Reverse Time Migration*.
         plt.plot(xs, I_rtm, label=r'$I_\text{RTM}$')
         plt.legend()
 
-    .. image:: cp2_files\cp2_26_0.png
+    .. image:: ../_static/exercises/p2_3.png
 
 Visualizing the imaging condition as a space-time diagram is a very good way
 to understand how the intersection of the incident and adjoint waves locates

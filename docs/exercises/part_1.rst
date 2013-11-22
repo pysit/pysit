@@ -97,8 +97,8 @@ causal (:math:`w(t) = 0` for :math:`t\le 0`), so we introduce a time shift
         plt.title('Ricker Wavelet', fontsize=22)
         plt.legend();
 
-
-    .. image:: cp1_files\cp1_12_0.png
+    .. image:: ../_static/exercises/p1_1.png
+        :width: 50%
 
 .. topic:: Problem 1.2
 
@@ -247,7 +247,7 @@ is to consider a plot of its space-time diagram.
         plot_space_time(us, config, title=r'u(x,t)')
 
 
-    .. image:: cp1_files\cp1_24_0.png
+    .. image:: ../_static/exercises/p1_5.png
 
 Data and Sampling
 =================
@@ -332,7 +332,7 @@ we will frequently want to solve the sampled forward problem,
 
     Plot and label the trace. Use :math:`x_r = 0.15`.
 
-    .. image:: cp2_files\cp2_15_0.png
+    .. image:: ../_static/exercises/p1_7.png
 
 Bonus Problems
 ==============
