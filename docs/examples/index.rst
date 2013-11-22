@@ -1,8 +1,10 @@
-********
-Examples
-********
+.. _examples::
 
 .. toctree::
    :maxdepth: 1
 
-   horizontal2d
+   horizontal_reflector
+   marmousi
+   parallel_demo
+   multisourcing
+   animation

@@ -5,15 +5,15 @@
 
 .. _pysit_optimization:
 
-**************************************************
-Objective Functions (`pysit.optimization`)
-**************************************************
+***********************************
+Optimization (`pysit.optimization`)
+***********************************
 
 
 Introduction
 ============
 
-Objective functions are...
+Optimization routines are...
 
 
 Getting Started
@@ -26,7 +26,7 @@ Getting Started
 
 
 Using `optimization`
-===========================
+====================
 
 .. THIS SECTION SHOULD BE EITHER
 
@@ -52,18 +52,13 @@ Outer and Inner Loops
 
 
 Extending `optimization`
-===============================
+========================
 
 Define the required interface:
 
 * _select_step
 * inner_loop
 * _compute_alpha0
-
-Parallelism
------------
-
-* How to write your extensions so that they are parallel over shots
 
 Reference/API
 =============

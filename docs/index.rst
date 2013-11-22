@@ -63,10 +63,8 @@ Code, derivations, and inversion interface documentation
 Examples
 --------
 
-- Documented examples
-
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
 
    examples/index
 
