@@ -21,7 +21,7 @@ from distutils.core import Extension
 import numpy as np
 
 CLASSIFIERS = [
-'Development Status :: 3 - Alpha',
+'Development Status :: 4 - Beta',
 'Intended Audience :: Science/Research',
 'Intended Audience :: Developers',
 'License :: OSI Approved :: BSD License',
@@ -68,7 +68,7 @@ package_data.update({ 'pysit._sphinx': ['from_astropy/ext/templates/*/*',
 
 setup(
     name = "pysit",
-    version = "0.4dev",
+    version = "0.5b1",
     packages = find_packages(),
     install_requires = ['numpy>=1.7',
                         'scipy>=0.12',
