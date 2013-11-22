@@ -49,6 +49,23 @@ extension_config = {'pysit.solvers.constant_density_acoustic.time.scalar._consta
 
 extensions = [Extension(key, **value) for key, value in extension_config.iteritems()]
 
+# Setup data inclusion
+package_data = {}
+
+# Include the default configuration file
+package_data.update({'pysit': ['pysit.cfg']})
+
+# Documentation theme data
+package_data.update({ 'pysit._sphinx': ['from_astropy/ext/templates/*/*',
+                                        # Cloud
+                                        'themes/cloud-pysit/*.*',
+                                        'themes/cloud-pysit/static/*.*',
+                                        'themes/cloud/*.*',
+                                        'themes/cloud/static/*.*',
+                                        ]})
+
+
+
 setup(
     name = "pysit",
     version = "0.4dev",
@@ -60,10 +77,6 @@ setup(
                         'matplotlib>=1.3',
                         # Note: mpi4py is not a strict requirement
                        ],
-
-    package_data = {
-        'pysit': ['pysit.cfg'],
-    },
     author = "Russell J. Hewett",
     author_email = "rhewett@mit.edu",
     description = "PySIT: Seismic Imaging Toolbox in Python",
@@ -74,5 +87,6 @@ setup(
     classifiers=CLASSIFIERS,
     platforms = ["Windows", "Linux", "Solaris", "Mac OS-X", "Unix"],
     use_2to3 = True,
-    ext_modules = extensions
+    ext_modules = extensions,
+    package_data = package_data
 )

@@ -1,0 +1,54 @@
+# use glob syntax.
+syntax: glob
+
+# Compiled files
+*.pyc
+*.pyo
+*.pyd
+*.a
+*.o
+*.so
+*.pyd
+__pycache__
+
+# Ignore .c files by default to avoid including generated code. If you want to
+# add a non-generated .c extension, use `git add -f filename.c`.
+# *.c
+
+# Other generated files
+# MANIFEST
+
+# Sphinx
+_build
+_generated
+docs/api
+
+
+# Packages/installer info
+*.egg
+*.egg-info
+dist
+build
+eggs
+parts
+bin
+var
+sdist
+develop-eggs
+.installed.cfg
+setuptools-*.tar.gz
+
+# Other
+.cache
+.tox
+.*.swp
+*~
+.project
+.pydevproject
+.settings
+.coverage
+cover
+htmlcov
+
+# Mac OSX
+.DS_Store
