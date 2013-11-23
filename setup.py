@@ -64,6 +64,16 @@ package_data.update({ 'pysit._sphinx': ['from_astropy/ext/templates/*/*',
                                         'themes/cloud/static/*.*',
                                         ]})
 
+# Add the headers and swig files for the solvers
+package_data.update({'pysit.solvers': ['*.i']})
+
+package_data.update({'pysit.solvers': ['fd_tools/*.hpp']})
+
+package_data.update({'pysit.solvers.constant_density_acoustic.time.scalar': [
+                     '*.h',
+                     '*.i'
+                     ]})
+
 
 
 setup(
