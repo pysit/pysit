@@ -50,7 +50,13 @@ Install with ``pip``
 The most recent stable version PySIT is available on `PyPI
 <https://pypi.python.org/pypi>`_ and can be installed by running::
 
-	pip install pysit
+	pip install pysit --pre
+
+.. warning::
+
+	The `--pre` option is *absolutely* necessary while the first release of
+	`pysit` is still in a beta mode.  As soon as this mode stabilizes, this will
+	no longer be necessary.
 
 To upgrade PySIT using ``pip``::
 
