@@ -9,6 +9,11 @@
 Acquisition (`pysit.core.acquisition`)
 **************************************
 
+.. note::
+
+    This section of the documentation is under construction.  The source,
+    however, is documented and you can access that via the `Reference/API`_
+    section.
 
 Introduction
 ============
