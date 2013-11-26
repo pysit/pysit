@@ -1,21 +1,21 @@
 .. _research_guide:
 
 PySIT is an open platform for reproducible research in seismic imaging and
-inversion.  We recognize that intellectual property concerns can be a
+inversion.  We recognize that intellectual property (IP) concerns can be a
 minefield in this research area, so PySIT has been designed to respect this.
 
 PySIT Core and PySIT Extensions
 ===============================
 
 The PySIT Core package is intended to be a central location for
-implementations of the status quo in seismic imaging and full waveform
+implementations of the state of the art in seismic imaging and full waveform
 inversion.  PySIT Core provides a fairly general framework for seismic
 inversion and the more specific methods available and principles applied
-should have references in the literature and should not be IP restricted.  Any
-additions to the PySIT Core package, new methods or old, must be IP
-compatible.  A BSD compatible license must be provided and approved by IP
-owners and other stakeholders before new code will be included.  For, code
-that cannot meet the licensing requirements, we allow for PySIT Extension
+should have references in the literature and should not be constrained by IP
+restrictions.  Any additions to the PySIT Core package, new methods or old,
+must be IP compatible.  A BSD compatible license must be provided and approved
+by IP owners and other stakeholders before new code will be included.  For,
+code that cannot meet the licensing requirements, we allow for PySIT Extension
 packages, which can be released separately under their own licensing terms.
 
 PySIT Research Workflow
