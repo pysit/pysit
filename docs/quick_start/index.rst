@@ -3,8 +3,8 @@ PySIT Inversion Examples: Quick Start
 *************************************
 
 
-Horizontal Reflectors (1 Shot)
-==============================
+Horizontal Reflectors (Single Source)
+=====================================
 
 .. note::
 
@@ -18,8 +18,8 @@ Horizontal Reflectors (1 Shot)
 
    horizontal2d
 
-Marmousi2 Velocity (Many Shots)
-===============================
+Marmousi2 Velocity (Many Sources)
+=================================
 
 .. warning::
 
