@@ -1,15 +1,13 @@
-.. _quick_start_example:
+.. Licensed under a 3-clause BSD style license - see LICENSE.rst
 
-******************************
-Simple PySIT Inversion Example
-******************************
+.. _quick_start_example:
 
 .. note::
 
     The problem in this example is small enough that it can be run in serial
     on a normal laptop in (at worst) a few minutes.  For a more complex
     example that should run in parallel, see
-    :ref:`quick_start_example_marmousi`.
+    :ref:`quick_start_example_marmousi`_.
 
 This example is a quick guide to the general structure of a PySIT seismic
 inversion script.   You can either type the commands into the IPython console,
@@ -21,8 +19,8 @@ or you can copy sections in by copying the text and using the ``%paste``
 2D Horizontal Reflectors
 ========================
 
-The source code for a slightly more complex version of this example is in the
-PySIT ``examples/HorizontalReflector2D.py directory``.
+The source code for a slightly more complex version of this example is found in the
+PySIT examples directory: `examples/HorizontalReflector2D.py`.
 
 Set Up the Computing Environment
 --------------------------------
