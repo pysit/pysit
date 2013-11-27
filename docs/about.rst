@@ -38,7 +38,7 @@ Citing PySIT
 
 	@MISC{PySIT2013,
 	      author = "Hewett, R.J. and Demanet, L. and the PySIT Team",
-	      title = "{PySIT}: {Python} Seismic Inversion Toolbox v0.5",
+	      title = "{PySIT}: {Python} Seismic Imaging Toolbox v0.5",
 	      year = "2013",
 	      url = "http://www.pysit.org",
 	      note = "Release 0.5"
