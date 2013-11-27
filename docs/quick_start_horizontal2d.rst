@@ -4,6 +4,13 @@
 Simple PySIT Inversion Example
 ******************************
 
+.. note::
+
+    The problem in this example is small enough that it can be run in serial
+    on a normal laptop in (at worst) a few minutes.  For a more complex
+    example that should run in parallel, see
+    :ref:`quick_start_example_marmousi`.
+
 This example is a quick guide to the general structure of a PySIT seismic
 inversion script.   You can either type the commands into the IPython console,
 or you can copy sections in by copying the text and using the ``%paste``
@@ -24,7 +31,7 @@ To get started, start an IPython console with the command
 
 .. code::
 
-	ipython --pylab
+    ipython --pylab
 
 First, we must import some fairly standard python and numerical python
 libraries that we will use in this demo. Run the following commands:
