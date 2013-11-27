@@ -7,7 +7,7 @@
     The problem in this example is small enough that it can be run in serial
     on a normal laptop in (at worst) a few minutes.  For a more complex
     example that should run in parallel, see
-    :ref:`quick_start_example_marmousi`_.
+    :ref:`quick_start_example_marmousi`.
 
 This example is a quick guide to the general structure of a PySIT seismic
 inversion script.   You can either type the commands into the IPython console,
@@ -144,7 +144,7 @@ can be plotted by:
 The plot command used is part of the visualization tools provided by PySIT.
 The result should be a figure that looks like this:
 
-.. image:: _static/ex_reflector.png
+.. image:: ../_static/ex_reflector.png
    :width: 75%
 
 Set Up the Sources and Receivers
@@ -316,7 +316,7 @@ Finally, we can plot the resulting model:
 
 Where you should see a figure that looks like this:
 
-.. image:: _static/ex_lbfgs15.png
+.. image:: ../_static/ex_lbfgs15.png
     :width: 75%
 
 Additionally, you can look at the descent behavior of the algorithm by

@@ -16,7 +16,7 @@ Getting Started with PySIT
    about
    install
    exercises/index
-   quick_start_horizontal2d
+   quick_start/index
 
 
 Research and PySIT
