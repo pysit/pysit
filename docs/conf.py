@@ -63,7 +63,7 @@ copyright = u'2011 - 2013, ' + author
 # The short X.Y version.
 version = '0.5'
 # The full version, including alpha/beta/rc tags.
-release = '0.5b2'
+release = '0.5b3'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
