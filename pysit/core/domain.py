@@ -39,7 +39,7 @@ class RectangularDomain(DomainBase):
 	Parameters
 	----------
 
-	args
+	configs
 		A variable number of config tuples, see Notes for details. One tuple for
 		each desired problem dimension.
 
@@ -79,7 +79,7 @@ class RectangularDomain(DomainBase):
 	   positive direction is always the *right* side.  For example, for the
 	   z-dimension, the top is left and the bottom is right.
 
-	5. A dimension parameters dict contains six keys:
+	5. A dimension parameters Bunch contains six keys:
 		1. `lbound`: a float with the closed left boundary of the domain
 		2. `rbound`: a float with the open right boundary of the domain
 		3. `lbc`: the left boundary condition
