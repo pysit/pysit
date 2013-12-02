@@ -129,7 +129,7 @@ class RectangularDomain(DomainBase):
 
 			param = Bunch(lbound=float(L), rbound=float(R), lbc=lbc, rbc=rbc, unit=unit)
 
-			param.length = (R - L)
+			param.length = float(R) - float(L)
 
 
 			# access the dimension data by index, key, or shortcut
