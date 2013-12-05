@@ -146,13 +146,15 @@ style of an attribute of the `~pysit.core.domain.RectangularDomain`.  E.g.,
     # Attribute-style
     domain.z
 
-The boundary condition information is given in the `lbc` and `rbc` properties of each dimension.  For example, to get the length of the right PML,
+The boundary condition information is given in the `lbc` and `rbc` properties
+of each dimension.  For example, to get the length of the right PML,
 
 .. code:: python
 
     print domain.z.rbc.length
 
-A big key of PySIT is that most code is dimension independent.  To iterate over the dimensions of a domain, without knowing their number ahead of time,
+A big key of PySIT is that most code is dimension independent.  To iterate
+over the dimensions of a domain, without knowing their number ahead of time,
 
 .. code:: python
 
