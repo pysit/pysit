@@ -2,7 +2,8 @@
 
 import numpy as np
 
-__all__ = ['MeshBase', 'CartesianMesh', 'StructuredNeumann', 'StructuredDirichlet', 'StructuredPML']
+__all__ = ['MeshBase', 'CartesianMesh',
+           'StructuredNeumann', 'StructuredDirichlet', 'StructuredPML']
 
 # Mapping between dimension and the key labels for Cartesian domain
 _cart_keys = {1: [(0, 'z')],
@@ -53,7 +54,7 @@ class MeshBase(object):
 		raise NotImplementedError('Must be implemented by subclass.')
 
 class StructuredMesh(MeshBase):
-	""" Base class for structured meshses in PySIT.
+	""" Base class for structured meshes in PySIT.
 
 	Parameters
 	----------
@@ -97,7 +98,7 @@ class StructuredMesh(MeshBase):
 		self.dim = domain.dim
 
 class CartesianMesh(StructuredMesh):
-	""" Specification of Cartesian meshses in PySIT.
+	""" Specification of Cartesian meshes in PySIT.
 
 	Parameters
 	----------
@@ -179,6 +180,9 @@ class CartesianMesh(StructuredMesh):
 			param = Bunch(n=n, delta=delta)
 
 			# Create the left and right boundary specs from the MeshBC factory
+			# Note, delta is necessary for some boundary constructions, but the
+			# mesh has not been instantiated yet, so it must be passed to
+			# the boundary constructor.
 			param.lbc = MeshBC(self, domain.parameters[i].lbc, i, 'left', delta)
 			param.rbc = MeshBC(self, domain.parameters[i].rbc, i, 'right', delta)
 
@@ -198,7 +202,7 @@ class CartesianMesh(StructuredMesh):
 		self._spgrid_bc = None
 
 	def nodes(self, include_bc=False):
-		""" Returns a self.dof() X self,.dim `~numpy.ndarray` of node locations.
+		""" Returns a self.dof() X self.dim `~numpy.ndarray` of node locations.
 
 			Parameters
 			----------
@@ -212,9 +216,10 @@ class CartesianMesh(StructuredMesh):
 	def mesh_coords(self, sparse=False, include_bc=False):
 		""" Returns coordinate arrays for mesh nodes.
 
-		Makes `~numpy.ndarray` arrays for each dimension, similar to `meshgrid`.
-		Always in ([X, [Y]], Z) order.  Optionally include nodes due to boundary
-		padding and optionally return sparse arrays to save memory.
+		Makes `~numpy.ndarray` arrays for each dimension, similar to
+		`~numpy.meshgrid`. Always in ([X, [Y]], Z) order.  Optionally include
+		nodes due to boundary padding and optionally return sparse arrays to
+		save memory.
 
 		Parameters
 		----------
@@ -225,11 +230,6 @@ class CartesianMesh(StructuredMesh):
 
 		include_bc : boolean
 			Optionally include physical locations of ghost/boundary points.
-
-		See Also
-		--------
-
-		`numpy.meshgrid`
 
 		"""
 
@@ -372,27 +372,45 @@ class CartesianMesh(StructuredMesh):
 		return self._dofs[include_bc]
 
 	def unpad_array(self, in_array, copy=False):
-		""" Returns a view of in_array, unpadded to the primary or boundary-condition- or ghost-node-free shape.
+		""" Returns a view of input array, `unpadded` to the primary or
+		    boundary-condition- or ghost-node-free shape.
+
+		    Truncates the array, information in the padded area is discarded.
 
 		Parameters
 		----------
-		in_array : ndarray
+
+		in_array : numpy.ndarray
 			Input array
-		copy : boolean
-			Return a copy of the unpadded array
+
+		copy : boolean, optional
+			Optionally return a copy of the unpadded array rather than a view.
+
+		Notes
+		-----
+
+		1. This function preserves array shape.  If the input is grid shaped,
+		   the return is grid shaped.  Similarly, if the input is vector shaped,
+		   the output will be vector shaped.
+
 		"""
 
+		# Get the various shapes of the array without boundary conditions
 		sh_unpadded_grid = self.shape(include_bc=False, as_grid=True)
-		sh_unpadded_dof = self.shape(include_bc=False, as_grid=False)
+		sh_unpadded_vector = self.shape(include_bc=False, as_grid=False)
 
-		# short circuit the unpad operation if the array is not padded
-		if in_array.shape == sh_unpadded_grid or in_array.shape == sh_unpadded_dof:
+		# If the array is already not padded, do nothing.
+		if (in_array.shape == sh_unpadded_grid or
+		    in_array.shape == sh_unpadded_vector):
 			out_array = in_array
 		else:
-			# shape of the input array in grid form
+			# Shape of the input array in grid form
 			sh_grid = self.shape(include_bc=True, as_grid=True)
 
 			# Build the slice into the new array (grid like for speed)
+			# For each dimension, build a slice object which gathers the
+			# unpadded section of the array.  Slice excludes the left and right
+			# boundary nodes.
 			sl = list()
 			for i in xrange(self.dim):
 				p = self.parameters[i]
@@ -402,11 +420,12 @@ class CartesianMesh(StructuredMesh):
 
 				sl.append(slice(nleft, sh_grid[i]-nright))
 
-			# Make the input array look like a grid, the slice is for a grid
+			# Make the input array look like a grid
+			# and extract the slice is for a grid
 			out_array = in_array.reshape(sh_grid)[sl]
 
+		# If the input shape is a vector, the return array has vector shape
 		if in_array.shape[1] == 1:
-			# Return in DOF shape
 			out = out_array.reshape(-1,1)
 		else:
 			out = out_array
@@ -414,53 +433,92 @@ class CartesianMesh(StructuredMesh):
 		return out.copy() if copy else out
 
 	def pad_array(self, in_array, out_array=None, padding_mode=None):
-		""" Returns a version of in_array, padded to add nodes from the boundary conditions or ghost nodes.
+		""" Returns a version of in_array, padded to add nodes from the
+		    boundary conditions or ghost nodes.
 
 		Parameters
 		----------
+
 		in_array : ndarray
 			Input array
+
 		out_array : ndarray, optional
 			If specifed, pad into a pre-allocated array
+
 		padding_mode : string
-			Padding mode option for numpy.pad.
+			Padding mode option for numpy.pad.  ``None`` indicates to pad with
+			zeros (see Note 2).
+
+		Notes
+		-----
+
+		1. ``padding_mode`` options are found in the `numpy` :func:`~numpy.pad`
+		   function.
+
+		2. If ``padding_mode`` is left at its default (``None``), the array will
+		   be padded with zeros *without* calling :func:`~numpy.pad` and will
+		   instead use a faster method.
+
+		3. Recommended value for ``padding_mode`` is 'edge' for repeating the
+		   edge value.
+
+		4. This function preserves array shape.  If the input is grid shaped,
+		   the return is grid shaped.  Similarly, if the input is vector shaped,
+		   the output will be vector shaped.
+
 		"""
 
+		# Shape of input array
+		sh_in_vector = self.shape(include_bc=False, as_grid=False)
+		sh_in_grid = self.shape(include_bc=False, as_grid=True)
+
 		# Shape of the new destination array
-		sh_dof  = self.shape(True, False)
-		sh_grid = self.shape(True, True)
-		sh_in_grid = self.shape(False,True)
-		# Build the slice into the new array (grid like for speed)
-		sl = list()
-		for i in xrange(self.dim):
-			p = self.parameters[i]
+		sh_out_vector  = self.shape(include_bc=True, as_grid=False)
+		sh_out_grid = self.shape(include_bc=True, as_grid=True)
 
-			nleft  = p.lbc.n
-			nright = p.rbc.n
-
-			sl.append(slice(nleft, sh_grid[i]-nright))
-
-		# Allocate the destination array and copy the source array to it
+		# If the output array is provided, we will need it in grid shape.
+		# Plus, this excepts early if the size of the output array is wrong.
 		if out_array is not None:
-			out_array.shape = sh_grid
-		else:
-			out_array = np.zeros(sh_grid, dtype=in_array.dtype)
-		out_array[sl] = in_array.reshape(sh_in_grid)
+			out_array.shape = sh_out_grid
 
-
-		# Build the padding tuples and pad the matrix
-		# The following if block is equivalent to the above call, but much
-		# slower than just allocationg a zero array as above, if the padding
-		# method is indeed zeros
+		# If padding_mode is not None, use numpy.pad() for padding.
+		# Otherwise, pads with zeros in a faster way.  This is a necessary
+		# optimization.
 		if padding_mode is not None:
 			_pad_tuple = tuple([(self.parameters[i].lbc.n, self.parameters[i].rbc.n) for i in xrange(self.dim)])
-			out_array = np.pad(in_array.reshape(sh_in_grid), _pad_tuple, mode=padding_mode).copy()
+			_out_array = np.pad(in_array.reshape(sh_in_grid), _pad_tuple, mode=padding_mode).copy()
 
-
-		if in_array.shape[1] == 1: # Does not guarantee dof shaped, but suggests it.
-			out_array.shape = sh_dof
+			# If the output memory is allocated, copy padded array into it.
+			if out_array is not None:
+				out_array[:] = _out_array[:]
+			else:
+				out_array = _out_array
 		else:
-			out_array.shape = sh_grid
+			# Allocate the destination array
+			if out_array is None:
+				out_array = np.zeros(sh_out_grid, dtype=in_array.dtype)
+
+			# Build the slice of the unpadded array into the new array.
+			# For each dimension, build a slice object which gathers the
+			# unpadded section of the output array.  Slice excludes the left
+			# and right boundary nodes.
+			sl = list()
+			for i in xrange(self.dim):
+				p = self.parameters[i]
+
+				nleft  = p.lbc.n
+				nright = p.rbc.n
+
+				sl.append(slice(nleft, sh_out_grid[i]-nright))
+
+			# Copy the source array
+			out_array[sl] = in_array.reshape(sh_in_grid)
+
+		# If the input shape is a vector, the return array has vector shape
+		if in_array.shape == sh_in_vector:
+			out_array.shape = sh_out_vector
+		else:
+			out_array.shape = sh_out_grid
 		return out_array
 
 	def inner_product(self, arg1, arg2):
@@ -470,8 +528,12 @@ class CartesianMesh(StructuredMesh):
 
 
 class UnstructuredMesh(MeshBase):
-	def __init__(self, *args, **kwargs):
-		raise NotImplementedError()
+	""" [NotImplemented] Base class for specifying unstructured meshes in
+	PySIT.
+	"""
+
+	pass
+
 
 class MeshBC(object):
 	""" Factory class for mesh boundary conditions. """
@@ -494,104 +556,275 @@ class MeshBC(object):
 			return super(MeshBC, cls).__new__(cls, mesh, domain_bc, *args, **kwargs)
 
 
-
 class MeshBCBase(object):
-	""" Base class for mesh boundary conditions. """
+	""" Base class for mesh boundary conditions.
+
+	Parameters
+	----------
+
+	mesh : subclass of pysit.core.mesh.MeshBase
+
+	domain_bc : subclass of pysit.core.domain.DomainBC
+
+	"""
 	def __init__(self, mesh, domain_bc, *args, **kwargs):
 		self.mesh = mesh
 		self.domain_bc = domain_bc
 
+
 class StructuredBCBase(MeshBCBase):
-	""" Base class for mesh boundary conditions on structured meshes."""
+	""" Base class for mesh boundary conditions on structured meshes.
+
+	Parameters
+	----------
+
+	mesh : subclass of pysit.core.mesh.MeshBase
+
+	domain_bc : subclass of pysit.core.domain.DomainBC
+
+	dim : int
+		Dimension number of the boundary condition.  See Note 1.
+
+	side : {'left', 'right'}
+		Side of the domain that the boundary condition applies to.
+
+	Notes
+	-----
+
+	1. ``dim`` is the dimension number corresponding to x, y, or z, **not** the
+	   spatial dimension that the problem lives in.
+
+	"""
+
+	# The distinction between ``type`` and ``boundary_type`` is most clear for
+	# absorbing boundaries.  Currently, the domain boundaries are somewhat
+	# poorly named as PML, when they are really meant to be general absorbing
+	# boundaries which can be implemented in an arbitrary way.
+	# ``boundary_type`` specifies the physical interpretation of the boundary
+	# condition and ``type`` specifies the discrete implementation.
+
+	@property
+	def type(self):
+		"""The type of discrete implementation of the boundary condition. """
+		return None
+
+	@property
+	def boundary_type(self):
+		"""The physical type of boundary condition. """
+		return None
+
 	def __init__(self, mesh, domain_bc, dim, side, *args, **kwargs):
+
 		MeshBCBase.__init__(self, mesh, domain_bc, *args, **kwargs)
+
 		self._n = 0
 		self.solver_padding = 1
 		self.dim = dim
 		self.side = side
 
-	n = property(lambda self: self._n, None, None, None)
+	n = property(lambda self: self._n,
+		         None,
+		         None,
+		         "Number of padding nodes on the boundary.")
+
 
 class StructuredDirichlet(StructuredBCBase):
-	"""Specification of the Dirichlet boundary condition on structured meshes."""
+	"""Specification of the Dirichlet boundary condition on structured meshes.
+
+	Parameters
+	----------
+
+	mesh : subclass of pysit.core.mesh.MeshBase
+
+	domain_bc : subclass of pysit.core.domain.DomainBC
+
+	dim : int
+		Dimension number of the boundary condition.  See Note 1.
+
+	side : {'left', 'right'}
+		Side of the domain that the boundary condition applies to.
+
+	Notes
+	-----
+
+	1. ``dim`` is the dimension number corresponding to x, y, or z, **not** the
+	   spatial dimension that the problem lives in.
+
+	"""
 
 	@property
-	def type(self): return 'dirichlet'
+	def type(self):
+		"""The type of discrete implementation of the boundary condition. """
+		return 'dirichlet'
+
 	@property
-	def boundary_type(self): return 'dirichlet'
+	def boundary_type(self):
+		"""The physical type of boundary condition. """
+		return 'dirichlet'
+
 
 class StructuredNeumann(StructuredBCBase):
-	"""Specification of the Neumann boundary condition on structured meshes."""
+	"""Specification of the Neumann boundary condition on structured meshes.
+
+	Parameters
+	----------
+
+	mesh : subclass of pysit.core.mesh.MeshBase
+
+	domain_bc : subclass of pysit.core.domain.DomainBC
+
+	dim : int
+		Dimension number of the boundary condition.  See Note 1.
+
+	side : {'left', 'right'}
+		Side of the domain that the boundary condition applies to.
+
+	Notes
+	-----
+
+	1. ``dim`` is the dimension number corresponding to x, y, or z, **not** the
+	   spatial dimension that the problem lives in.
+
+	"""
 
 	@property
-	def type(self): return 'neumann'
+	def type(self):
+		"""The type of discrete implementation of the boundary condition. """
+		return 'neumann'
+
 	@property
-	def boundary_type(self): return 'neumann'
+	def boundary_type(self):
+		"""The physical type of boundary condition. """
+		return 'neumann'
 
 class StructuredPML(StructuredBCBase):
-	"""Specification of the PML-absorbing boundary condition on structured meshes."""
+	"""Specification of the PML-absorbing boundary condition on structured meshes.
+
+	Parameters
+	----------
+
+	mesh : subclass of pysit.core.mesh.MeshBase
+
+	domain_bc : subclass of pysit.core.domain.DomainBC
+
+	dim : int
+		Dimension number of the boundary condition.  See Note 1.
+
+	side : {'left', 'right'}
+		Side of the domain that the boundary condition applies to.
+
+	delta : float
+		Mesh spacing
+
+	Notes
+	-----
+
+	1. ``dim`` is the dimension number corresponding to x, y, or z, **not** the
+	   spatial dimension that the problem lives in.
+
+	"""
 
 	@property
-	def type(self): return 'pml'
+	def type(self):
+		"""The type of discrete implementation of the boundary condition. """
+		return 'pml'
+
+	@property
+	def boundary_type(self):
+		"""The physical type of boundary condition. """
+		return self._boundary_type
 
 	def __init__(self, mesh, domain_bc, dim, side, delta, *args, **kwargs):
-		""" Constructor for PML-absorbing boundary conditions on structured meshes.
-
-		Parameters
-		----------
-		mesh : pysit mesh
-			Mesh for the boundary condition
-		domain_bc : PySIT domain boundary condition object
-			Physical specification of the boundary condition
-		dim : int
-			Dimension number for the BC.
-		side : str, {'left', 'right'}
-			Side at which PML is applied.
-		delta : float
-			Mesh spacing
-
-		"""
-
 
 		StructuredBCBase.__init__(self, mesh, domain_bc, dim, side, delta, *args, **kwargs)
 
 		pml_width = domain_bc.length
 
 		self._n = int(np.ceil(pml_width / delta))
+
+		# Sigma is the evaluation of the profile function on n points over the
+		# range [0, 1]
 		self.sigma = domain_bc.evaluate(self._n, side)
-		self.boundary_type = domain_bc.boundary_type
+
+		# Get the physical boundary type
+		self._boundary_type = domain_bc.boundary_type
 
 	def eval_on_mesh(self):
-		""" Evaluates the PML profile function sigma on the mesh."""
+		""" Evaluates the PML profile function sigma on the mesh.  Returns an
+		array the size of the mesh with the PML function evalauted at each node.
+		"""
 
-		sh_dof  = self.mesh.shape(True, False)
-		sh_grid = self.mesh.shape(True, True)
+		sh_dof  = self.mesh.shape(include_bc=True, as_grid=False)
+		sh_grid = self.mesh.shape(include_bc=True, as_grid=True)
+
 		out_array = np.zeros(sh_grid)
 
 		if self.side == 'left':
 			nleft = self._n
 			sl_block = tuple([slice(None) if self.dim!=k else slice(0,nleft) for k in xrange(self.mesh.dim)])
-		else: # right
+		else: # self.side == 'right'
 			nright = self._n
 			sl_block = tuple([slice(None) if self.dim!=k else slice(out_array.shape[k]-nright,None) for k in xrange(self.mesh.dim)])
 
+		# Get the shape of sigma in the appropriate dimension
 		sh = tuple([-1 if self.sigma.shape[0]==out_array[sl_block].shape[k] else 1 for k in xrange(self.mesh.dim)])
+
+		# Use numpy broadcasts to copy sigma throught the correct block.
 		out_array[sl_block] = self.sigma.reshape(sh)
 
 		return out_array.reshape(sh_dof)
 
 class StructuredGhost(StructuredBCBase):
-	@property
-	def type(self): return 'ghost'
-	@property
-	def boundary_type(self): return 'ghost'
+	"""Specification of the ghost-node padding as a boundary condition on 
+	structured meshes.
 
-	def __init__(self, mesh, domain_bc, ghost_padding, *args, **kwargs):
+	Parameters
+	----------
 
-		StructuredBCBase.__init__(self, mesh, domain_bc, ghost_padding, *args, **kwargs)
+	mesh : subclass of pysit.core.mesh.MeshBase
+
+	domain_bc : subclass of pysit.core.domain.DomainBC
+
+	dim : int
+		Dimension number of the boundary condition.  See Note 1.
+
+	side : {'left', 'right'}
+		Side of the domain that the boundary condition applies to.
+
+	ghost_padding : int
+		Number of ghost nodes.
+
+	Notes
+	-----
+
+	1. ``dim`` is the dimension number corresponding to x, y, or z, **not** the
+	   spatial dimension that the problem lives in.
+
+	"""
+
+	@property
+	def type(self):
+		"""The type of discrete implementation of the boundary condition. """
+		return 'ghost'
+
+	@property
+	def boundary_type(self):
+		"""The physical type of boundary condition. """
+		return 'ghost'
+
+	def __init__(self, mesh, domain_bc, dim, side, ghost_padding, *args, **kwargs):
+
+		StructuredBCBase.__init__(self, mesh, domain_bc, dim, side, ghost_padding, *args, **kwargs)
+
 		self.solver_padding = ghost_padding
 
-	n = property(lambda self: self.ghost_padding, None, None, None)
+	n = property(lambda self: self.ghost_padding,
+		         None,
+		         None,
+		         "Number of padding nodes on the boundary.")
 
 class UnstructuredBCBase(MeshBCBase):
+	""" [NotImplemented] Base class for specifying boundary conditions on
+	unstructured meshes in PySIT.
+	"""
 	pass
