@@ -1,0 +1,13 @@
+include ez_setup.py
+include pip-requirements
+include rtd-pip-requirements
+recursive-include pysit *.pyx *.c *.h *.hpp *.cxx *.cpp *.i
+
+recursive-include docs *
+recursive-include licenses *
+recursive-include examples *
+recursive-include pysit/_sphinx/themes *
+
+exclude *.pyc *.o
+prune docs/_build
+prune build

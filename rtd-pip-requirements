@@ -1,0 +1,7 @@
+numpy>=1.7
+scipy
+pyamg>=2.0.5
+obspy>=0.8.4
+lxml
+matplotlib>=1.3 
+mpi4py

@@ -1,34 +1,80 @@
+Functions/Methods
+
 """
-Info.
+Short Summary
+
+.. note:: optional deprecation warning
+
+Extended summary to clarify functionality, implementation details or
+background should go in notes.
 
 Parameters
 ----------
 
-N/A
+filename : str
+copy : bool, optional
+	Description of parameter `copy` (the default is False, because...)
+dtype : data-type
+iterable : iterable object
+shape : int or tuple of int
+files : list of str
+x1, x2 : array_like
+    Input arrays, description of `x1`, `x2`.
 
 Returns
 -------
 
-N/A
+return-type
+	Description of return value.
+
+Raises
+------
+
+ExceptionType
+	Description of when exception is raised.
+
+See Also
+--------
+
+reference to related code, is rarely needed
 
 Notes
 -----
 
-N/A
+Detailed description of the method, including math if so desired.
 
-Examples
---------
-
-N/A
-
-Todo
-----
-
-N/A
+Todo list, using rst todo directive can go here.
 
 References
 ----------
 
-N/A
+see https://github.com/numpy/numpy/blob/master/doc/HOWTO_DOCUMENT.rst.txt#id6
+
+Examples
+--------
+
+optional examples in doctest format
+
+"""
+
+Classes
+
+"""
+
+Parameters
+----------
+
+Like above, for __init__ parameters
+
+Attributes
+----------
+
+Like above parameters, for class attributes
+
+Methods
+-------
+
+Optional, if there are critical methods that should be listed.  Otherwise,
+just document the method.
 
 """

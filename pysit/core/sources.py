@@ -42,7 +42,7 @@ class SourceBase(object):
 	def f(self, t, **kwargs):
 		raise NotImplementedError('Evaluation function \'f\' must be implemented by subclass.')
 		
-	def w(self, *argsw, **kwags):
+	def w(self, *argsw, **kwargs):
 		raise NotImplementedError('Wavelet function must be implemented at the subclass level.')
 		
 	# For subclasses to implement.
@@ -180,8 +180,12 @@ class SourceSet(SourceBase, MeshRepresentationBase):
 		return sum([r.source_count for r in self.source_list])
 	source_count = property(get_source_count, None, None, None)
 		
-	def w(self, t, **kwargs):
-		vec = np.array([s.intensity*s.w(t,**kwargs) for s in self.source_list])
+	def w(self, t=None, nu=None, **kwargs):
+		if nu is None:
+			vec = np.array([s.intensity*s.w(t=t,**kwargs) for s in self.source_list])
+		else:
+			vec = np.array([s.intensity*s.w(nu=nu,**kwargs) for s in self.source_list])
+		
 		vec.shape = vec.size,1
 		return vec
 		
@@ -207,7 +211,11 @@ class SourceSet(SourceBase, MeshRepresentationBase):
 		-------
 		The function w evaluated on a grid as an ndarray shaped like the domain.
 		"""
-		v = self.w(t, nu=nu, **kwargs)
+		if nu is None:
+			v = self.w(t=t, **kwargs)
+		else:
+			v = self.w(nu=nu, **kwargs)
+			
 		if self._sample_interp_method == 'sparse':
 			return (self.adjoint_sampling_operator*v).reshape(self.mesh.shape())
 		else:	
