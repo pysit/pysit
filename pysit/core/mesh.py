@@ -10,6 +10,7 @@ _cart_keys = {1: [(0, 'z')],
               2: [(0, 'x'), (1, 'z')],
               3: [(0, 'x'), (1, 'y'), (2, 'z')]}
 
+
 class Bunch(dict):
     """ An implementation of the Bunch pattern.
 
@@ -25,6 +26,7 @@ class Bunch(dict):
     def __init__(self, **kwargs):
         dict.__init__(self, **kwargs)
         self.__dict__ = self
+
 
 class MeshBase(object):
     """ Base Class for Pysit mesh objects"""
@@ -52,6 +54,7 @@ class MeshBase(object):
     def inner_product(self, arg1, arg2):
         """ Implements inner product on the mesh, accounts for scaling."""
         raise NotImplementedError('Must be implemented by subclass.')
+
 
 class StructuredMesh(MeshBase):
     """ Base class for structured meshes in PySIT.
@@ -96,6 +99,7 @@ class StructuredMesh(MeshBase):
             raise ValueError('Mesh dimension must match domain dimension.')
 
         self.dim = domain.dim
+
 
 class CartesianMesh(StructuredMesh):
     """ Specification of Cartesian meshes in PySIT.
@@ -172,11 +176,12 @@ class CartesianMesh(StructuredMesh):
         self.parameters = dict()
 
         # Loop over each specified dimesion
-        for (i,k) in _cart_keys[self.dim]:
+        for (i, k) in _cart_keys[self.dim]:
 
             # Create the initial parameter Bunch
+            # n-1 because the number of points includes both boundaries.
             n = int(configs[i])
-            delta = domain.parameters[i].length / n
+            delta = domain.parameters[i].length / (n-1)
             param = Bunch(n=n, delta=delta)
 
             # Create the left and right boundary specs from the MeshBC factory
@@ -187,10 +192,9 @@ class CartesianMesh(StructuredMesh):
             param.rbc = MeshBC(self, domain.parameters[i].rbc, i, 'right', delta)
 
             # access the dimension data by index, key, or shortcut
-            self.parameters[i] = param # d.dim[-1]
-            self.parameters[k] = param # d.dim['z']
-            self.__setattr__(k, param) # d.z
-
+            self.parameters[i] = param  # d.dim[-1]
+            self.parameters[k] = param  # d.dim['z']
+            self.__setattr__(k, param)  # d.z
 
         # Initialize caching of mesh shapes and degrees of freedom
         self._shapes = dict()
@@ -240,19 +244,25 @@ class CartesianMesh(StructuredMesh):
             elif self._spgrid is not None:
                 return self._spgrid
 
-
         def _assemble_grid_row_bc(dim):
             p = self.parameters[dim]
-            lbound = self.domain.parameters[dim].lbound - p.lbc.n*p.delta
-            rbound = self.domain.parameters[dim].rbound + p.rbc.n*p.delta
+
+            # Note, we don't use p.lbc.domain_bc.length because the PML width
+            # can be longer than specified.  This occurs if the specified width
+            # is not evenly divisible by the mesh delta.  It is more important
+            # that the mesh delta remain constant.
+            actual_pml_length_l = p.lbc.n*p.delta
+            actual_pml_length_r = p.rbc.n*p.delta
+
+            lbound = self.domain.parameters[dim].lbound - actual_pml_length_l
+            rbound = self.domain.parameters[dim].rbound + actual_pml_length_r
             n = p.n + p.lbc.n + p.rbc.n
-            return np.linspace(lbound, rbound, n, endpoint=False)
+            return np.linspace(lbound, rbound, n)
 
         def _assemble_grid_row(dim):
             return np.linspace(self.domain.parameters[dim].lbound,
                                self.domain.parameters[dim].rbound,
-                               self.parameters[dim].n,
-                               endpoint=False)
+                               self.parameters[dim].n)
 
         # Build functions for generating the x, y, and z dimension positions
         if include_bc:
@@ -262,6 +272,8 @@ class CartesianMesh(StructuredMesh):
 
         # Build the rows depending on the dimension of the mesh and construct
         # the arrays using meshgrid.
+        # NUMPY: When numpy 1.9, this can be reduced to one line or two, as
+        # meshgrid will work with single inputs.
         if(self.dim == 1):
             # return value is a 1-tuple, created in python by (foo,)
             tup = tuple([assemble_grid_row('z')])
@@ -286,7 +298,6 @@ class CartesianMesh(StructuredMesh):
             tup = tuple([x.reshape(self.shape(include_bc)) for x in tup])
 
         return tup
-
 
     @property
     def deltas(self):
@@ -415,7 +426,7 @@ class CartesianMesh(StructuredMesh):
             for i in xrange(self.dim):
                 p = self.parameters[i]
 
-                nleft  = p.lbc.n
+                nleft = p.lbc.n
                 nright = p.rbc.n
 
                 sl.append(slice(nleft, sh_grid[i]-nright))
@@ -426,7 +437,7 @@ class CartesianMesh(StructuredMesh):
 
         # If the input shape is a vector, the return array has vector shape
         if in_array.shape[1] == 1:
-            out = out_array.reshape(-1,1)
+            out = out_array.reshape(-1, 1)
         else:
             out = out_array
 
@@ -473,7 +484,7 @@ class CartesianMesh(StructuredMesh):
         sh_in_grid = self.shape(include_bc=False, as_grid=True)
 
         # Shape of the new destination array
-        sh_out_vector  = self.shape(include_bc=True, as_grid=False)
+        sh_out_vector = self.shape(include_bc=True, as_grid=False)
         sh_out_grid = self.shape(include_bc=True, as_grid=True)
 
         # If the output array is provided, we will need it in grid shape.
@@ -506,7 +517,7 @@ class CartesianMesh(StructuredMesh):
             for i in xrange(self.dim):
                 p = self.parameters[i]
 
-                nleft  = p.lbc.n
+                nleft = p.lbc.n
                 nright = p.rbc.n
 
                 sl.append(slice(nleft, sh_out_grid[i]-nright))
@@ -697,6 +708,7 @@ class StructuredNeumann(StructuredBCBase):
         """The physical type of boundary condition. """
         return 'neumann'
 
+
 class StructuredPML(StructuredBCBase):
     """Specification of the PML-absorbing boundary condition on structured meshes.
 
@@ -743,8 +755,24 @@ class StructuredPML(StructuredBCBase):
         self._n = int(np.ceil(pml_width / delta))
 
         # Sigma is the evaluation of the profile function on n points over the
-        # range [0, 1]
-        self.sigma = domain_bc.evaluate(self._n, side)
+        # range [0, 1].  The extra +1 is because _n *excludes* the original
+        # boundary node.  However, the length of the PML is counted directly
+        # from this boundary node.
+        # For example, consider the discretized domain below. Let * be a node
+        # and @ be a boundary node.  Assume the domain length is 5, so the
+        # spacing is 1.
+        # @----*----*----*----*----@
+        # When the domain is extended for the PML, we get something like the
+        # following, where o is a node added in the PML.
+        # o----o----o----@----*----*----*----*----@----o----o----o
+        # The PML profile function must be evaluated from [0, 1] and the PML
+        # technically begins on @.  That is, from the mapping of [0, 1] onto
+        # the PML region, @ = 0 and the right-most o = 1.  self._n would take
+        # the value 3 in this example, not 4.  So we give the evaluation
+        # function an extra node to work with, to ensure that the delta is
+        # correct, then we take that extra node off of the sigma function.
+        s = domain_bc.evaluate(self._n+1, side)
+        self.sigma = s[1:]
 
         # Get the physical boundary type
         self._boundary_type = domain_bc.boundary_type
@@ -754,28 +782,52 @@ class StructuredPML(StructuredBCBase):
         array the size of the mesh with the PML function evalauted at each node.
         """
 
-        sh_dof  = self.mesh.shape(include_bc=True, as_grid=False)
+        sh_dof = self.mesh.shape(include_bc=True, as_grid=False)
         sh_grid = self.mesh.shape(include_bc=True, as_grid=True)
 
         out_array = np.zeros(sh_grid)
 
+        sl_block = list()
+
         if self.side == 'left':
             nleft = self._n
-            sl_block = tuple([slice(None) if self.dim!=k else slice(0,nleft) for k in xrange(self.mesh.dim)])
-        else: # self.side == 'right'
+
+            for k in xrange(self.mesh.dim):
+                if self.dim != k:
+                    s = slice(None)
+                else:
+                    s = slice(0, nleft)
+                sl_block.append(s)
+
+        else:  # self.side == 'right'
             nright = self._n
-            sl_block = tuple([slice(None) if self.dim!=k else slice(out_array.shape[k]-nright,None) for k in xrange(self.mesh.dim)])
+
+            for k in xrange(self.mesh.dim):
+                if self.dim != k:
+                    s = slice(None)
+                else:
+                    s = slice(out_array.shape[k]-nright, None)
+                sl_block.append(s)
+
+        sl_block = tuple(sl_block)
 
         # Get the shape of sigma in the appropriate dimension
-        sh = tuple([-1 if self.sigma.shape[0]==out_array[sl_block].shape[k] else 1 for k in xrange(self.mesh.dim)])
+        sh = list()
+        for k in xrange(self.mesh.dim):
+            if self.sigma.shape[0] == out_array[sl_block].shape[k]:
+                sh.append(-1)
+            else:
+                sh.append(1)
+        sh = tuple(sh)
 
         # Use numpy broadcasts to copy sigma throught the correct block.
         out_array[sl_block] = self.sigma.reshape(sh)
 
         return out_array.reshape(sh_dof)
 
+
 class StructuredGhost(StructuredBCBase):
-    """Specification of the ghost-node padding as a boundary condition on 
+    """Specification of the ghost-node padding as a boundary condition on
     structured meshes.
 
     Parameters
@@ -823,8 +875,8 @@ class StructuredGhost(StructuredBCBase):
                  None,
                  "Number of padding nodes on the boundary.")
 
+
 class UnstructuredBCBase(MeshBCBase):
     """ [NotImplemented] Base class for specifying boundary conditions on
     unstructured meshes in PySIT.
     """
-    pass

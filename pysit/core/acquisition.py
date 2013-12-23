@@ -56,7 +56,7 @@ def equispaced_acquisition(mesh, wavelet,
         if sources > m.x.n:
             raise ValueError('Number of sources exceeds mesh nodes.')
 
-        xpos = np.linspace(xmin, xmax-m.x.delta, receivers)
+        xpos = np.linspace(xmin, xmax, receivers)
         receiversbase = ReceiverSet(m, [PointReceiver(m, (x, receiver_depth), **receiver_kwargs) for x in xpos])
 
         local_sources = sources / parallel_shot_wrap.size, 1
@@ -73,8 +73,8 @@ def equispaced_acquisition(mesh, wavelet,
         if sources[0] > m.x.n or sources[1] > m.y.n:
             raise ValueError('Number of sources exceeds mesh nodes.')
 
-        xpos = np.linspace(xmin, xmax-m.x.delta, receivers[0])
-        ypos = np.linspace(ymin, ymax-m.y.delta, receivers[1])
+        xpos = np.linspace(xmin, xmax, receivers[0])
+        ypos = np.linspace(ymin, ymax, receivers[1])
         receiversbase = ReceiverSet(m, [PointReceiver(m, (x, y, receiver_depth), **receiver_kwargs) for x in xpos for y in ypos])
 
         local_sources = sources[0] / parallel_shot_wrap.size, sources[1] / parallel_shot_wrap.size
