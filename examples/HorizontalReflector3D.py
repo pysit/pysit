@@ -25,7 +25,7 @@ if __name__ == '__main__':
 
     d = RectangularDomain(x_config, y_config, z_config)
 
-    m = CartesianMesh(d, 45, 40, 35)
+    m = CartesianMesh(d, 46, 41, 36)
 
     #   Generate true wave speed
     C, C0, m, d = horizontal_reflector(m)

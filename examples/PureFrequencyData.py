@@ -11,8 +11,8 @@ if __name__ == '__main__':
 
     pml = PML(150, 100)
 
-    npx = 32
-    npz = 32
+    npx = 33
+    npz = 33
     dx = 30.0
     dz = 30.0
 
