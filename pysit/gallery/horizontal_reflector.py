@@ -168,7 +168,7 @@ def horizontal_reflector( mesh, **kwargs):
 #
 #   d = RectangularDomain(x_config, z_config)
 #
-#   m = CartesianMesh(d, 90, 70)
+#   m = CartesianMesh(d, 91, 71)
 #
 #   #       Generate true wave speed
 #   C, C0, m, d = horizontal_reflector(m)

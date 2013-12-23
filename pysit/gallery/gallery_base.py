@@ -149,22 +149,21 @@ class PrecomputedGalleryModel(GalleryModel):
 
     """
 
-
     # A sanitized name for filesystem work
     fs_full_name = ""
     fs_short_name = ""
 
     # Available data
-    supported_physical_parameters = list() #['density', 'vp']
-    supported_masks = list() # ['salt', 'water']
+    supported_physical_parameters = list()  # ['density', 'vp']
+    supported_masks = list()  # ['salt', 'water']
 
     # The local file names used to save the downloaded models
-    _local_parameter_filenames = {} #{'vp' : None, 'vs' : None, 'density' : None}
-    _local_mask_filenames = {} #{'water-mask' : None, 'salt-mask' : None}
+    _local_parameter_filenames = {}  # {'vp' : None, 'vs' : None, 'density' : None}
+    _local_mask_filenames = {}  # {'water-mask' : None, 'salt-mask' : None}
 
     # Sometimes the sources are not in the units we expect.  This scale factor
     # allows the numbers to be converted into common units.
-    _parameter_scale_factor = {} #{ 'vp' : 1.0, 'density' : 1.0}
+    _parameter_scale_factor = {}  # { 'vp' : 1.0, 'density' : 1.0}
 
     # Dictionary mapping physical parameters to a list of URLs where they
     # can be obtained
@@ -174,8 +173,8 @@ class PrecomputedGalleryModel(GalleryModel):
     _model_transposed = False
 
     # Model specification
-    base_physical_origin =  None
-    base_physical_size =None
+    base_physical_origin = None
+    base_physical_size = None
     base_physical_dimensions_units = tuple()
 
     base_pixels = None
@@ -186,10 +185,10 @@ class PrecomputedGalleryModel(GalleryModel):
     water_properties = (None, )
 
     # Default configuration of the four possible initial model schemes.
-    _initial_configs = {'smooth_width': {'sigma':3000.0},
-                        'smooth_low_pass': {'freq':1/3000.},
+    _initial_configs = {'smooth_width': {'sigma': 3000.0},
+                        'smooth_low_pass': {'freq': 1/3000.},
                         'constant': {'velocity': 3000.0},
-                        'gradient': {'min':1500.0, 'max':3000}}
+                        'gradient': {'min': 1500.0, 'max': 3000}}
 
     # Maps names of scales to physical scales for the model
     _scale_map = {}
@@ -199,12 +198,14 @@ class PrecomputedGalleryModel(GalleryModel):
 
     # Short cuts for the left and right positions of the edges of the domain.
     @property
-    def _coordinate_lbounds(self): return self.physical_origin
+    def _coordinate_lbounds(self):
+        return self.physical_origin
+
     @property
-    def _coordinate_rbounds(self): return self.physical_origin + self.physical_size
+    def _coordinate_rbounds(self):
+        return self.physical_origin + self.physical_size
 
     license_string = None
-
 
     def __init__(self, physics='acoustic',
                        origin=None,
@@ -298,23 +299,25 @@ class PrecomputedGalleryModel(GalleryModel):
             length = self._coordinate_rbounds - self._coordinate_lbounds
             self.pixels = np.ceil(length/self.pixel_scale).astype(np.int)
 
-            # correct physical size to match the number of pixels.  this can go over the true max size by up to 1 delta
+            # Correct physical size to match the number of pixels. This can go
+            # over the true max size by up to 1 delta.
             self.physical_size = self.pixel_scale*self.pixels
 
-            # Add 1 because the last point _is_ included (but not yet)
-#           self.pixels += 1
+            # Add 1 because the last point _is_ included.  Adds to all
+            # dimensions.
+            self.pixels += 1
 
-        else: #both are None
+        else:  # both are None
             self.pixels = self.base_pixels.copy()
             self.pixel_scale = self.base_pixel_scale.copy()
 
         # Create pysit domains and meshes
 
         # extract or default the boundary conditions
-        x_lbc = kwargs['x_lbc'] if ('x_lbc' in kwargs) else PML(0.1*self.pixels[0]*self.pixel_scale[0], 100.0)
-        x_rbc = kwargs['x_rbc'] if ('x_rbc' in kwargs) else PML(0.1*self.pixels[0]*self.pixel_scale[0], 100.0)
-        z_lbc = kwargs['z_lbc'] if ('z_lbc' in kwargs) else PML(0.1*self.pixels[1]*self.pixel_scale[1], 100.0)
-        z_rbc = kwargs['z_rbc'] if ('z_rbc' in kwargs) else PML(0.1*self.pixels[1]*self.pixel_scale[1], 100.0)
+        x_lbc = kwargs['x_lbc'] if ('x_lbc' in kwargs) else PML(0.1*self.physical_size[0], 100.0)
+        x_rbc = kwargs['x_rbc'] if ('x_rbc' in kwargs) else PML(0.1*self.physical_size[0], 100.0)
+        z_lbc = kwargs['z_lbc'] if ('z_lbc' in kwargs) else PML(0.1*self.physical_size[1], 100.0)
+        z_rbc = kwargs['z_rbc'] if ('z_rbc' in kwargs) else PML(0.1*self.physical_size[1], 100.0)
 
         x_config = (self._coordinate_lbounds[0], self._coordinate_rbounds[0], x_lbc, x_rbc)
         z_config = (self._coordinate_lbounds[1], self._coordinate_rbounds[1], z_lbc, z_rbc)
@@ -376,8 +379,8 @@ class PrecomputedGalleryModel(GalleryModel):
 
             # Construct the shape of the padding, which is 0 padding in the depth
             # direction and n pixels in each other direction
-            _pad_tuple = [(0,n-1) for n in sh]
-            _pad_tuple[-1] = (0,0)
+            _pad_tuple = [(0, n-1) for n in sh]
+            _pad_tuple[-1] = (0, 0)
             _pad_tuple = tuple(_pad_tuple)
 
             # If the water is to be fixed, the gradient is started at the
@@ -391,9 +394,9 @@ class PrecomputedGalleryModel(GalleryModel):
 
                 loc = np.where(ZZZ > min_max_depth)
                 zprof = np.zeros(_shape_tuple)
-                zprof[loc] = np.linspace(config['min'],config['max'],loc[0].size)
+                zprof[loc] = np.linspace(config['min'], config['max'], loc[0].size)
             else:
-                zprof = np.linspace(config['min'],config['max'],self._mesh.z.n)
+                zprof = np.linspace(config['min'], config['max'], self._mesh.z.n)
                 zprof.shape = _shape_tuple
 
             # Pad out the gradient.
@@ -606,7 +609,6 @@ class PrecomputedGalleryModel(GalleryModel):
 
         return y
 
-
     def _load_scaled_parameter_array(self, param):
         """ Builds or loads a numpy array for the scaled version of the model file."""
 
@@ -627,10 +629,8 @@ class PrecomputedGalleryModel(GalleryModel):
 
         return arr
 
-
-
     @classmethod
-    def _save_model(cls, format='mat'): #'npy', 'binary', 'pickle', 'segy'?
+    def _save_model(cls, format='mat'):  # 'npy', 'binary', 'pickle', 'segy'?
         pass
 
 #   def load_data(self,fnames):
