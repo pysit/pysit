@@ -5,8 +5,8 @@
 %}
 
 %include "numpy.i"
-%init %{ 
-import_array(); 
+%init %{
+import_array();
 %}
 
 %include "wave_constant_density_acoustic_first_order.i"

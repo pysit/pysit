@@ -1,15 +1,15 @@
 To generate the SWIG wrappers:
 swig -c++ -python -I. solvers.i
 
-SWIG will throw a warning about some overloaded functions shadowing others.  I 
+SWIG will throw a warning about some overloaded functions shadowing others.  I
 have done some investigating and found that, despite this warning, the correct
-overloaded function is called.  To verify that this is still the case, you can 
+overloaded function is called.  To verify that this is still the case, you can
 use the code below.
 
 To verify that numpy/python/swig are inferring the correct types:
 
 Stick this in a python routine:
-		
+
 from wave_solvers_cpp import bar
 
 a = np.array([3.14159265358979323846264338327950,6,7,8], dtype=np.float32)
@@ -24,17 +24,17 @@ Stick this in a cpp header file:
 
 void bar(double* Foo, int nFoo)
 {
-	std::cout << "Called double! " << std::endl;
-	std::cout << Foo[0] << Foo[1] << Foo[2] << Foo[3] << std::endl << std::endl;
-	Foo[2] = 3.14159265358979323846264338327950;
-	Foo[0] = 10.;
+    std::cout << "Called double! " << std::endl;
+    std::cout << Foo[0] << Foo[1] << Foo[2] << Foo[3] << std::endl << std::endl;
+    Foo[2] = 3.14159265358979323846264338327950;
+    Foo[0] = 10.;
 };
 void bar(float* Foo, int nFoo)
 {
-	std::cout << "Called float! " << std::endl;
-	std::cout << Foo[0] << Foo[1] << Foo[2] << Foo[3] << std::endl << std::endl;
-	Foo[2] = 3.14159265358979323846264338327950;
-	Foo[0] = 10.;
+    std::cout << "Called float! " << std::endl;
+    std::cout << Foo[0] << Foo[1] << Foo[2] << Foo[3] << std::endl << std::endl;
+    Foo[2] = 3.14159265358979323846264338327950;
+    Foo[0] = 10.;
 };
 
 And stick this in a swig interface (.i) file:
