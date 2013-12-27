@@ -48,12 +48,12 @@ Then, import the relevant class:
 
 Next, construct the actual mesh.  The mesh infers the problem dimension from
 the domain and the number of arguments after it.  An integer number of nodes
-is required for *each* dimension.
+is required for *each* dimension.  Both endpoints are included in the count.
 
 .. code:: python
 
-    nx = 100
-    nz = 100
+    nx = 101
+    nz = 101
     mesh = CartesianMesh(domain, nx, nz)
 
 

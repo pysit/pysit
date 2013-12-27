@@ -5,8 +5,8 @@
 %}
 
 %include "../../../numpy.i"
-%init %{ 
-import_array(); 
+%init %{
+import_array();
 %}
 
 %include "constant_density_acoustic_time_scalar.i"

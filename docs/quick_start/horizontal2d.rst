@@ -103,10 +103,11 @@ or a mesh:
 
 .. code:: python
 
-    mesh = CartesianMesh(d, 90, 70)
+    mesh = CartesianMesh(d, 91, 71)
 
 The Cartesian mesh takes a domain as its first parameter, and then the number
-of grid points in each dimension as the remaining arguments.
+of grid points in each dimension as the remaining arguments.  Note that both
+end points are included, so this will ensure that the grid spacing is 0.01.
 
 Finally, create the reflection model:
 

@@ -4,7 +4,7 @@
 
 // T=type, A=accuracy, S=shift value, D=derivative
 template< typename T, int D, int A, int S > class FD {public: static T apply(T* v, int const& i, int const& s, T const& dv) {return 0;}; };
-	//                  DERIV=1  ACC=2
+    //                  DERIV=1  ACC=2
 template< typename T> class FD<T, 1, 2, -1> {public: static T apply(T* v, int const& i, int const& s, T const& dv) { return ((-1./2.)*0.0     +0.0+(1./2.)*v[i+  s]) / dv;}; };
 template< typename T> class FD<T, 1, 2,  0> {public: static T apply(T* v, int const& i, int const& s, T const& dv) { return ((-1./2.)*v[i-  s]+0.0+(1./2.)*v[i+  s]) / dv;}; };
 template< typename T> class FD<T, 1, 2,  1> {public: static T apply(T* v, int const& i, int const& s, T const& dv) { return ((-1./2.)*v[i-  s]+0.0+(1./2.)*0.0     ) / dv;}; };

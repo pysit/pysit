@@ -40,12 +40,12 @@ import os, os.path
 # An extension configuration has the following format:
 # module_name' : { 'extension kwarg' : argument }
 # This makes adding C from deep in the package trivial.  No more nested setup.py.
-extension_config = {'pysit.solvers.constant_density_acoustic.time.scalar._constant_density_acoustic_time_scalar_cpp' : 
-	                      { 'sources' : [os.path.join(os.path.dirname(__file__), 'pysit','solvers','constant_density_acoustic','time','scalar','solvers_wrap.cxx')],
-	                      	'extra_compile_args' :  ["-O3"],
-	                        'include_dirs' : [np.get_include(), os.path.join(os.path.dirname(__file__), 'pysit','solvers','fd_tools')]
-	                      },
-	               }
+extension_config = {'pysit.solvers.constant_density_acoustic.time.scalar._constant_density_acoustic_time_scalar_cpp' :
+                          { 'sources' : [os.path.join(os.path.dirname(__file__), 'pysit','solvers','constant_density_acoustic','time','scalar','solvers_wrap.cxx')],
+                            'extra_compile_args' :  ["-O3"],
+                            'include_dirs' : [np.get_include(), os.path.join(os.path.dirname(__file__), 'pysit','solvers','fd_tools')]
+                          },
+                   }
 
 extensions = [Extension(key, **value) for key, value in extension_config.iteritems()]
 
