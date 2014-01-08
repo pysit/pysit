@@ -2,7 +2,11 @@ import itertools
 
 import numpy as np
 
-__all__ = ['bspline', 'quadratic', 'ConstructableDict', 'Bunch']
+__all__ = ['bspline',
+           'quadratic',
+           'ConstructableDict',
+           'Bunch',
+           'PositiveEvenIntegers']
 
 def bspline(x):
     x = np.array(x*1.0)  # Note that x must be a numpy array and also must be real.  As implemented, this performs a copy.  If there is slowness, this should be conditional. Also, perhaps should be conditional so no copying large domains.
@@ -71,3 +75,11 @@ class ConstructableDict(dict):
 
     def __setitem__(self, key, arg):
         raise NotImplementedError('__setitem__ should not be called for ConstructableDict instances')
+
+
+class _PositiveEvenIntegers(object):
+
+    def __contains__(self, needle):
+        return needle > 0 and not needle % 2
+
+PositiveEvenIntegers = _PositiveEvenIntegers()
