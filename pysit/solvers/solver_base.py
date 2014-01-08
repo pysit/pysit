@@ -29,9 +29,10 @@ class SolverBase(object):
 
     """
 
-    # Read-only property
-    @property #getter
-    def solver_type(self): return None
+    # These must be set in a subclass.  Ideally it should happen in once place
+    # and they can be inherited.
+    equation_physics = None  # e.g., 'constant-density-acoustic', 'elastic'
+    equation_dynamics = None  # e.g, 'time', 'frequency', 'laplace'
 
     @property #getter
     def cpp_accelerated(self): return False
