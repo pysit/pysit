@@ -6,18 +6,25 @@ import numpy as np
 
 from ..constant_density_acoustic_base import *
 
-__all__=['ConstantDensityAcousticTimeBase']
+__all__ = ['ConstantDensityAcousticTimeBase']
 
 __docformat__ = "restructuredtext en"
 
 class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
-    # Read-only property
-    @property #getter
-    def solver_type(self): return 'time'
+    equation_dynamics = 'time'
+
+    # These should be defined by subclasses.
+    temporal_integrator = None
+    spatial_discretization = None
+    spatial_accuracy_order = None
+    kernel_implementation = None
+    spatial_dimension = None
+    boundary_conditions = None
 
     def __init__(self, mesh,
-                       trange=(0.0,0.0), cfl_safety=1/6,
+                       trange=(0.0,0.0),
+                       cfl_safety=1/6,
                        time_accuracy_order=2,
                        **kwargs):
 
@@ -32,6 +39,23 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
         ConstantDensityAcousticBase.__init__(self, mesh, **kwargs)
 
+    def _factory_validation_function(self, mesh, *args, **kwargs):
+
+        valid_bc = True
+        for i in xrange(mesh.dim):
+            L = reduce(operator.or_, [mesh.parameters[i].lbc.type in x for x in self.boundary_conditions])
+            R = reduce(operator.or_, [mesh.parameters[i].rbc.type in x for x in self.boundary_conditions])
+            valid_bc &= L and R
+
+        return (mesh.dim == self.spatial_dimension and
+                valid_bc and
+                kwargs['equation_formulation'] == self.equation_formulation and
+                kwargs['temporal_integrator'] == self.temporal_integrator and
+                kwargs['spatial_discretization'] == self.spatial_discretization and
+                kwargs['spatial_accuracy_order'] in self.spatial_accuracy_order and
+                kwargs['kernel_implementation'] == self.kernel_implementation and
+                kwargs['equation_formulation'] == self.equation_formulation)
+
     def ts(self):
         """Returns a numpy array of the time values serviced by the specified dt
         and trange."""
@@ -45,7 +69,7 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         min_deltas = np.min(self.mesh.deltas)
 
         C = self._mp.C
-        max_C = max(abs(C.min()), C.max()) # faster than C.abs().max()
+        max_C = max(abs(C.min()), C.max())  # faster than C.abs().max()
 
         dt = CFL*min_deltas / max_C
         nsteps = int(math.ceil((tf - t0)/dt))

@@ -1,3 +1,5 @@
+import operator
+
 import numpy as np
 import scipy.sparse as spsp
 
@@ -5,6 +7,7 @@ from pysit.solvers.wavefield_vector import *
 from constant_density_acoustic_time_scalar_base import *
 
 from pysit.util import Bunch
+from pysit.util import PositiveEvenIntegers
 from pysit.util.derivatives import build_derivative_matrix
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
@@ -17,6 +20,12 @@ __docformat__ = "restructuredtext en"
 bc_type_codes = { 'dirichlet' : 0, 'neumann' : 1, 'ghost' : 2 }
 
 class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase):
+
+    spatial_discretization = 'finite-difference'
+    spatial_accuracy_order = PositiveEvenIntegers
+    kernel_implementation = 'numpy'
+    spatial_dimension = 1
+    boundary_conditions = ['pml-sim', 'dirichlet']
 
     @property #getter
     def cpp_accelerated(self): return True

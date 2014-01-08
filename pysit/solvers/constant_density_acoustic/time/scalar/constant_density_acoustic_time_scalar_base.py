@@ -45,6 +45,9 @@ class _ConstantDensityAcousticTimeScalar_SolverData(SolverDataTimeBase):
 
 class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
 
+    equation_formulation = 'scalar'
+    temporal_integrator = 'leap-frog'
+
     def __init__(self, mesh, **kwargs):
 
         self.A_km1 = None
@@ -54,21 +57,14 @@ class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
         ConstantDensityAcousticTimeBase.__init__(self, mesh, **kwargs)
 
     def time_step(self, solver_data, rhs_k, rhs_kp1):
+        u_km1 = solver_data.km1
+        u_k   = solver_data.k
+        u_kp1 = solver_data.kp1
 
-        if self.use_cpp_acceleration and self.cpp_accelerated:
-            self._time_step_accelerated(solver_data, rhs_k, rhs_kp1)
-        else:
-            u_km1 = solver_data.km1
-            u_k   = solver_data.k
-            u_kp1 = solver_data.kp1
+        f_bar = self.WavefieldVector(self.mesh, dtype=self.dtype)
+        f_bar.u += rhs_k
 
-            f_bar = self.WavefieldVector(self.mesh, dtype=self.dtype)
-            f_bar.u += rhs_k
-
-            u_kp1 += self.A_k*u_k.data + self.A_km1*u_km1.data + self.A_f*f_bar.data
-
-    def _time_step_accelerated(self, solver_data, rhs_k, rhs_kp1):
-        raise NotImplementedError('CPU Acceleration must be implemented at the subclass level.')
+        u_kp1 += self.A_k*u_k.data + self.A_km1*u_km1.data + self.A_f*f_bar.data
 
     _SolverData = _ConstantDensityAcousticTimeScalar_SolverData
 

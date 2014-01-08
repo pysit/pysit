@@ -16,6 +16,12 @@ __docformat__ = "restructuredtext en"
 
 class ConstantDensityAcousticTimeScalar_3D(ConstantDensityAcousticTimeScalarBase):
 
+    spatial_discretization = 'finite-difference'
+    spatial_accuracy_order = PositiveEvenIntegers
+    kernel_implementation = 'numpy'
+    spatial_dimension = 3
+    boundary_conditions = ['pml-sim', 'dirichlet']
+
     @property #getter
     def cpp_accelerated(self): return True
 
