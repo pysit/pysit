@@ -3,9 +3,12 @@ from .solver_factory import SolverFactory
 from .constant_density_acoustic import(ConstantDensityAcousticTimeODE_1D,
                                        ConstantDensityAcousticTimeODE_2D,
                                        ConstantDensityAcousticTimeODE_3D,
-                                       ConstantDensityAcousticTimeScalar_1D,
-                                       ConstantDensityAcousticTimeScalar_2D,
-                                       ConstantDensityAcousticTimeScalar_3D)
+                                       ConstantDensityAcousticTimeScalar_1D_numpy,
+                                       ConstantDensityAcousticTimeScalar_1D_cpp,
+                                       ConstantDensityAcousticTimeScalar_2D_numpy,
+                                       ConstantDensityAcousticTimeScalar_2D_cpp,
+                                       ConstantDensityAcousticTimeScalar_3D_numpy,
+                                       ConstantDensityAcousticTimeScalar_3D_cpp)
 
 __all__ = ['ConstantDensityAcousticWave']
 
@@ -24,18 +27,18 @@ class ConstantDensityAcousticWaveFactory(SolverFactory):
     default_kwargs = {'equation_formulation': 'scalar',
                       'temporal_integrator': 'leap-frog',
                       'spatial_discretization': 'finite-difference',
-                      'spatial_accuracy': 2,
+                      'spatial_accuracy_order': 2,
                       'kernel_implementation': 'numpy'}
 
 
 ConstantDensityAcousticWave = ConstantDensityAcousticWaveFactory()
 
-ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D)
-# ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_cpp)
-ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D)
-# ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_cpp)
-ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D)
-# ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_numpy)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_numpy)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_numpy)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_cpp)
 
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_1D)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_2D)

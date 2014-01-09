@@ -37,12 +37,12 @@ class SolverBase(object):
     @property #getter
     def cpp_accelerated(self): return False
 
-    def __init__(self, mesh, model_parameters={},
-                       spatial_accuracy_order=2,
-                       precision = 'double',
-                       spatial_shifted_differences=False,
-                       use_cpp_acceleration=False,
-                       **kwargs):
+    def __init__(self,
+                 mesh,
+                 model_parameters={},
+                 precision = 'double',
+                 spatial_shifted_differences=False,
+                 **kwargs):
         """Constructor for the WaveSolverBase class.
 
         Parameters
@@ -56,7 +56,8 @@ class SolverBase(object):
         self.mesh = mesh
         self.domain = mesh.domain
 
-        self.spatial_accuracy_order = spatial_accuracy_order
+        self.spatial_accuracy_order = kwargs.get('spatial_accuracy_order')
+
         self.spatial_shifted_differences = spatial_shifted_differences
 
 
@@ -67,11 +68,6 @@ class SolverBase(object):
                 self.dtype = np.double if precision == 'double' else np.single
             else:
                 self.dtype = np.complex128 if precision == 'double' else np.complex64
-
-        self.use_cpp_acceleration = use_cpp_acceleration
-        if use_cpp_acceleration and not self.cpp_accelerated:
-            self.use_cpp_acceleration = False
-            warnings.warn('C++ accelerated solver is not available for solver type {0}'.format(type(self)))
 
         self._mp = None
         self._model_change_count = 0
