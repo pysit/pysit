@@ -14,7 +14,7 @@ class ConstantDensityAcousticBase(SolverBase):
 
     """
 
-    equation_physics = 'constant-density-acoustic'
+    supports_equation_physics = 'constant-density-acoustic'
 
     ModelParameters = ConstantDensityAcousticParameters
 

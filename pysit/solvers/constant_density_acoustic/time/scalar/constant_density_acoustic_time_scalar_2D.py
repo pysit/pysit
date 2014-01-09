@@ -16,11 +16,11 @@ __docformat__ = "restructuredtext en"
 
 class ConstantDensityAcousticTimeScalar_2D(ConstantDensityAcousticTimeScalarBase):
 
-    spatial_discretization = 'finite-difference'
-    spatial_accuracy_order = PositiveEvenIntegers
-    kernel_implementation = 'numpy'
-    spatial_dimension = 2
-    boundary_conditions = ['pml-sim', 'dirichlet']
+    supports_spatial_discretization = 'finite-difference'
+    supports_spatial_accuracy_order = PositiveEvenIntegers
+    supports_kernel_implementation = 'numpy'
+    supports_spatial_dimension = 2
+    supports_boundary_conditions = ['pml-sim', 'dirichlet']
 
     @property #getter
     def cpp_accelerated(self): return True

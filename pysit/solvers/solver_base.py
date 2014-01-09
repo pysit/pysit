@@ -31,8 +31,8 @@ class SolverBase(object):
 
     # These must be set in a subclass.  Ideally it should happen in once place
     # and they can be inherited.
-    equation_physics = None  # e.g., 'constant-density-acoustic', 'elastic'
-    equation_dynamics = None  # e.g, 'time', 'frequency', 'laplace'
+    supports_equation_physics = None  # e.g., 'constant-density-acoustic', 'elastic'
+    supports_equation_dynamics = None  # e.g, 'time', 'frequency', 'laplace'
 
     @property #getter
     def cpp_accelerated(self): return False

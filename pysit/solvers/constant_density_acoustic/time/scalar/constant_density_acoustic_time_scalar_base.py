@@ -45,8 +45,8 @@ class _ConstantDensityAcousticTimeScalar_SolverData(SolverDataTimeBase):
 
 class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
 
-    equation_formulation = 'scalar'
-    temporal_integrator = 'leap-frog'
+    supports_equation_formulation = 'scalar'
+    supports_temporal_integrator = 'leap-frog'
 
     def __init__(self, mesh, **kwargs):
 

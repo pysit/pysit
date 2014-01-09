@@ -10,17 +10,20 @@ __all__ = ['ConstantDensityAcousticTimeBase']
 
 __docformat__ = "restructuredtext en"
 
+def reduce_or(bool_list):
+    return reduce(operator.or_, bool_list)
+
 class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
-    equation_dynamics = 'time'
+    supports_equation_dynamics = 'time'
 
     # These should be defined by subclasses.
-    temporal_integrator = None
-    spatial_discretization = None
-    spatial_accuracy_order = None
-    kernel_implementation = None
-    spatial_dimension = None
-    boundary_conditions = None
+    supports_temporal_integrator = None
+    supports_spatial_discretization = None
+    supports_spatial_accuracy_order = None
+    supports_kernel_implementation = None
+    supports_spatial_dimension = None
+    supports_boundary_conditions = None
 
     def __init__(self, mesh,
                        trange=(0.0,0.0),
@@ -43,18 +46,17 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
         valid_bc = True
         for i in xrange(mesh.dim):
-            L = reduce(operator.or_, [mesh.parameters[i].lbc.type in x for x in self.boundary_conditions])
-            R = reduce(operator.or_, [mesh.parameters[i].rbc.type in x for x in self.boundary_conditions])
+            L = reduce_or([mesh.parameters[i].lbc.type in x for x in self.supports_boundary_conditions])
+            R = reduce_or([mesh.parameters[i].rbc.type in x for x in self.supports_boundary_conditions])
             valid_bc &= L and R
 
-        return (mesh.dim == self.spatial_dimension and
+        return (mesh.dim == self.supports_spatial_dimension and
                 valid_bc and
-                kwargs['equation_formulation'] == self.equation_formulation and
-                kwargs['temporal_integrator'] == self.temporal_integrator and
-                kwargs['spatial_discretization'] == self.spatial_discretization and
-                kwargs['spatial_accuracy_order'] in self.spatial_accuracy_order and
-                kwargs['kernel_implementation'] == self.kernel_implementation and
-                kwargs['equation_formulation'] == self.equation_formulation)
+                kwargs['equation_formulation'] == self.supports_equation_formulation and
+                kwargs['temporal_integrator'] == self.supports_temporal_integrator and
+                kwargs['spatial_discretization'] == self.supports_spatial_discretization and
+                kwargs['spatial_accuracy_order'] in self.supports_spatial_accuracy_order and
+                kwargs['kernel_implementation'] == self.supports_kernel_implementation)
 
     def ts(self):
         """Returns a numpy array of the time values serviced by the specified dt
@@ -77,9 +79,10 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         self.dt = dt
         self.nsteps = nsteps
 
-        # If we are not using CPU acceleration, the operators need to be rebuilt
-        if not self.use_cpp_acceleration:
-            self._rebuild_operators()
+        self._rebuild_operators()
+
+    def _rebuild_operators(self, *args, **kwargs):
+        pass
 
     def time_step(self, solver_data, rhs, **kwargs):
         raise NotImplementedError("Function 'time_step' Must be implemented by subclass.")
