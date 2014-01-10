@@ -47,6 +47,7 @@ class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
 
     supports_equation_formulation = 'scalar'
     supports_temporal_integrator = 'leap-frog'
+    supports_temporal_accuracy_order = [2]
 
     def __init__(self, mesh, **kwargs):
 

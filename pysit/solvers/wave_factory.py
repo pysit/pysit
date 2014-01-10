@@ -26,6 +26,7 @@ class ConstantDensityAcousticWaveFactory(SolverFactory):
     # initrinsic to the mesh and solver.
     default_kwargs = {'equation_formulation': 'scalar',
                       'temporal_integrator': 'leap-frog',
+                      'temporal_accuracy_order': 2,
                       'spatial_discretization': 'finite-difference',
                       'spatial_accuracy_order': 2,
                       'kernel_implementation': 'numpy'}

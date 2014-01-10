@@ -19,6 +19,7 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
     # These should be defined by subclasses.
     supports_temporal_integrator = None
+    supports_temporal_accuracy_order = None
     supports_spatial_discretization = None
     supports_spatial_accuracy_order = None
     supports_kernel_implementation = None
@@ -28,7 +29,6 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
     def __init__(self, mesh,
                        trange=(0.0,0.0),
                        cfl_safety=1/6,
-                       time_accuracy_order=2,
                        **kwargs):
 
         self.trange = trange
@@ -38,7 +38,7 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         self.dt = 0.0
         self.nsteps = 0
 
-        self.time_accuracy_order = time_accuracy_order
+        self.time_accuracy_order = kwargs.get('time_accuracy_order')
 
         ConstantDensityAcousticBase.__init__(self, mesh, **kwargs)
 
@@ -54,6 +54,7 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
                 valid_bc and
                 kwargs['equation_formulation'] == self.supports_equation_formulation and
                 kwargs['temporal_integrator'] == self.supports_temporal_integrator and
+                kwargs['temporal_accuracy_order'] in self.supports_temporal_accuracy_order and
                 kwargs['spatial_discretization'] == self.supports_spatial_discretization and
                 kwargs['spatial_accuracy_order'] in self.supports_spatial_accuracy_order and
                 kwargs['kernel_implementation'] == self.supports_kernel_implementation)

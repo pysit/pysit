@@ -34,9 +34,6 @@ class SolverBase(object):
     supports_equation_physics = None  # e.g., 'constant-density-acoustic', 'elastic'
     supports_equation_dynamics = None  # e.g, 'time', 'frequency', 'laplace'
 
-    @property #getter
-    def cpp_accelerated(self): return False
-
     def __init__(self,
                  mesh,
                  model_parameters={},
