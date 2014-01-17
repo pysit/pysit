@@ -3,18 +3,21 @@ import numpy as np
 from pysit.solvers.solver_base import *
 from pysit.solvers.model_parameter import *
 
+from pysit.util.solvers import inherit_dict
+
 __all__ = ['ConstantDensityAcousticBase']
 
 __docformat__ = "restructuredtext en"
 
 
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticBase(SolverBase):
     """ Base class for solvers that use the Constant Density Acoustic Model
     (e.g., in the wave, helmholtz, and laplace domains).
 
     """
 
-    supports_equation_physics = 'constant-density-acoustic'
+    _local_support_spec = {'equation_physics': 'constant-density-acoustic'}
 
     ModelParameters = ConstantDensityAcousticParameters
 

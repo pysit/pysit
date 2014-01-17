@@ -1,18 +1,16 @@
-import numpy as np
-
 from ..constant_density_acoustic_time_base import *
 from pysit.solvers.solver_data import SolverDataTimeBase
 
-__all__=['ConstantDensityAcousticTimeODEBase']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticTimeODEBase']
 
 __docformat__ = "restructuredtext en"
 
-multistep_coeffs = { 1: [],
-                     2: [],
-                     3: [],
-                     4: [],
-}
-
+multistep_coeffs = {1: [],
+                    2: [],
+                    3: [],
+                    4: []}
 
 class _ConstantDensityAcousticTimeODE_SolverData(SolverDataTimeBase):
 
@@ -59,30 +57,32 @@ class _ConstantDensityAcousticTimeODE_SolverData(SolverDataTimeBase):
             self.u_primes.insert(0, self.us.pop(-1))
 
 
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
 
-    cpp_accelerated = False
+    _local_support_spec = {'equation_formulation': 'ode',
+                           'temporal_integrator': ['rk', 'runge-kutta'],
+                           'temporal_accuracy_order': [2, 4]}
 
     def __init__(self, mesh,
-                       integrator='rk', # 'multistep'
+                       temporal_integrator='rk',
                        **kwargs):
 
-        self.integrator = integrator
+        self.temporal_integrator = temporal_integrator
         self.A = None
 
         ConstantDensityAcousticTimeBase.__init__(self, mesh, **kwargs)
 
-
     def time_step(self, solver_data, rhs_k, rhs_kp1):
 
-        if self.integrator == 'rk':
+        if self.temporal_integrator == 'rk':
             if self.time_accuracy_order == 4:
                 self._rk4(solver_data, rhs_k, rhs_kp1)
             else:
                 self._rk2(solver_data, rhs_k, rhs_kp1)
 
     def _ode_rhs(self, u_bar, f):
-        data=self.A*u_bar.data
+        data = self.A*u_bar.data
         step = self.WavefieldVector(u_bar.mesh, dtype=u_bar.dtype, data=data)
         step.v += self.operator_components.m_inv*f
         return step

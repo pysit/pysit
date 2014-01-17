@@ -9,6 +9,8 @@ from pysit.util import PositiveEvenIntegers
 from pysit.util.derivatives import build_derivative_matrix
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
+from pysit.util.solvers import inherit_dict
+
 from constant_density_acoustic_time_scalar_cpp import (
     constant_density_acoustic_time_scalar_1D_2os,
     constant_density_acoustic_time_scalar_1D_4os,
@@ -20,11 +22,13 @@ __all__ = ['ConstantDensityAcousticTimeScalar_1D_numpy',
 
 __docformat__ = "restructuredtext en"
 
+
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase):
 
-    supports_spatial_discretization = 'finite-difference'
-    supports_spatial_dimension = 1
-    supports_boundary_conditions = ['pml-sim', 'dirichlet']
+    _local_support_spec = {'spatial_discretization': 'finite-difference',
+                           'spatial_dimension': 1,
+                           'boundary_conditions': ['pml-sim', 'dirichlet']}
 
     def __init__(self, mesh, **kwargs):
 
@@ -49,11 +53,11 @@ class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase
         aux_names = ['Phiz']
 
 
-
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScalar_1D):
 
-    supports_kernel_implementation = 'numpy'
-    supports_spatial_accuracy_order = PositiveEvenIntegers
+    _local_support_spec = {'kernel_implementation': 'numpy',
+                           'spatial_accuracy_order': PositiveEvenIntegers}
 
     def _rebuild_operators(self):
 
@@ -111,10 +115,11 @@ class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScal
         self.A_f   = Stilde_inv
 
 
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeScalar_1D_cpp(ConstantDensityAcousticTimeScalar_1D):
 
-    supports_kernel_implementation = 'cpp'
-    supports_spatial_accuracy_order = [2, 4, 6, 8]
+    _local_support_spec = {'kernel_implementation': 'cpp',
+                           'spatial_accuracy_order': [2, 4, 6, 8]}
 
     _cpp_funcs = {2: constant_density_acoustic_time_scalar_1D_2os,
                   4: constant_density_acoustic_time_scalar_1D_4os,

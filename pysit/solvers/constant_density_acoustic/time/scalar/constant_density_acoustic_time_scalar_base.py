@@ -1,11 +1,12 @@
-import numpy as np
-
 from ..constant_density_acoustic_time_base import *
 from pysit.solvers.solver_data import SolverDataTimeBase
 
-__all__=['ConstantDensityAcousticTimeScalarBase']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticTimeScalarBase']
 
 __docformat__ = "restructuredtext en"
+
 
 class _ConstantDensityAcousticTimeScalar_SolverData(SolverDataTimeBase):
 
@@ -26,28 +27,34 @@ class _ConstantDensityAcousticTimeScalar_SolverData(SolverDataTimeBase):
     @property
     def kp1(self):
         return self.us[0]
+
     @kp1.setter
     def kp1(self, arg):
         self.us[0] = arg
+
     @property
     def k(self):
         return self.us[1]
+
     @k.setter
     def k(self, arg):
         self.us[1] = arg
+
     @property
     def km1(self):
         return self.us[2]
+
     @km1.setter
     def km1(self, arg):
         self.us[2] = arg
 
 
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
 
-    supports_equation_formulation = 'scalar'
-    supports_temporal_integrator = 'leap-frog'
-    supports_temporal_accuracy_order = [2]
+    _local_support_spec = {'equation_formulation': 'scalar',
+                           'temporal_integrator': 'leap-frog',
+                           'temporal_accuracy_order': 2}
 
     def __init__(self, mesh, **kwargs):
 

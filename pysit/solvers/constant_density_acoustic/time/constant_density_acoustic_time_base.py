@@ -6,25 +6,25 @@ import numpy as np
 
 from ..constant_density_acoustic_base import *
 
+from pysit.util.solvers import inherit_dict
+
 __all__ = ['ConstantDensityAcousticTimeBase']
 
 __docformat__ = "restructuredtext en"
 
-def reduce_or(bool_list):
-    return reduce(operator.or_, bool_list)
 
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
-    supports_equation_dynamics = 'time'
-
-    # These should be defined by subclasses.
-    supports_temporal_integrator = None
-    supports_temporal_accuracy_order = None
-    supports_spatial_discretization = None
-    supports_spatial_accuracy_order = None
-    supports_kernel_implementation = None
-    supports_spatial_dimension = None
-    supports_boundary_conditions = None
+    _local_support_spec = {'equation_dynamics': 'time',
+                           # These should be defined by subclasses.
+                           'temporal_integrator': None,
+                           'temporal_accuracy_order': None,
+                           'spatial_discretization': None,
+                           'spatial_accuracy_order': None,
+                           'kernel_implementation': None,
+                           'spatial_dimension': None,
+                           'boundary_conditions': None}
 
     def __init__(self, mesh,
                        trange=(0.0,0.0),
@@ -41,23 +41,6 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         self.time_accuracy_order = kwargs.get('time_accuracy_order')
 
         ConstantDensityAcousticBase.__init__(self, mesh, **kwargs)
-
-    def _factory_validation_function(self, mesh, *args, **kwargs):
-
-        valid_bc = True
-        for i in xrange(mesh.dim):
-            L = reduce_or([mesh.parameters[i].lbc.type in x for x in self.supports_boundary_conditions])
-            R = reduce_or([mesh.parameters[i].rbc.type in x for x in self.supports_boundary_conditions])
-            valid_bc &= L and R
-
-        return (mesh.dim == self.supports_spatial_dimension and
-                valid_bc and
-                kwargs['equation_formulation'] == self.supports_equation_formulation and
-                kwargs['temporal_integrator'] == self.supports_temporal_integrator and
-                kwargs['temporal_accuracy_order'] in self.supports_temporal_accuracy_order and
-                kwargs['spatial_discretization'] == self.supports_spatial_discretization and
-                kwargs['spatial_accuracy_order'] in self.supports_spatial_accuracy_order and
-                kwargs['kernel_implementation'] == self.supports_kernel_implementation)
 
     def ts(self):
         """Returns a numpy array of the time values serviced by the specified dt

@@ -8,11 +8,19 @@ from pysit.util import Bunch
 from pysit.util.derivatives import build_derivative_matrix
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
-__all__=['ConstantDensityAcousticTimeODE_1D']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticTimeODE_1D']
 
 __docformat__ = "restructuredtext en"
 
+
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeODE_1D(ConstantDensityAcousticTimeODEBase):
+
+    _local_support_spec = {'spatial_discretization': 'finite-difference',
+                           'spatial_dimension': 1,
+                           'boundary_conditions': ['pml-sim', 'dirichlet']}
 
     def __init__(self, mesh, **kwargs):
 
@@ -25,21 +33,33 @@ class ConstantDensityAcousticTimeODE_1D(ConstantDensityAcousticTimeODEBase):
         dof = self.mesh.dof(include_bc=True)
 
         oc = self.operator_components
-        # Check if empty.  If empty, build the static components
-        if not self.operator_components:
+
+        built = oc.get('_numpy_components_built', False)
+
+        # build the static components
+        if not built:
             # build laplacian
-            oc.L = build_derivative_matrix(self.mesh, 2, self.spatial_accuracy_order, use_shifted_differences=self.spatial_shifted_differences)
+            oc.L = build_derivative_matrix(self.mesh,
+                                           2,
+                                           self.spatial_accuracy_order,
+                                           use_shifted_differences=self.spatial_shifted_differences)
 
             # build sigmaz (stored as -1*sigmaz)
             sz = build_sigma(self.mesh, self.mesh.z)
             oc.minus_sigmaz = make_diag_mtx(-sz)
 
             # build Dz
-            oc.Dz = build_derivative_matrix(self.mesh, 1, self.spatial_accuracy_order, dimension='z', use_shifted_differences=self.spatial_shifted_differences)
+            oc.Dz = build_derivative_matrix(self.mesh,
+                                            1,
+                                            self.spatial_accuracy_order,
+                                            dimension='z',
+                                            use_shifted_differences=self.spatial_shifted_differences)
 
             # build other useful things
-            oc.I     = spsp.eye(dof,dof)
-            oc.empty = spsp.csr_matrix((dof,dof))
+            oc.I     = spsp.eye(dof, dof)
+            oc.empty = spsp.csr_matrix((dof, dof))
+
+            oc._numpy_components_built = True
 
         C = self.model_parameters.C
         oc.m_inv = make_diag_mtx((C**2).reshape(-1,))
@@ -47,7 +67,6 @@ class ConstantDensityAcousticTimeODE_1D(ConstantDensityAcousticTimeODEBase):
         self.A = spsp.bmat([[oc.empty,              oc.I,            oc.empty       ],
                             [oc.m_inv*oc.L,         oc.minus_sigmaz, oc.m_inv*oc.Dz ],
                             [oc.minus_sigmaz*oc.Dz, oc.empty,        oc.minus_sigmaz]])
-
 
     class WavefieldVector(WavefieldVectorBase):
 

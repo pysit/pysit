@@ -3,16 +3,21 @@ import numpy as np
 from constant_density_acoustic_frequency_base import *
 from pysit.solvers.solver_data import SolverDataFrequencyBase
 
-__all__=['ConstantDensityAcousticFrequencyScalarBase']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticFrequencyScalarBase']
 
 __docformat__ = "restructuredtext en"
 
+
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequencyBase):
+
+    _local_support_spec = {'equation_formulation': 'scalar'}
 
     _SolverData = SolverDataFrequencyBase
 
     def __init__(self, mesh, **kwargs):
-
 
         self.M = None
         self.C = None

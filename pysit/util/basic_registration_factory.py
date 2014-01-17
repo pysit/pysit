@@ -1,3 +1,12 @@
+from collections import OrderedDict
+
+__all__ = ['BasicRegistrationFactory',
+           'NoMatchError',
+           'MultipleMatchError',
+           'ValidationFunctionError',
+           'TernaryRegistrationFactory',
+           'DoesNotMatch', 'IncompleteMatch', 'CompleteMatch']
+
 class BasicRegistrationFactory(object):
     """ Generalized registerable factory type.
 
@@ -43,7 +52,7 @@ class BasicRegistrationFactory(object):
 
     def __init__(self, default_widget_type=None, additional_validation_functions=[]):
 
-        self.registry = dict()
+        self.registry = OrderedDict()
 
         self.default_widget_type = default_widget_type
 
@@ -58,7 +67,9 @@ class BasicRegistrationFactory(object):
 
         # Any preprocessing and massaging of inputs can happen here
 
-        return self._check_registered_widget(*args, **kwargs)
+        WidgetType = self._check_registered_widget(*args, **kwargs)
+
+        return WidgetType(*args, **kwargs)
 
     def _check_registered_widget(self, *args, **kwargs):
         """ Implementation of a basic check to see if arguments match a widget."""
@@ -84,7 +95,7 @@ class BasicRegistrationFactory(object):
         # Only one is found
         WidgetType = candidate_widget_types[0]
 
-        return WidgetType(*args, **kwargs)
+        return WidgetType
 
     def register(self, WidgetType, validation_function=None, is_default=False):
         """ Register a widget with the factory.
@@ -138,6 +149,51 @@ class BasicRegistrationFactory(object):
     def unregister(self, WidgetType):
         """ Remove a widget from the factory's registry."""
         self.registry.pop(WidgetType)
+
+
+# enumerate some ternary values
+DoesNotMatch = 0
+IncompleteMatch = 1
+CompleteMatch = 2
+
+
+class TernaryRegistrationFactory(BasicRegistrationFactory):
+
+    def __init__(self, property_dict_name='supports', **kwargs):
+        BasicRegistrationFactory.__init__(self, **kwargs)
+
+        self.property_dict_name = property_dict_name
+
+    def _check_registered_widget(self, *args, **kwargs):
+        """ Implementation of a basic check to see if arguments match a widget."""
+
+        complete_matches = list()
+        incomplete_matches = list()
+
+        for key in self.registry:
+            # Call the registered validation function for each registered class
+            match_test = self.registry[key](*args, **kwargs)
+
+            if match_test == CompleteMatch:
+                complete_matches.append(key)
+            elif match_test == IncompleteMatch:
+                incomplete_matches.append(key)
+
+        if len(complete_matches) == 0:
+            if len(incomplete_matches) == 0:
+                if self.default_widget_type is None:
+                    raise NoMatchError("No types match specified arguments and no default is set.")
+                else:
+                    WidgetType = self.default_widget_type
+            else:
+                # take the first partial match
+                WidgetType = incomplete_matches[0]
+        elif len(complete_matches) == 1:
+                WidgetType = complete_matches[0]
+        else:
+            raise MultipleMatchError("Too many candidate types match ({0}).  Specify enough keywords to guarantee unique type identification.".format(n_matches))
+
+        return WidgetType
 
 
 class NoMatchError(StandardError):

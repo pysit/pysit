@@ -16,23 +16,18 @@ __docformat__ = "restructuredtext en"
 
 
 # Setup the constant density acoustic wave factory
-
 class ConstantDensityAcousticWaveFactory(SolverFactory):
 
-    supports_equation_physics = 'constant-density-acoustic'
-    supports_equation_dynamics = 'time'
-
-    # These are the arguments that users can specify.  Other validations are
-    # initrinsic to the mesh and solver.
-    default_kwargs = {'equation_formulation': 'scalar',
-                      'temporal_integrator': 'leap-frog',
-                      'temporal_accuracy_order': 2,
-                      'spatial_discretization': 'finite-difference',
-                      'spatial_accuracy_order': 2,
-                      'kernel_implementation': 'numpy'}
+    supports = {'equation_physics': 'constant-density-acoustic',
+                'equation_dynamics': 'time'}
 
 
 ConstantDensityAcousticWave = ConstantDensityAcousticWaveFactory()
+
+# Partial matches are resolved in the order of registration.  Therefore, the
+# default situation takes scalar, leapfrog, spatially fd, numpy kernels.  Other
+# defaults (such as accuracy) are minimally specified in the constructor, if
+# they are not specified to the factory call.
 
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_numpy)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_cpp)

@@ -1,17 +1,24 @@
-import warnings
-
 import numpy as np
 
 from solver_data import SolverDataBase
 
-__all__=['SolverBase']
+from pysit.util.registration_factory_base import DoesNotMatch
+from pysit.util.registration_factory_base import CompleteMatch
+from pysit.util.registration_factory_base import IncompleteMatch
+from pysit.util.solvers import supports
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['SolverBase']
 
 __docformat__ = "restructuredtext en"
+
 
 class NullModelParameters(object):
     def __init__(self, *args, **kwargs):
         raise TypeError("NullModelParameters should never be instantiated.")
 
+
+@inherit_dict('supports', '_local_support_spec')
 class SolverBase(object):
     """ Base class for pysit solvers. (e.g., wave, helmholtz, and laplace-domain)
 
@@ -31,8 +38,8 @@ class SolverBase(object):
 
     # These must be set in a subclass.  Ideally it should happen in once place
     # and they can be inherited.
-    supports_equation_physics = None  # e.g., 'constant-density-acoustic', 'elastic'
-    supports_equation_dynamics = None  # e.g, 'time', 'frequency', 'laplace'
+    _local_support_spec = {'equation_physics': None,  # e.g., 'constant-density-acoustic', 'elastic'
+                           'equation_dynamcs': None}  # e.g, 'time', 'frequency', 'laplace'
 
     def __init__(self,
                  mesh,
@@ -57,7 +64,6 @@ class SolverBase(object):
 
         self.spatial_shifted_differences = spatial_shifted_differences
 
-
         if precision in ['single', 'double']:
             self.precision = precision
 
@@ -69,6 +75,35 @@ class SolverBase(object):
         self._mp = None
         self._model_change_count = 0
         self.model_parameters = self.ModelParameters(mesh, inputs=model_parameters)
+
+    @classmethod
+    def _factory_validation_function(cls, mesh, *args, **kwargs):
+
+        complete_match = True
+        incomplete_match = True
+
+        for k, v in cls.supports.items():
+            if k in kwargs:
+                if not supports(kwargs[k], v):
+                    return DoesNotMatch
+            elif k == 'boundary_conditions':
+                valid_bc = True
+                for i in xrange(mesh.dim):
+                    L = supports(mesh.parameters[i].lbc.type, v)
+                    R = supports(mesh.parameters[i].rbc.type, v)
+                    valid_bc &= L and R
+                if not valid_bc:
+                    return DoesNotMatch
+            elif k == 'spatial_dimension':
+                if not supports(mesh.dim, v):
+                    return DoesNotMatch
+            else:
+                complete_match = False
+
+        if complete_match:
+            return CompleteMatch
+        elif incomplete_match:
+            return IncompleteMatch
 
     @property #getter
     def model_parameters(self): return self._mp
