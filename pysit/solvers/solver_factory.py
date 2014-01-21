@@ -50,16 +50,14 @@ class SolverFactory(TernaryRegistrationFactory):
 
     """
 
-    supports_equation_physics = None  # 'constant-density-acoustic', 'elastic'
-    supports_equation_dynamics = None  # 'time', 'frequency', 'laplace'
-
-    default_kwargs = {}
+    supports = {'equation_physics': None,  # 'constant-density-acoustic', 'elastic'
+                'equation_dynamics': None}  # 'time', 'frequency', 'laplace'
 
     def _check_registered_widget(self, *args, **kwargs):
         """ Implementation of a basic check to see if arguments match a widget."""
 
         # Update the defaults from the kwargs
-        new_kwargs = self.default_kwargs.copy()
+        new_kwargs = self.supports.copy()
         new_kwargs.update(kwargs)
 
         # It might be wise, at some point, to pop
@@ -87,10 +85,20 @@ class SolverFactory(TernaryRegistrationFactory):
 
         """
 
-        if self.supports_equation_physics != WidgetType.supports['equation_physics']:
-            raise SolverPhysicsMismatchError("Factory {0} accepts '{1}' physics while solver {2} supports '{3}' physics.".format(self.__class__.__name__, self.supports_equation_physics, WidgetType.__name__, WidgetType.equation_physics))
-        elif self.supports_equation_dynamics != WidgetType.supports['equation_dynamics']:
-            raise SolverDynamicsMismatchError("Factory {0} accepts '{1}' dynamics while solver {2} supports '{3}' dynamics.".format(self.__class__.__name__, self.supports_equation_dynamics, WidgetType.__name__, WidgetType.equation_dynamics))
+        if self.supports['equation_physics'] != WidgetType.supports['equation_physics']:
+            err_str = ("Factory {0} accepts '{1}' physics while solver {2} "
+                       "supports '{3}' physics.".format(self.__class__.__name__,
+                                                        self.supports['equation_physics'],
+                                                        WidgetType.__name__,
+                                                        WidgetType.supports['equation_physics']))
+            raise SolverPhysicsMismatchError(err_str)
+        elif self.supports['equation_dynamics'] != WidgetType.supports['equation_dynamics']:
+            err_str = ("Factory {0} accepts '{1}' dynamics while solver {2} "
+                       "supports '{3}' dynamics.".format(self.__class__.__name__,
+                                                        self.supports['equation_dynamics'],
+                                                        WidgetType.__name__,
+                                                        WidgetType.supports['equation_dynamics']))
+            raise SolverDynamicsMismatchError(err_str)
         else:
             TernaryRegistrationFactory.register(self, WidgetType,
                                               validation_function=validation_function,

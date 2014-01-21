@@ -13,7 +13,7 @@ __docformat__ = "restructuredtext en"
 class ConstantDensityHelmholtzFactory(SolverFactory):
 
     supports = {'equation_physics': 'constant-density-acoustic',
-                'equation_dynamics': 'time'}
+                'equation_dynamics': 'frequency'}
 
 
 ConstantDensityHelmholtz = ConstantDensityHelmholtzFactory()
