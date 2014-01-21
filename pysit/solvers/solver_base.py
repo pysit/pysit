@@ -43,8 +43,7 @@ class SolverBase(object):
 
     def __init__(self,
                  mesh,
-                 # model_parameters={},
-                 precision = 'double',
+                 precision='double',
                  spatial_shifted_differences=False,
                  **kwargs):
         """Constructor for the WaveSolverBase class.
@@ -64,7 +63,9 @@ class SolverBase(object):
 
         self.spatial_shifted_differences = spatial_shifted_differences
 
-        if precision in ['single', 'double']:
+        # This _should_ always be true, if the solver is constructed through
+        # the appropriate factory, as 'precision' is a support value.
+        if precision in self.supports['precision']:
             self.precision = precision
 
             if self.supports['equation_dynamics'] == 'time':

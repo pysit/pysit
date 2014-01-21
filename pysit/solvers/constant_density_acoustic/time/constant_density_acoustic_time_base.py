@@ -24,7 +24,8 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
                            'spatial_accuracy_order': None,
                            'kernel_implementation': None,
                            'spatial_dimension': None,
-                           'boundary_conditions': None}
+                           'boundary_conditions': None,
+                           'precision': None}
 
     def __init__(self, mesh,
                        trange=(0.0,0.0),

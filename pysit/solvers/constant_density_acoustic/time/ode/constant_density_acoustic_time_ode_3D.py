@@ -22,7 +22,8 @@ class ConstantDensityAcousticTimeODE_3D(ConstantDensityAcousticTimeODEBase):
                            'spatial_discretization': 'finite-difference',
                            'spatial_dimension': 3,
                            'spatial_accuracy_order': PositiveEvenIntegers,
-                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet']}
+                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet'],
+                           'precision': ['single', 'double']}
 
     def __init__(self, mesh, **kwargs):
 

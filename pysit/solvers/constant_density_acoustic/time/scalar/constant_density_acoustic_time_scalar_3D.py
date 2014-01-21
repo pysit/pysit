@@ -63,7 +63,8 @@ class ConstantDensityAcousticTimeScalar_3D(ConstantDensityAcousticTimeScalarBase
 class ConstantDensityAcousticTimeScalar_3D_numpy(ConstantDensityAcousticTimeScalar_3D):
 
     _local_support_spec = {'kernel_implementation': 'numpy',
-                           'spatial_accuracy_order': PositiveEvenIntegers}
+                           'spatial_accuracy_order': PositiveEvenIntegers,
+                           'precision': ['single', 'double']}
 
     def _rebuild_operators(self):
 
@@ -169,7 +170,8 @@ class ConstantDensityAcousticTimeScalar_3D_numpy(ConstantDensityAcousticTimeScal
 class ConstantDensityAcousticTimeScalar_3D_cpp(ConstantDensityAcousticTimeScalar_3D):
 
     _local_support_spec = {'kernel_implementation': 'cpp',
-                           'spatial_accuracy_order': [2, 4, 6, 8]}
+                           'spatial_accuracy_order': [2, 4, 6, 8],
+                           'precision': ['single', 'double']}
 
     _cpp_funcs = {2: constant_density_acoustic_time_scalar_3D_2os,
                   4: constant_density_acoustic_time_scalar_3D_4os,

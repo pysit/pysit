@@ -23,7 +23,8 @@ class ConstantDensityAcousticFrequencyBase(ConstantDensityAcousticBase):
                            'spatial_discretization': None,
                            'spatial_accuracy_order': None,
                            'spatial_dimension': None,
-                           'boundary_conditions': None}
+                           'boundary_conditions': None,
+                           'precision': None}
 
     def __init__(self, mesh, solver_style='sparseLU', spatial_shifted_differences=True, **kwargs):
 
