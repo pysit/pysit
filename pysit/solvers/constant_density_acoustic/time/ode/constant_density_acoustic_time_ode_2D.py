@@ -5,6 +5,7 @@ from pysit.solvers.wavefield_vector import *
 from constant_density_acoustic_time_ode_base import *
 
 from pysit.util import Bunch
+from pysit.util import PositiveEvenIntegers
 from pysit.util.derivatives import build_derivative_matrix
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
@@ -18,9 +19,11 @@ __docformat__ = "restructuredtext en"
 @inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeODE_2D(ConstantDensityAcousticTimeODEBase):
 
-    _local_support_spec = {'spatial_discretization': 'finite-difference',
+    _local_support_spec = {'kernel_implementation': 'numpy',
+                           'spatial_discretization': 'finite-difference',
                            'spatial_dimension': 2,
-                           'boundary_conditions': ['pml-sim', 'dirichlet']}
+                           'spatial_accuracy_order': PositiveEvenIntegers,
+                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet']}
 
     def __init__(self, mesh, **kwargs):
 
