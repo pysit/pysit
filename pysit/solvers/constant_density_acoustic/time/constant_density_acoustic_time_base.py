@@ -38,7 +38,7 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         self.dt = 0.0
         self.nsteps = 0
 
-        self.time_accuracy_order = kwargs.get('time_accuracy_order')
+        self.temporal_accuracy_order = kwargs.get('temporal_accuracy_order')
 
         ConstantDensityAcousticBase.__init__(self, mesh, **kwargs)
 

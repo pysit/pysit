@@ -10,11 +10,11 @@ __docformat__ = "restructuredtext en"
 
 class _ConstantDensityAcousticTimeScalar_SolverData(SolverDataTimeBase):
 
-    def __init__(self, solver, time_accuracy_order, **kwargs):
+    def __init__(self, solver, temporal_accuracy_order, **kwargs):
 
         self.solver = solver
 
-        self.time_accuracy_order = time_accuracy_order
+        self.temporal_accuracy_order = temporal_accuracy_order
 
         # self.us[0] is kp1, [1] is k or current, [2] is km1, [3] is km2, etc
         self.us = [solver.WavefieldVector(solver.mesh, dtype=solver.dtype) for x in xrange(3)]
@@ -77,4 +77,4 @@ class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
     _SolverData = _ConstantDensityAcousticTimeScalar_SolverData
 
     def SolverData(self, *args, **kwargs):
-        return self._SolverData(self, self.time_accuracy_order, **kwargs)
+        return self._SolverData(self, self.temporal_accuracy_order, **kwargs)

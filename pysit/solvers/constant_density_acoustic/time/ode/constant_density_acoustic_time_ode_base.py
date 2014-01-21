@@ -14,17 +14,17 @@ multistep_coeffs = {1: [],
 
 class _ConstantDensityAcousticTimeODE_SolverData(SolverDataTimeBase):
 
-    def __init__(self, solver, time_accuracy_order, integrator, **kwargs):
+    def __init__(self, solver, temporal_accuracy_order, integrator, **kwargs):
 
         self.solver = solver
 
-        self.time_accuracy_order = time_accuracy_order
+        self.temporal_accuracy_order = temporal_accuracy_order
 
         # self.us[0] is kp1, [1] is k or current, [2] is km1, [3] is km2, etc
         self.us = [solver.WavefieldVector(solver.mesh, dtype=solver.dtype) for x in xrange(3)]
 
         if integrator == 'multistep':
-            self.u_primes = [solver.WavefieldVector(solver.mesh, dtype=solver.dtype) for x in xrange(time_accuracy_order)]
+            self.u_primes = [solver.WavefieldVector(solver.mesh, dtype=solver.dtype) for x in xrange(temporal_accuracy_order)]
         else:
             self.u_primes = list()
 
@@ -66,6 +66,7 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
 
     def __init__(self, mesh,
                        temporal_integrator='rk',
+                       temporal_accuracy_order=4,
                        **kwargs):
 
         self.temporal_integrator = temporal_integrator
@@ -76,7 +77,7 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
     def time_step(self, solver_data, rhs_k, rhs_kp1):
 
         if self.temporal_integrator == 'rk':
-            if self.time_accuracy_order == 4:
+            if self.temporal_accuracy_order == 4:
                 self._rk4(solver_data, rhs_k, rhs_kp1)
             else:
                 self._rk2(solver_data, rhs_k, rhs_kp1)
@@ -114,4 +115,4 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
     _SolverData = _ConstantDensityAcousticTimeODE_SolverData
 
     def SolverData(self, *args, **kwargs):
-        return self._SolverData(self, self.time_accuracy_order, self.integrator, **kwargs)
+        return self._SolverData(self, self.temporal_accuracy_order, self.integrator, **kwargs)
