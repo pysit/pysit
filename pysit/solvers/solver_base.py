@@ -2,9 +2,9 @@ import numpy as np
 
 from solver_data import SolverDataBase
 
-from pysit.util.registration_factory_base import DoesNotMatch
-from pysit.util.registration_factory_base import CompleteMatch
-from pysit.util.registration_factory_base import IncompleteMatch
+from pysit.util.basic_registration_factory import DoesNotMatch
+from pysit.util.basic_registration_factory import CompleteMatch
+from pysit.util.basic_registration_factory import IncompleteMatch
 from pysit.util.solvers import supports
 from pysit.util.solvers import inherit_dict
 
@@ -39,11 +39,11 @@ class SolverBase(object):
     # These must be set in a subclass.  Ideally it should happen in once place
     # and they can be inherited.
     _local_support_spec = {'equation_physics': None,  # e.g., 'constant-density-acoustic', 'elastic'
-                           'equation_dynamcs': None}  # e.g, 'time', 'frequency', 'laplace'
+                           'equation_dynamics': None}  # e.g, 'time', 'frequency', 'laplace'
 
     def __init__(self,
                  mesh,
-                 model_parameters={},
+                 # model_parameters={},
                  precision = 'double',
                  spatial_shifted_differences=False,
                  **kwargs):
@@ -67,14 +67,14 @@ class SolverBase(object):
         if precision in ['single', 'double']:
             self.precision = precision
 
-            if self.solver_type == 'time':
+            if self.supports['equation_dynamics'] == 'time':
                 self.dtype = np.double if precision == 'double' else np.single
             else:
                 self.dtype = np.complex128 if precision == 'double' else np.complex64
 
         self._mp = None
         self._model_change_count = 0
-        self.model_parameters = self.ModelParameters(mesh, inputs=model_parameters)
+        # self.model_parameters = self.ModelParameters(mesh, inputs=model_parameters)
 
     @classmethod
     def _factory_validation_function(cls, mesh, *args, **kwargs):
@@ -82,20 +82,21 @@ class SolverBase(object):
         complete_match = True
         incomplete_match = True
 
-        for k, v in cls.supports.items():
-            if k in kwargs:
-                if not supports(kwargs[k], v):
+        for parameter, values in cls.supports.items():
+            if parameter in kwargs:
+                print cls.__name__, parameter, values
+                if not supports(kwargs[parameter], values):
                     return DoesNotMatch
-            elif k == 'boundary_conditions':
+            elif parameter == 'boundary_conditions':
                 valid_bc = True
                 for i in xrange(mesh.dim):
-                    L = supports(mesh.parameters[i].lbc.type, v)
-                    R = supports(mesh.parameters[i].rbc.type, v)
+                    L = supports(mesh.parameters[i].lbc.type, values)
+                    R = supports(mesh.parameters[i].rbc.type, values)
                     valid_bc &= L and R
                 if not valid_bc:
                     return DoesNotMatch
-            elif k == 'spatial_dimension':
-                if not supports(mesh.dim, v):
+            elif parameter == 'spatial_dimension':
+                if not supports(mesh.dim, values):
                     return DoesNotMatch
             else:
                 complete_match = False
