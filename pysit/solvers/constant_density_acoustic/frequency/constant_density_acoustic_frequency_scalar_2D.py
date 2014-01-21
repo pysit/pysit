@@ -19,7 +19,7 @@ class ConstantDensityAcousticFrequencyScalar_2D(ConstantDensityAcousticFrequency
 
     _local_support_spec = {'spatial_discretization': 'finite-difference',
                            'spatial_dimension': 2,
-                           'boundary_conditions': ['pml-sim', 'dirichlet']}
+                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet']}
 
     def __init__(self, mesh, **kwargs):
 
