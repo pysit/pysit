@@ -30,11 +30,16 @@ class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase
                            'spatial_dimension': 1,
                            'boundary_conditions': ['pml', 'pml-sim', 'dirichlet']}
 
-    def __init__(self, mesh, **kwargs):
+    def __init__(self, mesh, spatial_accuracy_order=4, **kwargs):
 
         self.operator_components = Bunch()
 
-        ConstantDensityAcousticTimeScalarBase.__init__(self, mesh, **kwargs)
+        self.spatial_accuracy_order = spatial_accuracy_order
+
+        ConstantDensityAcousticTimeScalarBase.__init__(self,
+                                                       mesh,
+                                                       spatial_accuracy_order=spatial_accuracy_order,
+                                                       **kwargs)
 
     def _rebuild_operators(self):
 
@@ -75,8 +80,7 @@ class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScal
             # build laplacian
             oc.L = build_derivative_matrix(self.mesh,
                                            2,
-                                           self.spatial_accuracy_order,
-                                           use_shifted_differences=self.spatial_shifted_differences)
+                                           self.spatial_accuracy_order)
 
             # build sigmaz
             sz = build_sigma(self.mesh, self.mesh.z)
@@ -86,8 +90,7 @@ class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScal
             oc.Dz = build_derivative_matrix(self.mesh,
                                             1,
                                             self.spatial_accuracy_order,
-                                            dimension='z',
-                                            use_shifted_differences=self.spatial_shifted_differences)
+                                            dimension='z')
 
             # build other useful things
             oc.I = spsp.eye(dof, dof)

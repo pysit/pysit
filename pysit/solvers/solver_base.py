@@ -44,7 +44,6 @@ class SolverBase(object):
     def __init__(self,
                  mesh,
                  precision='double',
-                 spatial_shifted_differences=False,
                  **kwargs):
         """Constructor for the WaveSolverBase class.
 
@@ -58,10 +57,6 @@ class SolverBase(object):
 
         self.mesh = mesh
         self.domain = mesh.domain
-
-        self.spatial_accuracy_order = kwargs.get('spatial_accuracy_order')
-
-        self.spatial_shifted_differences = spatial_shifted_differences
 
         # This _should_ always be true, if the solver is constructed through
         # the appropriate factory, as 'precision' is a support value.

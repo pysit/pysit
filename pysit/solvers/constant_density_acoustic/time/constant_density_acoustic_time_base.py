@@ -27,10 +27,11 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
                            'boundary_conditions': None,
                            'precision': None}
 
-    def __init__(self, mesh,
-                       trange=(0.0,0.0),
-                       cfl_safety=1/6,
-                       **kwargs):
+    def __init__(self,
+                 mesh,
+                 trange=(0.0, 1.0),
+                 cfl_safety=1/6,
+                 **kwargs):
 
         self.trange = trange
         self.cfl_safety = cfl_safety
@@ -41,7 +42,11 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
         self.temporal_accuracy_order = kwargs.get('temporal_accuracy_order')
 
-        ConstantDensityAcousticBase.__init__(self, mesh, **kwargs)
+        ConstantDensityAcousticBase.__init__(self,
+                                             mesh,
+                                             trange=trange,
+                                             cfl_safety=cfl_safety,
+                                             **kwargs)
 
     def ts(self):
         """Returns a numpy array of the time values serviced by the specified dt

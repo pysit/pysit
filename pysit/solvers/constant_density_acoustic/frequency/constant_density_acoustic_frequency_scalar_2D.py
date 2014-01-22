@@ -22,11 +22,23 @@ class ConstantDensityAcousticFrequencyScalar_2D(ConstantDensityAcousticFrequency
                            'boundary_conditions': ['pml', 'pml-sim', 'dirichlet'],
                            'precision': ['single', 'double']}
 
-    def __init__(self, mesh, **kwargs):
+    def __init__(self,
+                 mesh,
+                 spatial_accuracy_order=4,
+                 spatial_shifted_differences=True,
+                 **kwargs):
 
         self.operator_components = Bunch()
 
-        ConstantDensityAcousticFrequencyScalarBase.__init__(self, mesh, **kwargs)
+        self.spatial_accuracy_order = spatial_accuracy_order
+
+        self.spatial_shifted_differences = spatial_shifted_differences
+
+        ConstantDensityAcousticFrequencyScalarBase.__init__(self,
+                                                            mesh,
+                                                            spatial_accuracy_order=spatial_accuracy_order,
+                                                            spatial_shifted_differences=spatial_shifted_differences,
+                                                            **kwargs)
 
     def _rebuild_operators(self):
 

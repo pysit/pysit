@@ -30,11 +30,16 @@ class ConstantDensityAcousticTimeScalar_2D(ConstantDensityAcousticTimeScalarBase
                            'spatial_dimension': 2,
                            'boundary_conditions': ['pml', 'pml-sim', 'dirichlet']}
 
-    def __init__(self, mesh, **kwargs):
+    def __init__(self, mesh, spatial_accuracy_order=4, **kwargs):
 
         self.operator_components = Bunch()
 
-        ConstantDensityAcousticTimeScalarBase.__init__(self, mesh, **kwargs)
+        self.spatial_accuracy_order = spatial_accuracy_order
+
+        ConstantDensityAcousticTimeScalarBase.__init__(self,
+                                                       mesh,
+                                                       spatial_accuracy_order=spatial_accuracy_order,
+                                                       **kwargs)
 
     def _rebuild_operators(self):
 
@@ -79,8 +84,7 @@ class ConstantDensityAcousticTimeScalar_2D_numpy(ConstantDensityAcousticTimeScal
             # build laplacian
             oc.L = build_derivative_matrix(self.mesh,
                                            2,
-                                           self.spatial_accuracy_order,
-                                           use_shifted_differences=self.spatial_shifted_differences)
+                                           self.spatial_accuracy_order)
 
             # build sigmax
             sx = build_sigma(self.mesh, self.mesh.x)
@@ -94,16 +98,14 @@ class ConstantDensityAcousticTimeScalar_2D_numpy(ConstantDensityAcousticTimeScal
             oc.minus_Dx = build_derivative_matrix(self.mesh,
                                                   1,
                                                   self.spatial_accuracy_order,
-                                                  dimension='x',
-                                                  use_shifted_differences=self.spatial_shifted_differences)
+                                                  dimension='x')
             oc.minus_Dx.data *= -1
 
             # build Dz
             oc.minus_Dz = build_derivative_matrix(self.mesh,
                                                   1,
                                                   self.spatial_accuracy_order,
-                                                  dimension='z',
-                                                  use_shifted_differences=self.spatial_shifted_differences)
+                                                  dimension='z')
             oc.minus_Dz.data *= -1
 
             # build other useful things
