@@ -80,7 +80,6 @@ class SolverBase(object):
 
         for parameter, values in cls.supports.items():
             if parameter in kwargs:
-                print cls.__name__, parameter, values
                 if not supports(kwargs[parameter], values):
                     return DoesNotMatch
             elif parameter == 'boundary_conditions':

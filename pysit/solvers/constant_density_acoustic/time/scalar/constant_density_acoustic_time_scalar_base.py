@@ -62,6 +62,8 @@ class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
         self.A_k   = None
         self.A_f   = None
 
+        self.temporal_accuracy_order = 2
+
         ConstantDensityAcousticTimeBase.__init__(self, mesh, **kwargs)
 
     def time_step(self, solver_data, rhs_k, rhs_kp1):

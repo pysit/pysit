@@ -47,10 +47,10 @@ class HybridModeling(object):
             A wave solver that inherits from pysit.solvers.WaveSolverBase
 
         """
-        if self.solver_type == solver.solver_type:
+        if self.solver_type == solver.supports['equation_dynamics']:
             self.solver = solver
         else:
-            raise TypeError("Argument 'solver' type {1} does not match modeling solver type {0}.".format(self.solver_type, solver.solver_type))
+            raise TypeError("Argument 'solver' type {1} does not match modeling solver type {0}.".format(self.solver_type, solver.supports['equation_dynamics']))
 
         if dft_points_per_period < 2:
             raise ValueError("Must have at least 2 points per period for DFT.")

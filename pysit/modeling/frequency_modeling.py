@@ -25,10 +25,10 @@ class FrequencyModeling(object):
             A wave solver that inherits from pysit.solvers.WaveSolverBase
 
         """
-        if self.solver_type == solver.solver_type:
+        if self.solver_type == solver.supports['equation_dynamics']:
             self.solver = solver
         else:
-            raise TypeError("Argument 'solver' type {1} does not match modeling solver type {0}.".format(self.solver_type, solver.solver_type))
+            raise TypeError("Argument 'solver' type {1} does not match modeling solver type {0}.".format(self.solver_type, solver.supports['equation_dynamics']))
 
     def forward_model(self, shot, m0, frequencies, return_parameters=[]):
         """Applies the forward model to the model for the given solver.
