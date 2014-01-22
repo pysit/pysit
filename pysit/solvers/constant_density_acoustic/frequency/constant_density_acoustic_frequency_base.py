@@ -26,7 +26,7 @@ class ConstantDensityAcousticFrequencyBase(ConstantDensityAcousticBase):
                            'boundary_conditions': None,
                            'precision': None}
 
-    def __init__(self, mesh, solver_style='sparseLU', spatial_shifted_differences=True, **kwargs):
+    def __init__(self, mesh, solver_style='sparseLU', **kwargs):
 
         # A dictionary that holds the helmholtz operators as a function of nu
         self.linear_operators = ConstructableDict(self._build_helmholtz_operator)
@@ -37,7 +37,7 @@ class ConstantDensityAcousticFrequencyBase(ConstantDensityAcousticBase):
 
         ConstantDensityAcousticBase.__init__(self,
                                              mesh,
-                                             spatial_shifted_differences=spatial_shifted_differences,
+                                             solver_style=solver_style,
                                              **kwargs)
 
     def _process_mp_reset(self, *args, **kwargs):

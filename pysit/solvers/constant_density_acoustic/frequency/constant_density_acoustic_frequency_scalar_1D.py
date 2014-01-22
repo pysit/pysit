@@ -4,6 +4,7 @@ from pysit.solvers.wavefield_vector import *
 from constant_density_acoustic_frequency_scalar_base import *
 
 from pysit.util import Bunch
+from pysit.util import PositiveEvenIntegers
 from pysit.util.derivatives import build_derivative_matrix
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
@@ -19,6 +20,7 @@ class ConstantDensityAcousticFrequencyScalar_1D(ConstantDensityAcousticFrequency
 
     _local_support_spec = {'spatial_discretization': 'finite-difference',
                            'spatial_dimension': 1,
+                           'spatial_accuracy_order': PositiveEvenIntegers,
                            'boundary_conditions': ['pml', 'pml-sim', 'dirichlet'],
                            'precision': ['single', 'double']}
 
