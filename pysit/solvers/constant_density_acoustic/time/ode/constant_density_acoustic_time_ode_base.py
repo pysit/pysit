@@ -70,12 +70,6 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
                  temporal_accuracy_order=4,
                  **kwargs):
 
-        # Absorb and overwrite default keyword arguments.  It is important to
-        # do this in this manner, because setting a default in the usual way
-        # pops it from kwargs and thus, a base class won't have access to it.
-        new_kwargs = default_kwargs.copy()
-        new_kwargs.update(kwargs)
-
         self.temporal_integrator = temporal_integrator
         self.temporal_accuracy_order = temporal_accuracy_order
 
@@ -84,7 +78,7 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
         ConstantDensityAcousticTimeBase.__init__(self,
                                                  mesh,
                                                  temporal_integrator='rk',
-                                                 temporal_accuracy_order=4,
+                                                 temporal_accuracy_order=temporal_accuracy_order,
                                                  **kwargs)
 
     def time_step(self, solver_data, rhs_k, rhs_kp1):
