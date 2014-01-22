@@ -64,10 +64,11 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
                            'temporal_integrator': ['rk', 'runge-kutta'],
                            'temporal_accuracy_order': [2, 4]}
 
-    default_kwargs = {'temporal_integrator': 'rk',
-                      'temporal_accuracy_order': 4}
-
-    def __init__(self, mesh, **kwargs):
+    def __init__(self,
+                 mesh,
+                 temporal_integrator='rk',
+                 temporal_accuracy_order=4,
+                 **kwargs):
 
         # Absorb and overwrite default keyword arguments.  It is important to
         # do this in this manner, because setting a default in the usual way
@@ -76,9 +77,15 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
         new_kwargs.update(kwargs)
 
         self.temporal_integrator = temporal_integrator
+        self.temporal_accuracy_order = temporal_accuracy_order
+
         self.A = None
 
-        ConstantDensityAcousticTimeBase.__init__(self, mesh, **kwargs)
+        ConstantDensityAcousticTimeBase.__init__(self,
+                                                 mesh,
+                                                 temporal_integrator='rk',
+                                                 temporal_accuracy_order=4,
+                                                 **kwargs)
 
     def time_step(self, solver_data, rhs_k, rhs_kp1):
 
@@ -121,4 +128,7 @@ class ConstantDensityAcousticTimeODEBase(ConstantDensityAcousticTimeBase):
     _SolverData = _ConstantDensityAcousticTimeODE_SolverData
 
     def SolverData(self, *args, **kwargs):
-        return self._SolverData(self, self.temporal_accuracy_order, self.integrator, **kwargs)
+        return self._SolverData(self,
+                                self.temporal_accuracy_order,
+                                self.temporal_integrator,
+                                **kwargs)
