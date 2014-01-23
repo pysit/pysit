@@ -118,7 +118,7 @@ As before, define the wave solver.
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 42-49
+    :lines: 42-47
 
 And generate the data.  Note that the parallel wrapper is not needed here, as
 each shot exists only on the processor that owns it and each piece of data can
@@ -126,13 +126,13 @@ be generated independently.
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 53-56
+    :lines: 51-54
 
 An MPI Barrier allows the processors to synchronize after generating the data.
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 60
+    :lines: 58
 
 Define the objective function.  As the objective function contains an explicit
 summation over shots, we must pass the parallel wrapper to the constructor so
@@ -141,21 +141,21 @@ computed.
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 67-68
+    :lines: 65-66
 
 Define the optimization routine and set the initial value to be the velocity
 that we generated with the gallery problem.
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 70-73
+    :lines: 68-71
 
 Configure and run the optimization for 10 steps, storing the reconstructed
 model and the value of the objective function at every iteration.
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 79-87
+    :lines: 77-85
 
 Finally, only one processor needs to save the data.  The SciPy io function
 :func:`~scipy.io.savemat` will save a dictionary of numpy arrays in the MATLAB
@@ -165,7 +165,7 @@ mode, and an array of the objective values to a file called
 
 .. literalinclude:: ../../examples/ParallelMarmousi.py
     :language: python
-    :lines: 92-108
+    :lines: 90-106
 
 On 12 cores of a 16 core Intel Xeon E5-2670 machine, this script runs in
 roughly 25 minutes.
