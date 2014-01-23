@@ -71,7 +71,7 @@ class ConstantDensityAcousticTimeScalar_2D_numpy(ConstantDensityAcousticTimeScal
 
     def _rebuild_operators(self):
 
-        ConstantDensityAcousticTimeScalar_1D._rebuild_operators(self)
+        ConstantDensityAcousticTimeScalar_2D._rebuild_operators(self)
 
         dof = self.mesh.dof(include_bc=True)
 

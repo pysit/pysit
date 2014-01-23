@@ -44,10 +44,9 @@ if __name__ == '__main__':
     trange = (0.0,3.0)
 
     solver_time = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
-                                         spatial_accuracy_order=6,
-                                         trange=trange)
+                                              spatial_accuracy_order=6,
+                                              kernel_implementation='cpp',
+                                              trange=trange)
     # Generate synthetic Seismic data
     print('Generating data...')
     base_model = solver_time.ModelParameters(m,{'C': C})
@@ -58,17 +57,13 @@ if __name__ == '__main__':
     # Define and configure the objective function
     if hybrid:
         solver = ConstantDensityAcousticWave(m,
-                                             formulation='scalar',
-                                             model_parameters={'C': C},
                                              spatial_accuracy_order=4,
                                              trange=trange)
         objective = HybridLeastSquares(solver)
     else:
 
         solver = ConstantDensityHelmholtz(m,
-                                        model_parameters={'C': C0},
-                                        spatial_shifted_differences=True,
-                                        spatial_accuracy_order=4)
+                                          spatial_accuracy_order=4)
         objective = FrequencyLeastSquares(solver)
 
     # Define the inversion algorithm

@@ -56,7 +56,7 @@ if __name__ == '__main__':
     # Define and configure the wave solver
     trange = (0.0,3.0)
 
-    solver = ConstantDensityHelmholtz(m, model_parameters={'C': C}, spatial_shifted_differences=True, spatial_accuracy_order=4)
+    solver = ConstantDensityHelmholtz(m)
 
     modeling_tools = FrequencyModeling(solver)
     frequencies = [1.0, 3.0, 5.0,10.0]

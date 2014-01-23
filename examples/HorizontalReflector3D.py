@@ -51,11 +51,9 @@ if __name__ == '__main__':
     trange = (0.0,3.0)
 
     solver = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=6,
                                          trange=trange,
-                                         use_cpp_acceleration=True)
+                                         kernel_implementation='cpp')
 
     # Generate synthetic Seismic data
     print('Generating data...')
@@ -75,7 +73,7 @@ if __name__ == '__main__':
     print('Running LBFGS...')
     tt = time.time()
 
-    nsteps = 60
+    nsteps = 3
 
     configuration = {'value_frequency'           : 1,
                      'residual_frequency'        : 1,
@@ -93,7 +91,7 @@ if __name__ == '__main__':
 
     result = invalg(shots, initial_value, nsteps,
                     line_search=line_search,
-                    status_configuration=status_configuration, verbose=True)
+                    status_configuration=configuration, verbose=True)
 
     print 'Run time:  {0}s'.format(time.time()-tt)
 

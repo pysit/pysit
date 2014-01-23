@@ -51,7 +51,7 @@ if __name__ == '__main__':
     C = np.reshape(Carray, (1024,1), 'F')
     C0 = 3000*np.ones((1024,1))
 
-    solver = ConstantDensityHelmholtz(m, model_parameters={'C': C}, spatial_shifted_differences=True, spatial_accuracy_order=4)
+    solver = ConstantDensityHelmholtz(m)
     base_model = solver.ModelParameters(m,{'C': C})
     frequencies = [1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 7.5, 10.0] #random bunch of frequencies
     generate_seismic_data(shots, solver, base_model, frequencies=frequencies)

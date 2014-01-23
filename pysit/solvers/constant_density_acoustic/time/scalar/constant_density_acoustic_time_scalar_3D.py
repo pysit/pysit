@@ -73,6 +73,8 @@ class ConstantDensityAcousticTimeScalar_3D_numpy(ConstantDensityAcousticTimeScal
 
     def _rebuild_operators(self):
 
+        ConstantDensityAcousticTimeScalar_3D._rebuild_operators(self)
+
         dof = self.mesh.dof(include_bc=True)
 
         oc = self.operator_components
