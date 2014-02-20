@@ -1,51 +1,41 @@
-from .constant_density_acoustic import(ConstantDensityAcousticTimeODE_1D,
-                                      ConstantDensityAcousticTimeODE_2D,
-                                      ConstantDensityAcousticTimeODE_3D,
-                                      ConstantDensityAcousticTimeScalar_1D,
-                                      ConstantDensityAcousticTimeScalar_2D,
-                                      ConstantDensityAcousticTimeScalar_3D,
-                                      )
+from .solver_factory import SolverFactory
 
-__all__=['ConstantDensityAcousticWave']
+from .constant_density_acoustic import(ConstantDensityAcousticTimeODE_1D,
+                                       ConstantDensityAcousticTimeODE_2D,
+                                       ConstantDensityAcousticTimeODE_3D,
+                                       ConstantDensityAcousticTimeScalar_1D_numpy,
+                                       ConstantDensityAcousticTimeScalar_1D_cpp,
+                                       ConstantDensityAcousticTimeScalar_2D_numpy,
+                                       ConstantDensityAcousticTimeScalar_2D_cpp,
+                                       ConstantDensityAcousticTimeScalar_3D_numpy,
+                                       ConstantDensityAcousticTimeScalar_3D_cpp)
+
+__all__ = ['ConstantDensityAcousticWave']
 
 __docformat__ = "restructuredtext en"
 
-class ConstantDensityAcousticWave(object):
-    defined_solvers = { 'structured-cartesian': {
-                            'vector': {
-                                      # dimension
-#                                     1: ConstantDensityAcousticTimeVector_1D,
-#                                     2: ConstantDensityAcousticTimeVector_2D,
-#                                     3: ConstantDensityAcousticTimeVector_3D,
-                                },
 
-                            'scalar': {
-                                      # dimension
-                                      1: ConstantDensityAcousticTimeScalar_1D,
-                                      2: ConstantDensityAcousticTimeScalar_2D,
-                                      3: ConstantDensityAcousticTimeScalar_3D,
-                                },
+# Setup the constant density acoustic wave factory
+class ConstantDensityAcousticWaveFactory(SolverFactory):
 
-                            'ode': {
-                                      # dimension
-                                      1: ConstantDensityAcousticTimeODE_1D,
-                                      2: ConstantDensityAcousticTimeODE_2D,
-                                      3: ConstantDensityAcousticTimeODE_3D,
-                                },
-                         },
-                      }
-    def __new__(cls, mesh, formulation=None, *args, **kwargs):
-        if cls is ConstantDensityAcousticWave:
-            try:
-                solver = ConstantDensityAcousticWave.defined_solvers[mesh.type][formulation][mesh.dim]
-            except KeyError as e:
-                print "Solver for '{0}'D constant density acoustic wave equation for the '{1}' formulation system does not exist for '{2}' type domains.".format(mesh.dim, formulation, mesh.type)
-                raise e
-            return solver(mesh, *args, **kwargs)
-#           return super(ConstantDensityAcousticWave, cls).__new__(solver, mesh, *args, **kwargs)
-        else:
-            return super(ConstantDensityAcousticWave, cls).__new__(cls, mesh, *args, **kwargs)
+    supports = {'equation_physics': 'constant-density-acoustic',
+                'equation_dynamics': 'time'}
 
-    def __init__(self, mesh, *args, **kwargs):
-        raise NotImplementedError("ConstantDensityAcousticWave factory __init__ should never be called.")
 
+ConstantDensityAcousticWave = ConstantDensityAcousticWaveFactory()
+
+# Partial matches are resolved in the order of registration.  Therefore, the
+# default situation takes scalar, leapfrog, spatially fd, numpy kernels.  Other
+# defaults (such as accuracy) are minimally specified in the constructor, if
+# they are not specified to the factory call.
+
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_numpy)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_numpy)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_numpy)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_cpp)
+
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_1D)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_2D)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_3D)

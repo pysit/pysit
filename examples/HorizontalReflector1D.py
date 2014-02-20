@@ -49,14 +49,12 @@ if __name__ == '__main__':
 
     solver1 = ConstantDensityAcousticWave(m,
                                          formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=2,
                                          trange=trange)
 
     solver2 = ConstantDensityAcousticWave(m,
-                                         use_cpp_acceleration=True,
+                                         kernel_implementation='cpp',
                                          formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=2,
                                          trange=trange)
 

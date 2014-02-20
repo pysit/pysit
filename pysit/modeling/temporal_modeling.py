@@ -44,10 +44,10 @@ class TemporalModeling(object):
 
         """
 
-        if self.solver_type == solver.solver_type:
+        if self.solver_type == solver.supports['equation_dynamics']:
             self.solver = solver
         else:
-            raise TypeError("Argument 'solver' type {1} does not match modeling solver type {0}.".format(self.solver_type, solver.solver_type))
+            raise TypeError("Argument 'solver' type {1} does not match modeling solver type {0}.".format(self.solver_type, solver.supports['equation_dynamics']))
 
     def _setup_forward_rhs(self, rhs_array, data):
         return self.solver.mesh.pad_array(data, out_array=rhs_array)

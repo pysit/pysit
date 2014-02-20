@@ -1,24 +1,40 @@
-import numpy as np
 import scipy.sparse as spsp
 
 from pysit.solvers.wavefield_vector import *
 from constant_density_acoustic_time_ode_base import *
 
 from pysit.util import Bunch
+from pysit.util import PositiveEvenIntegers
 from pysit.util.derivatives import build_derivative_matrix
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
-__all__=['ConstantDensityAcousticTimeODE_3D']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticTimeODE_3D']
 
 __docformat__ = "restructuredtext en"
 
+
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeODE_3D(ConstantDensityAcousticTimeODEBase):
 
-    def __init__(self, mesh, **kwargs):
+    _local_support_spec = {'kernel_implementation': 'numpy',
+                           'spatial_discretization': 'finite-difference',
+                           'spatial_dimension': 3,
+                           'spatial_accuracy_order': PositiveEvenIntegers,
+                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet'],
+                           'precision': ['single', 'double']}
+
+    def __init__(self, mesh, spatial_accuracy_order=4, **kwargs):
 
         self.operator_components = Bunch()
 
-        ConstantDensityAcousticTimeODEBase.__init__(self, mesh, **kwargs)
+        self.spatial_accuracy_order = spatial_accuracy_order
+
+        ConstantDensityAcousticTimeODEBase.__init__(self,
+                                                    mesh,
+                                                    spatial_accuracy_order=spatial_accuracy_order,
+                                                    **kwargs)
 
     def _rebuild_operators(self):
 
@@ -27,10 +43,14 @@ class ConstantDensityAcousticTimeODE_3D(ConstantDensityAcousticTimeODEBase):
         # a more readable reference
         oc = self.operator_components
 
-        # Check if empty.  If empty, build the static components
-        if not self.operator_components:
+        built = oc.get('_numpy_components_built', False)
+
+        # build the static components
+        if not built:
             # build laplacian
-            oc.L = build_derivative_matrix(self.mesh, 2, self.spatial_accuracy_order, use_shifted_differences=self.spatial_shifted_differences)
+            oc.L = build_derivative_matrix(self.mesh,
+                                           2,
+                                           self.spatial_accuracy_order)
 
             # build sigmax
             sx = build_sigma(self.mesh, self.mesh.x)
@@ -45,17 +65,26 @@ class ConstantDensityAcousticTimeODE_3D(ConstantDensityAcousticTimeODEBase):
             oc.minus_sigmaz = make_diag_mtx(-sz)
 
             # build Dx
-            oc.Dx = build_derivative_matrix(self.mesh, 1, self.spatial_accuracy_order, dimension='x', use_shifted_differences=self.spatial_shifted_differences)
+            oc.Dx = build_derivative_matrix(self.mesh,
+                                            1,
+                                            self.spatial_accuracy_order,
+                                            dimension='x')
 
             # build Dy
-            oc.Dy = build_derivative_matrix(self.mesh, 1, self.spatial_accuracy_order, dimension='y', use_shifted_differences=self.spatial_shifted_differences)
+            oc.Dy = build_derivative_matrix(self.mesh,
+                                            1,
+                                            self.spatial_accuracy_order,
+                                            dimension='y')
 
             # build Dz
-            oc.Dz = build_derivative_matrix(self.mesh, 1, self.spatial_accuracy_order, dimension='z', use_shifted_differences=self.spatial_shifted_differences)
-            # build other useful things
+            oc.Dz = build_derivative_matrix(self.mesh,
+                                            1,
+                                            self.spatial_accuracy_order,
+                                            dimension='z')
 
-            oc.I     = spsp.eye(dof,dof)
-            oc.empty = spsp.csr_matrix((dof,dof))
+            # build other useful things
+            oc.I     = spsp.eye(dof, dof)
+            oc.empty = spsp.csr_matrix((dof, dof))
 
             # useful intermediates
             oc.sigma_sum_pair_prod = make_diag_mtx((sx*sy+sx*sz+sy*sz))
@@ -69,6 +98,7 @@ class ConstantDensityAcousticTimeODE_3D(ConstantDensityAcousticTimeODEBase):
             oc.sigma_zx_Dy      = make_diag_mtx(sz*sx)*oc.Dy
             oc.sigma_xy_Dz      = make_diag_mtx(sx*sy)*oc.Dz
 
+            oc._numpy_components_built = True
 
         C = self.model_parameters.C
         oc.m_inv = make_diag_mtx((C**2).reshape(-1,))

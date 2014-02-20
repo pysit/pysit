@@ -1,12 +1,12 @@
 from __future__ import absolute_import
 
 import time
-from itertools import repeat
 
 import numpy as np
 
 __all__ = ['generate_seismic_data', 'generate_shot_data_time', 'generate_shot_data_frequency']
 __docformat__ = "restructuredtext en"
+
 
 def generate_seismic_data(shots, solver, model, verbose=False, frequencies=None, **kwargs):
     """Given a list of shots and a solver, generates seismic data.
@@ -32,9 +32,9 @@ def generate_seismic_data(shots, solver, model, verbose=False, frequencies=None,
 
     for shot in shots:
 
-        if solver.solver_type == "time":
+        if solver.supports['equation_dynamics'] == "time":
             generate_shot_data_time(shot, solver, model, verbose=verbose, **kwargs)
-        elif solver.solver_type == "frequency":
+        elif solver.supports['equation_dynamics'] == "frequency":
             if frequencies is None:
                 raise TypeError('A frequency solver is passed, but no frequencies are given')
             generate_shot_data_frequency(shot, solver, model, frequencies, verbose=verbose, **kwargs)
@@ -81,7 +81,7 @@ def generate_shot_data_time(shot, solver, model, wavefields=None, wavefields_pad
     shot.dt = solver.dt
     shot.trange = solver.trange
 
-    if solver.solver_type != "time":
+    if solver.supports['equation_dynamics'] != "time":
         raise TypeError('Solver must be a time solver to generate data.')
 
     if(wavefields is not None):

@@ -1,9 +1,6 @@
 # Std import block
 import time
 
-import numpy as np
-import matplotlib.pyplot as plt
-
 from pysit import *
 from pysit.gallery import horizontal_reflector
 
@@ -24,7 +21,6 @@ def test_1d():
     C, C0, m, d = horizontal_reflector(m)
 
     # Set up shots
-    Nshots = 1
     shots = []
 
     # Define source location and type
@@ -42,14 +38,12 @@ def test_1d():
 
 
     # Define and configure the wave solver
-    trange = (0.0,3.0)
+    trange = (0.0, 3.0)
 
     solver = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=2,
                                          trange=trange,
-                                         use_cpp_acceleration=True)
+                                         kernel_implementation='cpp')
 
     # Generate synthetic Seismic data
     tt = time.time()
@@ -98,11 +92,9 @@ def test_2d():
     trange = (0.0,3.0)
 
     solver = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=2,
                                          trange=trange,
-                                         use_cpp_acceleration=True)
+                                         kernel_implementation='cpp')
 
     # Generate synthetic Seismic data
     tt = time.time()
@@ -152,11 +144,9 @@ def test_3d():
     trange = (0.0,1.0)
 
     solver = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=2,
                                          trange=trange,
-                                         use_cpp_acceleration=True)
+                                         kernel_implementation='cpp')
 
     # Generate synthetic Seismic data
     tt = time.time()
@@ -172,12 +162,12 @@ if __name__ == '__main__':
 
     from pysit import *
 
-    ws1, m1 = test_1d()
-    vis.animate(ws1, m1, display_rate=10)
+    # ws1, m1 = test_1d()
+    # vis.animate(ws1, m1, display_rate=10)
 
-#   ws2, m2 = test_2d()
-#   vis.animate(ws2, m2, display_rate=10)
+    # ws2, m2 = test_2d()
+    # vis.animate(ws2, m2, display_rate=10)
 
-#   ws3, m3 = test_3d()
-#   vis.animate(ws3, m3, display_rate=10)
+    ws3, m3 = test_3d()
+    vis.animate(ws3, m3, display_rate=10)
 

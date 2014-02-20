@@ -139,7 +139,7 @@ can be plotted by:
 .. code:: python
 
     plt.figure()
-    vis.plot(C, m)
+    vis.plot(C, mesh)
     plt.draw()
 
 The plot command used is part of the visualization tools provided by PySIT.
@@ -203,7 +203,7 @@ Define the Solver and Generate Synthetic Data
 PySIT defines solvers as objects that are passed to different routines. This
 is so that all code that uses wave solvers remains generic. Any PySIT solver
 object can be used here, but we will use a solver for the constant-density
-acoustic wave equation, `ConstantDensityAcousticWave`. The constructor for
+acoustic wave equation, `ConstantDensityAcousticWave`. The factory for
 `ConstantDensityAcousticWave` automatically determines the correct dimension
 for the solver based on the mesh that is provided.
 
@@ -211,10 +211,9 @@ for the solver based on the mesh that is provided.
 
     solver = ConstantDensityAcousticWave(mesh,
                                          formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=2,
-                                         trange=(0.0,3.0),
-                                         use_cpp_acceleration=True)
+                                         trange=(0.0, 3.0),
+                                         kernel_implementation='cpp')
 
 The first argument is, again, the mesh, the second specifies that we are using
 the scalar form of the equation, and the third specifies the set of wave
@@ -279,16 +278,16 @@ which the listed value is stored:
 
 .. code:: python
 
-    status_configuration = {'value_frequency' : 1,
-                            'residual_frequency' : 1,
-                            'residual_length_frequency' : 1,
-                            'objective_frequency' : 1,
-                            'step_frequency' : 1,
-                            'step_length_frequency' : 1,
-                            'gradient_frequency' : 1,
-                            'gradient_length_frequency' : 1,
-                            'run_time_frequency' : 1,
-                            'alpha_frequency' : 1}
+    status_configuration = {'value_frequency': 1,
+                            'residual_frequency': 1,
+                            'residual_length_frequency': 1,
+                            'objective_frequency': 1,
+                            'step_frequency': 1,
+                            'step_length_frequency': 1,
+                            'gradient_frequency': 1,
+                            'gradient_length_frequency': 1,
+                            'run_time_frequency': 1,
+                            'alpha_frequency': 1}
 
 Finally, we can run the optimization routine:
 

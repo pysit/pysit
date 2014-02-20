@@ -54,11 +54,9 @@ if __name__ == '__main__':
     trange = (0.0,3.0)
 
     solver = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=6,
                                          trange=trange,
-                                         use_cpp_acceleration=True)
+                                         kernel_implementation='cpp')
 
     modeling_tools = TemporalModeling(solver)
     ret = modeling_tools.forward_model(shot, solver.model_parameters.without_padding(), return_parameters=['wavefield'])

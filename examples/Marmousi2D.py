@@ -25,14 +25,12 @@ if __name__ == '__main__':
                                    )
 
     # Define and configure the wave solver
-    trange = (0.0,3.0)
+    trange = (0.0, 3.0)
 
     solver = ConstantDensityAcousticWave(m,
-                                         formulation='scalar',
-                                         model_parameters={'C': C},
                                          spatial_accuracy_order=6,
                                          trange=trange,
-                                         use_cpp_acceleration=True)
+                                         kernel_implementation='cpp')
 
     # Generate synthetic Seismic data
     print('Generating data...')

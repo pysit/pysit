@@ -3,15 +3,21 @@ import numpy as np
 from pysit.solvers.solver_base import *
 from pysit.solvers.model_parameter import *
 
-__all__=['ConstantDensityAcousticBase']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticBase']
 
 __docformat__ = "restructuredtext en"
 
+
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticBase(SolverBase):
     """ Base class for solvers that use the Constant Density Acoustic Model
     (e.g., in the wave, helmholtz, and laplace domains).
 
     """
+
+    _local_support_spec = {'equation_physics': 'constant-density-acoustic'}
 
     ModelParameters = ConstantDensityAcousticParameters
 
@@ -27,4 +33,3 @@ class ConstantDensityAcousticBase(SolverBase):
 
     def _compute_dWaveOp_laplace(self, *args):
         raise NotImplementedError('Derivative Laplace domain operator not yet implemented.')
-

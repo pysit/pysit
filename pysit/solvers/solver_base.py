@@ -1,17 +1,24 @@
-import warnings
-
 import numpy as np
 
 from solver_data import SolverDataBase
 
-__all__=['SolverBase']
+from pysit.util.basic_registration_factory import DoesNotMatch
+from pysit.util.basic_registration_factory import CompleteMatch
+from pysit.util.basic_registration_factory import IncompleteMatch
+from pysit.util.solvers import supports
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['SolverBase']
 
 __docformat__ = "restructuredtext en"
+
 
 class NullModelParameters(object):
     def __init__(self, *args, **kwargs):
         raise TypeError("NullModelParameters should never be instantiated.")
 
+
+@inherit_dict('supports', '_local_support_spec')
 class SolverBase(object):
     """ Base class for pysit solvers. (e.g., wave, helmholtz, and laplace-domain)
 
@@ -29,19 +36,15 @@ class SolverBase(object):
 
     """
 
-    # Read-only property
-    @property #getter
-    def solver_type(self): return None
+    # These must be set in a subclass.  Ideally it should happen in once place
+    # and they can be inherited.
+    _local_support_spec = {'equation_physics': None,  # e.g., 'constant-density-acoustic', 'elastic'
+                           'equation_dynamics': None}  # e.g, 'time', 'frequency', 'laplace'
 
-    @property #getter
-    def cpp_accelerated(self): return False
-
-    def __init__(self, mesh, model_parameters={},
-                       spatial_accuracy_order=2,
-                       precision = 'double',
-                       spatial_shifted_differences=False,
-                       use_cpp_acceleration=False,
-                       **kwargs):
+    def __init__(self,
+                 mesh,
+                 precision='double',
+                 **kwargs):
         """Constructor for the WaveSolverBase class.
 
         Parameters
@@ -55,26 +58,48 @@ class SolverBase(object):
         self.mesh = mesh
         self.domain = mesh.domain
 
-        self.spatial_accuracy_order = spatial_accuracy_order
-        self.spatial_shifted_differences = spatial_shifted_differences
-
-
-        if precision in ['single', 'double']:
+        # This _should_ always be true, if the solver is constructed through
+        # the appropriate factory, as 'precision' is a support value.
+        if precision in self.supports['precision']:
             self.precision = precision
 
-            if self.solver_type == 'time':
+            if self.supports['equation_dynamics'] == 'time':
                 self.dtype = np.double if precision == 'double' else np.single
             else:
                 self.dtype = np.complex128 if precision == 'double' else np.complex64
 
-        self.use_cpp_acceleration = use_cpp_acceleration
-        if use_cpp_acceleration and not self.cpp_accelerated:
-            self.use_cpp_acceleration = False
-            warnings.warn('C++ accelerated solver is not available for solver type {0}'.format(type(self)))
-
         self._mp = None
         self._model_change_count = 0
-        self.model_parameters = self.ModelParameters(mesh, inputs=model_parameters)
+        # self.model_parameters = self.ModelParameters(mesh, inputs=model_parameters)
+
+    @classmethod
+    def _factory_validation_function(cls, mesh, *args, **kwargs):
+
+        complete_match = True
+        incomplete_match = True
+
+        for parameter, values in cls.supports.items():
+            if parameter in kwargs:
+                if not supports(kwargs[parameter], values):
+                    return DoesNotMatch
+            elif parameter == 'boundary_conditions':
+                valid_bc = True
+                for i in xrange(mesh.dim):
+                    L = supports(mesh.parameters[i].lbc.type, values)
+                    R = supports(mesh.parameters[i].rbc.type, values)
+                    valid_bc &= L and R
+                if not valid_bc:
+                    return DoesNotMatch
+            elif parameter == 'spatial_dimension':
+                if not supports(mesh.dim, values):
+                    return DoesNotMatch
+            else:
+                complete_match = False
+
+        if complete_match:
+            return CompleteMatch
+        elif incomplete_match:
+            return IncompleteMatch
 
     @property #getter
     def model_parameters(self): return self._mp

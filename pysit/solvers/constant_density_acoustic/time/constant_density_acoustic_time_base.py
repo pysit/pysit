@@ -6,20 +6,32 @@ import numpy as np
 
 from ..constant_density_acoustic_base import *
 
-__all__=['ConstantDensityAcousticTimeBase']
+from pysit.util.solvers import inherit_dict
+
+__all__ = ['ConstantDensityAcousticTimeBase']
 
 __docformat__ = "restructuredtext en"
 
+
+@inherit_dict('supports', '_local_support_spec')
 class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
 
-    # Read-only property
-    @property #getter
-    def solver_type(self): return 'time'
+    _local_support_spec = {'equation_dynamics': 'time',
+                           # These should be defined by subclasses.
+                           'temporal_integrator': None,
+                           'temporal_accuracy_order': None,
+                           'spatial_discretization': None,
+                           'spatial_accuracy_order': None,
+                           'kernel_implementation': None,
+                           'spatial_dimension': None,
+                           'boundary_conditions': None,
+                           'precision': None}
 
-    def __init__(self, mesh,
-                       trange=(0.0,0.0), cfl_safety=1/6,
-                       time_accuracy_order=2,
-                       **kwargs):
+    def __init__(self,
+                 mesh,
+                 trange=(0.0, 1.0),
+                 cfl_safety=1/6,
+                 **kwargs):
 
         self.trange = trange
         self.cfl_safety = cfl_safety
@@ -28,9 +40,11 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         self.dt = 0.0
         self.nsteps = 0
 
-        self.time_accuracy_order = time_accuracy_order
-
-        ConstantDensityAcousticBase.__init__(self, mesh, **kwargs)
+        ConstantDensityAcousticBase.__init__(self,
+                                             mesh,
+                                             trange=trange,
+                                             cfl_safety=cfl_safety,
+                                             **kwargs)
 
     def ts(self):
         """Returns a numpy array of the time values serviced by the specified dt
@@ -45,7 +59,7 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         min_deltas = np.min(self.mesh.deltas)
 
         C = self._mp.C
-        max_C = max(abs(C.min()), C.max()) # faster than C.abs().max()
+        max_C = max(abs(C.min()), C.max())  # faster than C.abs().max()
 
         dt = CFL*min_deltas / max_C
         nsteps = int(math.ceil((tf - t0)/dt))
@@ -53,9 +67,10 @@ class ConstantDensityAcousticTimeBase(ConstantDensityAcousticBase):
         self.dt = dt
         self.nsteps = nsteps
 
-        # If we are not using CPU acceleration, the operators need to be rebuilt
-        if not self.use_cpp_acceleration:
-            self._rebuild_operators()
+        self._rebuild_operators()
+
+    def _rebuild_operators(self, *args, **kwargs):
+        pass
 
     def time_step(self, solver_data, rhs, **kwargs):
         raise NotImplementedError("Function 'time_step' Must be implemented by subclass.")
