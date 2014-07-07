@@ -79,6 +79,6 @@ class ConjugateGradient(OptimizationBase):
 
     def _compute_alpha0(self, phi0, grad0, reset=False, upscale_factor=None, **kwargs):
         if reset or (self.prev_alpha is None):
-            return phi0 / (grad0.norm()*np.prod(self.solver.domain.deltas))**2
+            return phi0 / (grad0.norm()*np.prod(self.solver.mesh.deltas))**2
         else:
             return self.prev_alpha / upscale_factor
