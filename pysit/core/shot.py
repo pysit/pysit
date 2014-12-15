@@ -2,10 +2,10 @@ import copy
 import numpy as np
 import scipy.sparse as spsp
 from scipy.interpolate import interp1d
-from pysit.core.sources import SourceSet
+from pysit.core.sources import *
 
 # The names from this namespace that we wish to expose globally go here.
-__all__ = ['Shot']
+__all__ = ['Shot', 'SourceEncodedSupershot']
 
 __docformat__ = "restructuredtext en"
 
@@ -175,10 +175,10 @@ class SourceEncodedSupershot(Shot):
         according to these new weights.
         """
         
-        if weight_type == "gaussian":
+        if self.weight_type == "gaussian":
             self.weight_vector = np.random.randn(self._nshots)
     
-        elif weight_type == "krebs":
+        elif self.weight_type == "krebs":
             print "IS THIS JUST A MULTIPLICATION BY 1 or -1, OR SOME CROSS-CORRELATION WITH A VECTOR CONTAINING ALL 1 or ALL -1 FOR EACH SOURCE?"
             print "Krebs also say in the 'encoding' section that they normalize so that the total power is always the same. Think about this."
             print "I think moghaddam paper discusses implementation in matrix form and weighting vector."
@@ -199,7 +199,7 @@ class SourceEncodedSupershot(Shot):
         
         #Verify that each shot has a 'PointSource' source 
         for shot in shots:
-            if type(shot.sources != 'PointSource'):
+            if type(shot.sources) != PointSource:
                 raise Exception("The shots have to have a PointSource as source.")
 
         #Verify that we have a fixed-spread acquisition (Receiver locations are the same for each shot in 'shots') 
@@ -207,7 +207,7 @@ class SourceEncodedSupershot(Shot):
         receiverset_sampling_operator = shots[0].receivers.sampling_operator
         receiver_approximation_type = shots[0].receivers.receiver_list[0].approximation #'gaussian' or 'delta' for instance.
         for shot in shots:
-            if shot.receivers.sampling_operator != receiverset_sampling_operator:
+            if np.abs(shot.receivers.sampling_operator - receiverset_sampling_operator).nnz != 0: #Inequality check sparse matrix not implemented. This is workaround.
                 raise Exception("The receiver acquisition has to be the same for each shot in order to construct a supershot.")
             
             for receiver in shot.receivers.receiver_list: #assuming we have a ReceiverSet and not a single PointReceiver. I think this check is redundant when the sampling operators are identical.
@@ -242,7 +242,7 @@ class SourceEncodedSupershot(Shot):
         
         sources = [] #This list will be filled with copies of the sequential source. These sources are PointSources as has been verified when setting the sequential shots.
         for shot, code in zip(shots,vec.tolist()):
-            source = np.copy.deepcopy(shot.sources)
+            source = copy.deepcopy(shot.sources)
             source.intensity = code
             source.set_shot(None)
             sources.append(source)
@@ -263,7 +263,7 @@ class SourceEncodedSupershot(Shot):
         
             time_simulation == False
             
-        receiver_set = np.copy.deepcopy(shots[0].receivers) #Initialize by copying one, then reset data.
+        receiver_set = copy.deepcopy(shots[0].receivers) #Initialize by copying one, then reset data.
         receiver_set.set_shot(self)
         
         if time_simulation:
