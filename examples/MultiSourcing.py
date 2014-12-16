@@ -57,7 +57,7 @@ if __name__ == '__main__':
                                          spatial_accuracy_order=6,
                                          trange=trange,
                                          kernel_implementation='cpp')
-
+    true_model = solver.ModelParameters(m,{'C': C})
     modeling_tools = TemporalModeling(solver)
-    ret = modeling_tools.forward_model(shot, solver.model_parameters.without_padding(), return_parameters=['wavefield'])
+    ret = modeling_tools.forward_model(shot, true_model, return_parameters=['wavefield'])
     vis.animate(ret['wavefield'], m, display_rate=5)

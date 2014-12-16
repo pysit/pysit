@@ -57,15 +57,15 @@ if __name__ == '__main__':
     trange = (0.0,3.0)
 
     solver = ConstantDensityHelmholtz(m)
-
+    true_model = solver.ModelParameters(m,{'C': C})
     modeling_tools = FrequencyModeling(solver)
     frequencies = [1.0, 3.0, 5.0,10.0]
-    ret = modeling_tools.forward_model(shot, solver.model_parameters.without_padding(), frequencies=frequencies, return_parameters=['wavefield'])
+    ret = modeling_tools.forward_model(shot, true_model, frequencies=frequencies, return_parameters=['wavefield'])
 
-    arr1 = np.reshape(ret['wavefield'][1.0], (90,70))
-    arr3 = np.reshape(ret['wavefield'][3.0], (90,70))
-    arr5 = np.reshape(ret['wavefield'][5.0], (90,70))
-    arr10 = np.reshape(ret['wavefield'][10.0], (90,70))
+    arr1 = np.reshape(ret['wavefield'][1.0], (91,71))
+    arr3 = np.reshape(ret['wavefield'][3.0], (91,71))
+    arr5 = np.reshape(ret['wavefield'][5.0], (91,71))
+    arr10 = np.reshape(ret['wavefield'][10.0], (91,71))
 
     #arrreallim = arr.real.min(),arr.real.max()
     #arrimaglim = arr.imag.min(),arr.imag.max()
