@@ -101,6 +101,8 @@ class DerivativeGaussianPulse(SourceWaveletBase):
 
     """
 
+    precomputed_values_t = dict()   #Shared amongst instances of class. Right now only for time domain, because this computes it at every timestep.
+                                    #This vastly improves the performance of source encoded supershots, as many source evaluations are required each timestep.
     @property
     def time_source(self):
         """bool, Indicates if wavelet is defined in time domain."""
@@ -136,13 +138,17 @@ class DerivativeGaussianPulse(SourceWaveletBase):
 
         n = self.order
 
-        x = (ts-self.t_shift)/(_sqrt2*self.sigma)
-        c = (-1/_sqrt2)**n
-        v = c*self._hermite(x)*np.exp(-(x**2))
+        v = []
+        for t in ts:
+            if (t,self.sigma,self.t_shift,self.threshold) not in DerivativeGaussianPulse.precomputed_values_t: #Not precomputed
+                x = (t-self.t_shift)/(_sqrt2*self.sigma)
+                c = (-1/_sqrt2)**n
+                _v = c*self._hermite(x)*np.exp(-(x**2))
+                if np.abs(_v) < self.threshold: _v = 0.0
+                DerivativeGaussianPulse.precomputed_values_t[t,self.sigma,self.t_shift,self.threshold] = _v
+            v.append(DerivativeGaussianPulse.precomputed_values_t[t,self.sigma,self.t_shift,self.threshold])
 
-        v[np.abs(v) < self.threshold] = 0.0
-
-        return v[0] if ts_was_not_array else v
+        return v[0] if ts_was_not_array else np.array(v)
 
     def _evaluate_frequency(self, nus):
 

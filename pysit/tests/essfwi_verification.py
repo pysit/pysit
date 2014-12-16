@@ -52,34 +52,42 @@ if __name__ == '__main__':
 
     # Generate synthetic Seismic data
     tt = time.time()
-    wavefields =  []
     true_model = solver.ModelParameters(m,{'C': C})
     initial_model = solver.ModelParameters(m,{'C': C0})
-    generate_seismic_data(shots, solver, true_model, wavefields=wavefields)
+    generate_seismic_data(shots, solver, true_model)
 
     print 'Data generation: {0}s'.format(time.time()-tt)
 
     print 'Now that the data is generated, test if ESSFWI objective and gradient have expected values equal to the sequential source versions.'
 
 
-    essfwi_shot = SourceEncodedSupershot(shots)
+    essfwi_shot = SourceEncodedSupershot(shots, weight_type = 'krebs')
     solver.model = initial_model
 
     objective = TemporalLeastSquares(solver)
     aux_info = {'objective_value': (True, None)}
+    tt = time.time()
     sequential_grad = objective.compute_gradient(shots,initial_model,aux_info)
+    print "Elapsed time for sequential gradient computation is: %f"%(time.time()-tt)
     sequential_objective = aux_info['objective_value'][1]
     
     essfwi_grads = []
     essfwi_objectives = []
     n_iter = 10
+    tt = time.time()
     for i in xrange(n_iter):
         aux_info = {'objective_value': (True, None)}
         essfwi_grad = objective.compute_gradient([essfwi_shot],initial_model,aux_info) #list of shots is expected...
         essfwi_objective = aux_info['objective_value'][1]
         essfwi_grads.append(essfwi_grad)
         essfwi_objectives.append(essfwi_objective)
-        essfwi_shot.generate_weight_vector() #Generate new weights.
+        essfwi_shot.generate_weight_vector() #Generate new weights and reencode.
+    
+    #Some observations.
+    print "After implementing a storage for precomputed values for the Ricker Wavelet, the difference between 10 sequential FWI gradient contributions and 10 encoded simultaneous source FWI gradient contributions is only caused by the the encoding."
+    print "As in every current time-simulation, construction of the RHS takes an amount of time that is in the same order as a call to the actual timestep function"
+    print "Partially still due to getting the wavelet and partially because a dense RHS vector is generated, even though the RHS is not really dense."
+    print "One solution would be to allow sparse RHS vectors? \n"
     
     #average the gradients and the objective values
     
@@ -90,6 +98,9 @@ if __name__ == '__main__':
     for essfwi_grad, essfwi_objective in zip(essfwi_grads, essfwi_objectives):
         avg_essfwi_grad += 1.0/n_iter * essfwi_grad
         avg_essfwi_objective += 1.0/n_iter * essfwi_objective
+
+    print "Sequential objective is    : %f"%sequential_objective
+    print "average ESSFWI objective is: %f"%avg_essfwi_objective
     
     plt.figure(1) #The sequential shot gradient
     plt.imshow(np.reshape(sequential_grad.data, (41,71), 'F'))
@@ -102,9 +113,75 @@ if __name__ == '__main__':
     plt.colorbar()
     plt.show()
     
-    print "DO THE SAME FOR FREQUENCY DOMAIN IMPLEMENTATION."
+    print "Do the same for the frequency domain implementation."
+    del shots, essfwi_shot
+    shots = equispaced_acquisition(m,
+                                   RickerWavelet(5.0),
+                                   sources=10,
+                                   source_depth=zpos,
+                                   source_kwargs={},
+                                   receivers='max',
+                                   receiver_depth=zpos,
+                                   receiver_kwargs={},
+                                   )
+        
+    freqs = [2.0, 4.0, 6.0] #Just three frequencies
+    solver = ConstantDensityHelmholtz(m)
+    tt = time.time()
+    generate_seismic_data(shots, solver, true_model, frequencies = freqs)
+    print 'Data generation: {0}s'.format(time.time()-tt)
+    
+    print 'Now that the data is generated, test if ESSFWI objective and gradient have expected values equal to the sequential source versions.'
+    essfwi_shot = SourceEncodedSupershot(shots, weight_type = 'gaussian')
+    solver.model = initial_model
 
+    objective = FrequencyLeastSquares(solver)
+    aux_info = {'objective_value': (True, None)}
+    tt = time.time()
+    sequential_grad = objective.compute_gradient(shots,initial_model, frequencies = freqs, aux_info = aux_info)
+    print "Elapsed time for sequential gradient computation is: %f"%(time.time()-tt)
+    sequential_objective = aux_info['objective_value'][1]
+    
+    essfwi_grads = []
+    essfwi_objectives = []
+    n_iter = 10
+    tt = time.time()
+    for i in xrange(n_iter):
+        aux_info = {'objective_value': (True, None)}
+        essfwi_grad = objective.compute_gradient([essfwi_shot],initial_model, frequencies = freqs, aux_info = aux_info) #list of shots is expected...
+        essfwi_objective = aux_info['objective_value'][1]
+        essfwi_grads.append(essfwi_grad)
+        essfwi_objectives.append(essfwi_objective)
+        essfwi_shot.generate_weight_vector() #Generate new weights and reencode.
+    
+    #average the gradients and the objective values
+    
+    #initialize
+    avg_essfwi_grad = 0.0*essfwi_grad
+    avg_essfwi_objective = 0.0
+    
+    for essfwi_grad, essfwi_objective in zip(essfwi_grads, essfwi_objectives):
+        avg_essfwi_grad += 1.0/n_iter * essfwi_grad
+        avg_essfwi_objective += 1.0/n_iter * essfwi_objective
 
+    print "Sequential objective is    : %f"%sequential_objective
+    print "average ESSFWI objective is: %f"%avg_essfwi_objective    
+    
+    plt.figure(4) #The sequential shot gradient
+    plt.imshow(np.reshape(sequential_grad.data, (41,71), 'F'))
+    plt.colorbar()
+    plt.figure(5) #The ESSFWI shot gradient
+    plt.imshow(np.reshape(essfwi_grad.data, (41,71), 'F'))
+    plt.colorbar()
+    plt.figure(6) #The averaged ESSFWI shot gradient
+    plt.imshow(np.reshape(avg_essfwi_grad.data, (41,71), 'F'))
+    plt.colorbar()
+    plt.show()
+    
+    print "Also do some timing to find out where bottlenecks are in current implementation. Ideally, generating new weights and encoding should be a minor costs compared to a forward model."
+    print "Also see if I can let essfwi shot behave as list"
+
+    
     
 #
 #    # Define the inversion algorithm

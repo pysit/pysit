@@ -179,9 +179,6 @@ class SourceEncodedSupershot(Shot):
             self.weight_vector = np.random.randn(self._nshots)
     
         elif self.weight_type == "krebs":
-            print "IS THIS JUST A MULTIPLICATION BY 1 or -1, OR SOME CROSS-CORRELATION WITH A VECTOR CONTAINING ALL 1 or ALL -1 FOR EACH SOURCE?"
-            print "Krebs also say in the 'encoding' section that they normalize so that the total power is always the same. Think about this."
-            print "I think moghaddam paper discusses implementation in matrix form and weighting vector."
             self.weight_vector = 2*np.random.random_integers(0,1,self._nshots) - 1 #values that are either -1 or 1 with equal likelihood.
     
         else:
@@ -227,9 +224,7 @@ class SourceEncodedSupershot(Shot):
     @weight_vector.setter
     def weight_vector(self, vec):
         #Should be possible to select a random shot to fire (so weight vector has one single '1' location and the rest is '0'. This would implement randomized shot in an easy way.
-        
-        print "set the weight vector, create new sourceset and receiverset, so that when 'shot.sources' is called in modeling, a sourceset is returned."
-        print "The receiverset will be required for calculation of the residual for instance."
+        #See the paper "Fast waveform inversion without source-encoding" by Van Leeuwen and Herrmann, 2013, and "A new optimization approach for source-encoding full-waveform inversion" by moghaddam et al, 2013
         
         if len(vec) != self._nshots:
             raise Exception("weight vector of incorrect length supplied. This should not have happened.")
@@ -257,11 +252,11 @@ class SourceEncodedSupershot(Shot):
         
         #See if time or frequency data has been recorded by the ReceiverSets. Do this by checking one receiver set
         time_simulation = True #Initialize:
-        if type(shots[0].receivers.data) == None:
+        if shots[0].receivers.data is None:
             if shots[0].receivers.data_dft == {}:
                 raise Exception("No time or frequency data set.")
         
-            time_simulation == False
+            time_simulation = False
             
         receiver_set = copy.deepcopy(shots[0].receivers) #Initialize by copying one, then reset data.
         receiver_set.set_shot(self)
