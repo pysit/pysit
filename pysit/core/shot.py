@@ -166,8 +166,20 @@ class SourceEncodedSupershot(Shot):
         #Set the shots to 'self.sequential_shots'. This will invoke the setter, which will generate the first weight vector.
         self.weight_type = weight_type       
         self.sequential_shots = shots
-       
-    def generate_weight_vector(self): 
+
+    def generate_weight_vector(self):
+        if self.weight_type == "gaussian":
+            weight_vector = np.random.randn(self._nshots)
+    
+        elif self.weight_type == "krebs":
+            weight_vector = 2*np.random.random_integers(0,1,self._nshots) - 1 #values that are either -1 or 1 with equal likelihood.
+
+        else:
+            raise Exception("Incorrect weight type supplied.")
+
+        return weight_vector
+
+    def encode(self): 
         """ Do a new encoding.
         
         Calling this function will generate a new random vector
@@ -175,15 +187,118 @@ class SourceEncodedSupershot(Shot):
         according to these new weights.
         """
         
-        if self.weight_type == "gaussian":
-            self.weight_vector = np.random.randn(self._nshots)
-    
-        elif self.weight_type == "krebs":
-            self.weight_vector = 2*np.random.random_integers(0,1,self._nshots) - 1 #values that are either -1 or 1 with equal likelihood.
-    
+        class EncodedSourceSet(SourceSet):
+            """ A SourceSet that encodes the member sources. 
+            
+            """
+            def __init__(self, mesh, sources, time_coded=True, **kwargs):
+                """ Creates a SourceSet the normal way, but also indicates whether coding is happening on time or frequency basis. 
+                
+                """
+                
+                super(EncodedSourceSet, self).__init__(mesh, sources, **kwargs)
+                self.time_coded = time_coded
+                
+                if not time_coded:
+                    self.codes = dict() #To allow for a different code at every frequency
+            
+            def f(self, t=0.0, nu=None, **kwargs):
+                #Decorate here
+                
+                ret = None
+                if self.time_coded and nu == None: 
+                    #We already set the codes in encode(). They have not changed, so no need to reapply.
+                    ret = super(EncodedSourceSet, self ).f(t, nu, **kwargs )
+                elif not self.time_coded and nu != None:
+                    #Set the codes for this frequency. Not much of an overhead since no timestepping.
+                    #In contrast to a time simulation, the intensity (used for code) has to be set again each time frequencies are varied. Each frequency can have a different code.
+                    
+                    for source_nr in xrange(self.source_count):
+                        source = self.source_list[source_nr]
+                        source.intensity = self.codes[nu][source_nr]                        
+                        
+                    ret = super(EncodedSourceSet, self ).f(t, nu, **kwargs )
+                    
+                else:
+                    raise Exception("Something strange happened")
+        
+                return ret 
+            
+            def encode(self, codes, nu=None):
+                """ If no nu applied, code is interpreted as time code
+                
+                codes: An ndarray with length equal to the number of sources.
+                nu:    The frequency at which the codes are applied, in case of a frequency domain simulation.
+                
+                """
+                if self.time_coded and nu == None:  #Time domain.
+                    #self.codes is an ndarray or list with length equal to the number of sources
+                    self.codes = codes      
+                    
+                    #Set the codes here already. Applying them at each time step when f() is called is an overhead.
+                    
+                    for source_nr in xrange(self.source_count):
+                        source = self.source_list[source_nr]
+                        source.intensity = self.codes[source_nr]
+                        
+                elif not self.time_coded and nu != None:    #Freq domain.
+                    #self.codes is a dict. At every frequency it has an ndarray or list with length equal to the number of sources
+                    self.codes[nu] = codes   
+                else:   #Some inconsistency
+                    raise Exception("Something strange happened")
+        
+        #In the future it should be possible to select a random shot to fire (so weight vector has one single '1' location and the rest is '0'. This would implement randomized shot in an easy way.
+        #See the paper "Fast waveform inversion without source-encoding" by Van Leeuwen and Herrmann, 2013, and "A new optimization approach for source-encoding full-waveform inversion" by moghaddam et al, 2013        
+        #Even though the methods are very similar, the randomized shot allows for non-fixed-spread acquisition as well. So a different method should probably be written. 
+
+        shots = self._sequential_shots
+        
+        #Prepare the source list which will be used to make the encoded SourceSet
+        sources = []
+        for shot in shots:
+            source = copy.deepcopy(shot.sources)
+            source.set_shot(None)
+            sources.append(source)
+        
+        #Generate the encoded SourceSet. The actual encoding weights are supplied in the loop below.
+        mesh = shots[0].sources.mesh
+        enc_sourceset = EncodedSourceSet(mesh, sources, time_coded = self.is_time_simulation)
+        enc_sourceset.set_shot(self)
+        
+        #Make the encoded ReceiverSet by encoding the data in each ReceiverSet.
+        #We already verified that each ReceiverSet has the same sampling operator.
+        #Encode both SourceSets and receivers in loop
+        
+        receiver_set = copy.deepcopy(shots[0].receivers) #Initialize by copying one, then reset data.
+        receiver_set.set_shot(self)
+
+        if self.is_time_simulation:
+            receiver_set.data*=0.0 #clear time data
+            codes = self.generate_weight_vector() #generate encoding 
+            
+            #now encode and add contributions from each receiver set
+            for shot, code in zip(shots,codes.tolist()):
+                ### ENCODE RECEIVERS ###
+                receiver_set.data += code*shot.receivers.data
+                
+            enc_sourceset.encode(codes)
         else:
-            raise Exception("Incorrect weight type supplied.")
-    
+            
+            for freq in shots[0].receivers.data_dft: #Encode every frequency the same way. Perhaps I should encode each frequency differently to increase randomness?
+                receiver_set.data_dft[freq]*= 0 #clear frequency data
+                codes = self.generate_weight_vector() #generate different encoding for each frequency
+                
+                #now encode and add contributions from each receiver set
+                for shot, code in zip(shots,codes.tolist()):
+                    ### ENCODE RECEIVERS ###
+                    receiver_set.data_dft[freq] += code*shot.receivers.data_dft[freq]
+                    
+                enc_sourceset.encode(codes, nu=freq)
+                
+        #Now make the SourceSet from the list of sources:
+        self.sources = enc_sourceset
+        self.receivers = receiver_set
+
     @property
     def sequential_shots(self): return self.sequential_shots
     @sequential_shots.setter
@@ -217,70 +332,18 @@ class SourceEncodedSupershot(Shot):
         self._receiver_approximation = receiver_approximation_type
         self._nshots = len(shots)
 
-        self.generate_weight_vector() #This will generate a randomized weighting vector. When setting this vector an encoded SourceSet and ReceiverSet are created.
-
-    @property
-    def weight_vector(self): return self._weight_vector
-    @weight_vector.setter
-    def weight_vector(self, vec):
-        #Should be possible to select a random shot to fire (so weight vector has one single '1' location and the rest is '0'. This would implement randomized shot in an easy way.
-        #See the paper "Fast waveform inversion without source-encoding" by Van Leeuwen and Herrmann, 2013, and "A new optimization approach for source-encoding full-waveform inversion" by moghaddam et al, 2013
-        
-        if len(vec) != self._nshots:
-            raise Exception("weight vector of incorrect length supplied. This should not have happened.")
-
-        self._weight_vector = vec
-        
-        shots = self._sequential_shots
-        
-        #Make the encoded SourceSet
-        
-        sources = [] #This list will be filled with copies of the sequential source. These sources are PointSources as has been verified when setting the sequential shots.
-        for shot, code in zip(shots,vec.tolist()):
-            source = copy.deepcopy(shot.sources)
-            source.intensity = code
-            source.set_shot(None)
-            sources.append(source)
-
-        #Now make the SourceSet from the list of sources:
-        mesh = shots[0].sources.mesh
-        source_set = SourceSet(mesh,sources)
-        source_set.set_shot(self)
-        
-        #Make the encoded ReceiverSet by encoding the data in each ReceiverSet.
-        #We already verified that each ReceiverSet has the same sampling operator.
-        
         #See if time or frequency data has been recorded by the ReceiverSets. Do this by checking one receiver set
-        time_simulation = True #Initialize:
+        self.is_time_simulation = True #Initialize:
         if shots[0].receivers.data is None:
             if shots[0].receivers.data_dft == {}:
-                raise Exception("No time or frequency data set.")
+                raise Exception("No time or frequency data recorded yet.")
         
-            time_simulation = False
-            
-        receiver_set = copy.deepcopy(shots[0].receivers) #Initialize by copying one, then reset data.
-        receiver_set.set_shot(self)
-        
-        if time_simulation:
-            #clear time data
-            receiver_set.data*=0.0
-            
-            #now encode and add contributions from each receiver set
-            for shot, code in zip(shots,vec.tolist()):
-                receiver_set.data += code*shot.receivers.data
-            
-        else:
-            
-            for freq in shot.receivers.data_dft: #Encode every frequency the same way. Perhaps I should encode each frequency differently ?
-                #clear frequency data
-                receiver_set.data_dft[freq]*= 0
-                #now encode and add contributions from each receiver set
-                
-                for shot, code in zip(shots,vec.tolist()):
-                    receiver_set.data_dft[freq] += code*shot.receivers.data_dft[freq]
-                    
-        self.sources = source_set
-        self.receivers = receiver_set
+            self.is_time_simulation = False
+
+
+        self.encode() #This will generate a randomized weighting vector. When setting this vector an encoded SourceSet and ReceiverSet are created.
+
+
                 
 #if __name__ == '__main__':
 #

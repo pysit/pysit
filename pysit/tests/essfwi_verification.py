@@ -34,7 +34,7 @@ if __name__ == '__main__':
 
     shots = equispaced_acquisition(m,
                                    RickerWavelet(5.0),
-                                   sources=10,
+                                   sources=20,
                                    source_depth=zpos,
                                    source_kwargs={},
                                    receivers='max',
@@ -73,7 +73,7 @@ if __name__ == '__main__':
     
     essfwi_grads = []
     essfwi_objectives = []
-    n_iter = 10
+    n_iter = 20
     tt = time.time()
     for i in xrange(n_iter):
         aux_info = {'objective_value': (True, None)}
@@ -81,7 +81,9 @@ if __name__ == '__main__':
         essfwi_objective = aux_info['objective_value'][1]
         essfwi_grads.append(essfwi_grad)
         essfwi_objectives.append(essfwi_objective)
-        essfwi_shot.generate_weight_vector() #Generate new weights and reencode.
+        essfwi_shot.encode() #Generate new weights and reencode.
+    
+    print "Elapsed time for ESSFWI gradient computation is: %f"%(time.time()-tt)
     
     #Some observations.
     print "After implementing a storage for precomputed values for the Ricker Wavelet, the difference between 10 sequential FWI gradient contributions and 10 encoded simultaneous source FWI gradient contributions is only caused by the the encoding."
@@ -144,7 +146,7 @@ if __name__ == '__main__':
     
     essfwi_grads = []
     essfwi_objectives = []
-    n_iter = 10
+    n_iter = 20
     tt = time.time()
     for i in xrange(n_iter):
         aux_info = {'objective_value': (True, None)}
@@ -152,7 +154,7 @@ if __name__ == '__main__':
         essfwi_objective = aux_info['objective_value'][1]
         essfwi_grads.append(essfwi_grad)
         essfwi_objectives.append(essfwi_objective)
-        essfwi_shot.generate_weight_vector() #Generate new weights and reencode.
+        essfwi_shot.encode() #Generate new weights and reencode.
     
     #average the gradients and the objective values
     
