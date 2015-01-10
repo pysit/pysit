@@ -16,11 +16,17 @@ def positivity(x):
     """ Checks to see if an array is entirely strictly positive. """
     return np.all(x > 0)
 
-def reasonability(x, val, mode):
+def reasonability(x, val, mode, correct = False):
     """ Checks to see if an array is within a set of bounds. """
     if mode == 'high':
+        if correct:
+            x[np.where(x >= val)] = val
+
         return  np.all(x <= val)
     if mode == 'low':
+        if correct:
+            x[np.where(x <= val)] = val
+        
         return  np.all(x >= val)
 
 class ModelParameterDescription(object):
@@ -63,8 +69,8 @@ class WaveSpeed(ModelParameterDescription):
     name = 'C'
     constraints = tuple(((finite, tuple(), 'finite'),
                          (positivity, tuple(), 'positivity'),
-#                       (reasonability, (300.0, 'low'), 'lower bound'),
-#                       (reasonability, (7500.0, 'high'), 'upper bound')
+                         (reasonability, (1000.0, 'low' , True), 'lower bound'),
+                         (reasonability, (6500.0, 'high', True), 'upper bound')
                         ))
 
     @classmethod
