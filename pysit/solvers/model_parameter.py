@@ -317,7 +317,7 @@ class ModelParameterBase(object):
 
         for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
             sl=slice(idx*dof,(idx+1)*dof)
-            p.postprocess(result[sl])
+            p.postprocess(result.data[sl])
 
         return result
 
@@ -368,7 +368,7 @@ class ModelParameterBase(object):
 
         for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
             sl=slice(idx*dof,(idx+1)*dof)
-            p.postprocess(result[sl])
+            p.postprocess(result.data[sl])
 
         return result
 
@@ -412,7 +412,7 @@ class ModelParameterBase(object):
 
         for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
             sl=slice(idx*dof,(idx+1)*dof)
-            p.postprocess(result[sl])
+            p.postprocess(result.data[sl])
 
         return result
 
