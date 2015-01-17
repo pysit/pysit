@@ -392,6 +392,8 @@ class ModelParameterBase(object):
                 sl=slice(idx*dof,(idx+1)*dof)
                 arr[sl] += p.linearize(self.data[sl])-p.linearize(rhs.data[sl])
             result = self.perturbation(data=arr)
+            return result   #RETURN HERE ALREADY, BECAUSE OTHERWISE THE RESULT WILL BE POSTPROCESSED EVEN THOUGH IT IS NOT A NONLINEAR MODEL_PARAMETER, BUT A PERTURBATION WITH LINEAR DATA   
+        
         # difference with a ModelParamter is OK, but will return an array
         elif type(rhs) is np.ndarray and (rhs.shape == self.data.shape):
             dof = self.mesh.dof(include_bc=self.padded)
@@ -410,6 +412,7 @@ class ModelParameterBase(object):
                 arr[sl] += p.unlinearize(p.linearize(self.data[sl]) - rhs)
             result = self.perturbation(data=arr)
 
+        #Not sure if the other types of subtractions should have the bounds checked though...
         for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
             sl=slice(idx*dof,(idx+1)*dof)
             p.postprocess(result.data[sl])
