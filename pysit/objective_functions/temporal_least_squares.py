@@ -71,7 +71,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         return 0.5*r_norm2*self.solver.dt
 
-    def _gradient_helper(self, shot, m0, ignore_minus=False, **kwargs):
+    def _gradient_helper(self, shot, m0, ignore_minus=False, ret_pseudo_hess_diag_comp = False, **kwargs):
         """Helper function for computing the component of the gradient due to a
         single shot.
 
@@ -91,10 +91,27 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         # Perform the migration or F* operation to get the gradient component
         g = self.modeling_tools.migrate_shot(shot, m0, r, dWaveOp=dWaveOp)
 
-        if ignore_minus:
-            return g, r
+        if not ignore_minus:
+            g = -1*g
+
+        if ret_pseudo_hess_diag_comp:
+            return g, r, self._pseudo_hessian_diagonal_component_shot(dWaveOp)
         else:
-            return -1*g, r
+            return g, r
+
+    def _pseudo_hessian_diagonal_component_shot(self, dWaveOp):
+        #Shin 2001: "Improved amplitude preservation for prestack depth migration by inverse scattering theory". 
+        #Basic illumination compensation. In here we compute the diagonal.
+        #Currently only implemented for temporal modeling. Although very easy for frequency modeling as well. -> np.real(omega^4*wavefield * np.conj(wavefield)) -> np.real(dWaveOp*np.conj(dWaveOp))  
+        import time
+        tt = time.time()
+        pseudo_hessian_diag_contrib = np.zeros(dWaveOp[0].shape)
+        for i in xrange(len(dWaveOp)): #Since dWaveOp is a list I cannot use a single numpy command but I need to loop over timesteps. May have been nicer if dWaveOp had been implemented as a single large ndarray I think
+            pseudo_hessian_diag_contrib += dWaveOp[i]*dWaveOp[i]
+
+        print "Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%tt
+
+        return pseudo_hessian_diag_contrib
 
     def compute_gradient(self, shots, m0, aux_info={}, **kwargs):
         """Compute the gradient for a set of shots.
@@ -114,8 +131,14 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         # compute the portion of the gradient due to each shot
         grad = m0.perturbation()
         r_norm2 = 0.0
+        pseudo_h_diag_shot = np.zeros(m0.asarray().shape)
         for shot in shots:
-            g, r = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
+            if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
+                g, r, h = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
+                pseudo_h_diag_shot += h 
+            else:
+                g, r = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
+            
             grad -= g # handle the minus 1 in the definition of the gradient of this objective
             r_norm2 += np.linalg.norm(r)**2
 
@@ -129,6 +152,11 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             ngrad = np.zeros_like(grad.asarray())
             self.parallel_wrap_shot.comm.Allreduce(grad.asarray(), ngrad)
             grad=m0.perturbation(data=ngrad)
+            
+            if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
+                pseudo_h_diag = np.zeros(pseudo_h_diag_shot.shape)
+                self.parallel_wrap_shot.comm.Allreduce(pseudo_h_diag_shot, pseudo_h_diag)
+                pseudo_h_diag *= self.solver.dt #The gradient is implemented as a time integral in TemporalModeling.adjoint_model(). I think the pseudo Hessian (F*F in notation Shin) also represents a time integral. So multiply with dt as well to be consistent. 
 
         # account for the measure in the integral over time
         r_norm2 *= self.solver.dt
@@ -138,6 +166,8 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             aux_info['residual_norm'] = (True, np.sqrt(r_norm2))
         if ('objective_value' in aux_info) and aux_info['objective_value'][0]:
             aux_info['objective_value'] = (True, 0.5*r_norm2)
+        if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
+            aux_info['pseudo_hess_diag'] = (True, pseudo_h_diag)
 
         return grad
 
