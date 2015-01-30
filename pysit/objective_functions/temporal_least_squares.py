@@ -101,15 +101,19 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
     def _pseudo_hessian_diagonal_component_shot(self, dWaveOp):
         #Shin 2001: "Improved amplitude preservation for prestack depth migration by inverse scattering theory". 
-        #Basic illumination compensation. In here we compute the diagonal.
-        #Currently only implemented for temporal modeling. Although very easy for frequency modeling as well. -> np.real(omega^4*wavefield * np.conj(wavefield)) -> np.real(dWaveOp*np.conj(dWaveOp))  
+        #Basic illumination compensation. In here we compute the diagonal. It is not perfect, it does not include receiver coverage for instance.
+        #Currently only implemented for temporal modeling. Although very easy for frequency modeling as well. -> np.real(omega^4*wavefield * np.conj(wavefield)) -> np.real(dWaveOp*np.conj(dWaveOp))
+        
+        mesh = self.solver.mesh
+          
         import time
         tt = time.time()
-        pseudo_hessian_diag_contrib = np.zeros(dWaveOp[0].shape)
-        for i in xrange(len(dWaveOp)): #Since dWaveOp is a list I cannot use a single numpy command but I need to loop over timesteps. May have been nicer if dWaveOp had been implemented as a single large ndarray I think
-            pseudo_hessian_diag_contrib += dWaveOp[i]*dWaveOp[i]
+        pseudo_hessian_diag_contrib = np.zeros(mesh.unpad_array(dWaveOp[0], copy=True).shape)
+        for i in xrange(len(dWaveOp)):                          #Since dWaveOp is a list I cannot use a single numpy command but I need to loop over timesteps. May have been nicer if dWaveOp had been implemented as a single large ndarray I think
+            unpadded_dWaveOp_i = mesh.unpad_array(dWaveOp[i])   #This will modify dWaveOp[i] ! But that should be okay as it will not be used anymore.
+            pseudo_hessian_diag_contrib += unpadded_dWaveOp_i*unpadded_dWaveOp_i
 
-        print "Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%tt
+        print "Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%(time.time() - tt)
 
         return pseudo_hessian_diag_contrib
 
@@ -131,11 +135,11 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         # compute the portion of the gradient due to each shot
         grad = m0.perturbation()
         r_norm2 = 0.0
-        pseudo_h_diag_shot = np.zeros(m0.asarray().shape)
+        pseudo_h_diag = np.zeros(m0.asarray().shape)
         for shot in shots:
             if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
-                g, r, h = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
-                pseudo_h_diag_shot += h 
+                g, r, h = self._gradient_helper(shot, m0, ignore_minus=True, ret_pseudo_hess_diag_comp = True, **kwargs)
+                pseudo_h_diag += h 
             else:
                 g, r = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
             
@@ -154,12 +158,13 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             grad=m0.perturbation(data=ngrad)
             
             if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
-                pseudo_h_diag = np.zeros(pseudo_h_diag_shot.shape)
-                self.parallel_wrap_shot.comm.Allreduce(pseudo_h_diag_shot, pseudo_h_diag)
-                pseudo_h_diag *= self.solver.dt #The gradient is implemented as a time integral in TemporalModeling.adjoint_model(). I think the pseudo Hessian (F*F in notation Shin) also represents a time integral. So multiply with dt as well to be consistent. 
+                pseudo_h_diag_temp = np.zeros(pseudo_h_diag.shape)
+                self.parallel_wrap_shot.comm.Allreduce(pseudo_h_diag, pseudo_h_diag_temp)
+                pseudo_h_diag = pseudo_h_diag_temp 
 
         # account for the measure in the integral over time
         r_norm2 *= self.solver.dt
+        pseudo_h_diag *= self.solver.dt #The gradient is implemented as a time integral in TemporalModeling.adjoint_model(). I think the pseudo Hessian (F*F in notation Shin) also represents a time integral. So multiply with dt as well to be consistent.
 
         # store any auxiliary info that is requested
         if ('residual_norm' in aux_info) and aux_info['residual_norm'][0]:
