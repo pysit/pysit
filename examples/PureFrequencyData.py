@@ -11,8 +11,8 @@ if __name__ == '__main__':
 
     pml = PML(150, 100)
 
-    npx = 33
-    npz = 33
+    npx = 32
+    npz = 32
     dx = 30.0
     dz = 30.0
 
@@ -48,8 +48,8 @@ if __name__ == '__main__':
     Clayer1 = np.ones((16,32))*3000.0
     Clayer2 = np.ones((16,32))*4000.0
     Carray = np.append(Clayer1,Clayer2, axis=0)
-    C = np.reshape(Carray, (1024,1), 'F')
-    C0 = 3000*np.ones((1024,1))
+    C = np.reshape(Carray, (npx*npz,1), 'F')
+    C0 = 3000*np.ones((npx*npz,1))
 
     solver = ConstantDensityHelmholtz(m)
     base_model = solver.ModelParameters(m,{'C': C})
