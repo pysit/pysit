@@ -23,6 +23,12 @@ def reasonability(x, val, mode):
     if mode == 'low':
         return  np.all(x >= val)
 
+def enforce_upper_bound(x, val):
+    x[np.where(x >= val)] = val
+
+def enforce_lower_bound(x, val):
+    x[np.where(x <= val)] = val
+
 class ModelParameterDescription(object):
     """ Base class for describing a wave model.
 
@@ -39,6 +45,7 @@ class ModelParameterDescription(object):
     """
     name = None
     constraints = tuple()
+    postprocessing_steps = []       #Steps can be added
 
     @classmethod
     def linearize(cls, data):
@@ -59,6 +66,16 @@ class ModelParameterDescription(object):
 
         return True, None
 
+    @classmethod
+    def postprocess(cls, data):
+        """ This function is called after each addition, subtraction, etc. 
+            By default 'postprocessing_steps' is empty and nothing is done.
+            postprocessing_steps can be appended so that for instance
+            bounds are enforced by all objects of the specific class. """
+
+        for cfunc, cargs in cls.postprocessing_steps:
+            cfunc(data, *cargs)
+
 class WaveSpeed(ModelParameterDescription):
     name = 'C'
     constraints = tuple(((finite, tuple(), 'finite'),
@@ -73,6 +90,13 @@ class WaveSpeed(ModelParameterDescription):
     @classmethod
     def unlinearize(cls, data): return np.sqrt(1./data)
 
+    @classmethod
+    def add_upper_bound(cls, val):
+        cls.postprocessing_steps.append((enforce_upper_bound, (val,)))
+    
+    @classmethod    
+    def add_lower_bound(cls, val):
+        cls.postprocessing_steps.append((enforce_lower_bound, (val,)))        
 
 class BulkModulus(ModelParameterDescription):
     name = 'kappa'
@@ -192,6 +216,9 @@ class ModelParameterBase(object):
         # set up the accessors for the model properties
         for p,idx in zip(self.parameter_list,itertools.count()):
             self.add_property(p.name, idx)
+            sl=slice(idx*dof,(idx+1)*dof)
+            p.postprocess(self.data[sl])            
+            
 
     def perturbation(self, data=None, *args, **kwargs):
         if data is None:
@@ -288,6 +315,10 @@ class ModelParameterBase(object):
                 result.data[sl] = 0
                 result.data[sl] += p.unlinearize(rhs * p.linearize(self.data[sl]) )
 
+        for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
+            sl=slice(idx*dof,(idx+1)*dof)
+            p.postprocess(result.data[sl])
+
         return result
 
     def __rmul__(self,lhs):
@@ -335,6 +366,10 @@ class ModelParameterBase(object):
                 result.data[sl] = 0
                 result.data[sl] += p.unlinearize(rhs + p.linearize(self.data[sl]) )
 
+        for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
+            sl=slice(idx*dof,(idx+1)*dof)
+            p.postprocess(result.data[sl])
+
         return result
 
     def __radd__(self,lhs):
@@ -357,6 +392,8 @@ class ModelParameterBase(object):
                 sl=slice(idx*dof,(idx+1)*dof)
                 arr[sl] += p.linearize(self.data[sl])-p.linearize(rhs.data[sl])
             result = self.perturbation(data=arr)
+            return result   #RETURN HERE ALREADY, BECAUSE OTHERWISE THE RESULT WILL BE POSTPROCESSED EVEN THOUGH IT IS NOT A NONLINEAR MODEL_PARAMETER, BUT A PERTURBATION WITH LINEAR DATA   
+        
         # difference with a ModelParamter is OK, but will return an array
         elif type(rhs) is np.ndarray and (rhs.shape == self.data.shape):
             dof = self.mesh.dof(include_bc=self.padded)
@@ -372,8 +409,14 @@ class ModelParameterBase(object):
             for p,idx in zip(self.parameter_list, itertools.count()):
                 sl=slice(idx*dof,(idx+1)*dof)
                 arr[sl] = 0
-                arra[sl] += p.unlinearize(p.linearize(self.data[sl]) - rhs)
+                arr[sl] += p.linearize(self.data[sl]) - rhs
             result = self.perturbation(data=arr)
+            return result   #RETURN HERE ALREADY, BECAUSE OTHERWISE THE RESULT WILL BE POSTPROCESSED EVEN THOUGH IT IS NOT A NONLINEAR MODEL_PARAMETER, BUT A PERTURBATION WITH LINEAR DATA
+
+        #Not sure if the other types of subtractions should have the bounds checked though...
+        for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
+            sl=slice(idx*dof,(idx+1)*dof)
+            p.postprocess(result.data[sl])
 
         return result
 
