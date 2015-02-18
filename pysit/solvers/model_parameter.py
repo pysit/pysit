@@ -409,8 +409,9 @@ class ModelParameterBase(object):
             for p,idx in zip(self.parameter_list, itertools.count()):
                 sl=slice(idx*dof,(idx+1)*dof)
                 arr[sl] = 0
-                arr[sl] += p.unlinearize(p.linearize(self.data[sl]) - rhs)
+                arr[sl] += p.linearize(self.data[sl]) - rhs
             result = self.perturbation(data=arr)
+            return result   #RETURN HERE ALREADY, BECAUSE OTHERWISE THE RESULT WILL BE POSTPROCESSED EVEN THOUGH IT IS NOT A NONLINEAR MODEL_PARAMETER, BUT A PERTURBATION WITH LINEAR DATA
 
         #Not sure if the other types of subtractions should have the bounds checked though...
         for p,idx in zip(result.parameter_list,itertools.count()): #Postprocess. In most cases this does nothing. But it could enforce bounds if specified for instance.
