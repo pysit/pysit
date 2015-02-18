@@ -300,7 +300,7 @@ class SourceEncodedSupershot(Shot):
         self.receivers = receiver_set
 
     @property
-    def sequential_shots(self): return self.sequential_shots
+    def sequential_shots(self): return self._sequential_shots
     @sequential_shots.setter
     def sequential_shots(self, shots): 
         """ Set a list of sequential shots.
