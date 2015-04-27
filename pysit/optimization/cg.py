@@ -42,7 +42,7 @@ class ConjugateGradient(OptimizationBase):
 
         """
 
-        reset = (self.reset_length is not None) and (not np.mod(i, self.reset_length))
+        reset = (self.reset_length is not None) and (not np.mod(iteration, self.reset_length))
 
         if (self.prev_gradient is None) or reset:
             direction = -1*gradient
