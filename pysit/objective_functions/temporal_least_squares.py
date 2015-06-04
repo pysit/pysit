@@ -19,7 +19,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         self.parallel_wrap_shot = parallel_wrap_shot
 
-    def _residual(self, shot, m0, dWaveOp=None):
+    def _residual(self, shot, m0, imaging_period, dWaveOp=None):
         """Computes residual in the usual sense.
 
         Parameters
@@ -41,7 +41,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             rp.append('dWaveOp')
 
         # Run the forward modeling step
-        retval = self.modeling_tools.forward_model(shot, m0, return_parameters=rp)
+        retval = self.modeling_tools.forward_model(shot, m0, imaging_period, return_parameters=rp)
 
         # Compute the residual vector by interpolating the measured data to the
         # timesteps used in the previous forward modeling stage.
@@ -71,7 +71,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         return 0.5*r_norm2*self.solver.dt
 
-    def _gradient_helper(self, shot, m0, ignore_minus=False, ret_pseudo_hess_diag_comp = False, **kwargs):
+    def _gradient_helper(self, shot, m0, imaging_period, ignore_minus=False, ret_pseudo_hess_diag_comp = False, **kwargs):
         """Helper function for computing the component of the gradient due to a
         single shot.
 
@@ -86,20 +86,20 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         # Compute the residual vector and its norm
         dWaveOp=[]
-        r = self._residual(shot, m0, dWaveOp=dWaveOp, **kwargs)
+        r = self._residual(shot, m0, imaging_period, dWaveOp=dWaveOp, **kwargs)
 
         # Perform the migration or F* operation to get the gradient component
-        g = self.modeling_tools.migrate_shot(shot, m0, r, dWaveOp=dWaveOp)
+        g = self.modeling_tools.migrate_shot(shot, m0, r, imaging_period, dWaveOp=dWaveOp)
 
         if not ignore_minus:
             g = -1*g
 
         if ret_pseudo_hess_diag_comp:
-            return g, r, self._pseudo_hessian_diagonal_component_shot(dWaveOp)
+            return g, r, self._pseudo_hessian_diagonal_component_shot(dWaveOp, imaging_period)
         else:
             return g, r
 
-    def _pseudo_hessian_diagonal_component_shot(self, dWaveOp):
+    def _pseudo_hessian_diagonal_component_shot(self, dWaveOp, imaging_period):
         #Shin 2001: "Improved amplitude preservation for prestack depth migration by inverse scattering theory". 
         #Basic illumination compensation. In here we compute the diagonal. It is not perfect, it does not include receiver coverage for instance.
         #Currently only implemented for temporal modeling. Although very easy for frequency modeling as well. -> np.real(omega^4*wavefield * np.conj(wavefield)) -> np.real(dWaveOp*np.conj(dWaveOp))
@@ -113,11 +113,13 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             unpadded_dWaveOp_i = mesh.unpad_array(dWaveOp[i])   #This will modify dWaveOp[i] ! But that should be okay as it will not be used anymore.
             pseudo_hessian_diag_contrib += unpadded_dWaveOp_i*unpadded_dWaveOp_i
 
+        pseudo_hessian_diag_contrib *= imaging_period #Compensate for doing fewer summations at higher imaging_period
+
         print "Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%(time.time() - tt)
 
         return pseudo_hessian_diag_contrib
 
-    def compute_gradient(self, shots, m0, aux_info={}, **kwargs):
+    def compute_gradient(self, shots, m0, aux_info={}, imaging_period = 1, **kwargs):
         """Compute the gradient for a set of shots.
 
         Computes the gradient as
@@ -129,8 +131,10 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             List of Shots for which to compute the gradient.
         m0 : ModelParameters
             The base point about which to compute the gradient
-
+        imaging_period: Imaging happens every 'imaging_period' timesteps. Use higher numbers to reduce memory consumption at the cost of lower gradient accuracy.
         """
+
+        imaging_period = int(imaging_period) #Needs to be an integer
 
         # compute the portion of the gradient due to each shot
         grad = m0.perturbation()
@@ -138,10 +142,10 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         pseudo_h_diag = np.zeros(m0.asarray().shape)
         for shot in shots:
             if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
-                g, r, h = self._gradient_helper(shot, m0, ignore_minus=True, ret_pseudo_hess_diag_comp = True, **kwargs)
+                g, r, h = self._gradient_helper(shot, m0, imaging_period, ignore_minus=True, ret_pseudo_hess_diag_comp = True, **kwargs)
                 pseudo_h_diag += h 
             else:
-                g, r = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
+                g, r = self._gradient_helper(shot, m0, imaging_period, ignore_minus=True, **kwargs)
             
             grad -= g # handle the minus 1 in the definition of the gradient of this objective
             r_norm2 += np.linalg.norm(r)**2

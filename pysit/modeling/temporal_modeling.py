@@ -52,7 +52,7 @@ class TemporalModeling(object):
     def _setup_forward_rhs(self, rhs_array, data):
         return self.solver.mesh.pad_array(data, out_array=rhs_array)
 
-    def forward_model(self, shot, m0, return_parameters=[]):
+    def forward_model(self, shot, m0, imaging_period, return_parameters=[]):
         """Applies the forward model to the model for the given solver.
 
         Parameters
@@ -135,7 +135,8 @@ class TemporalModeling(object):
             # Compute time derivative of p at time k
             # Note that this is is returned as a PADDED array
             if 'dWaveOp' in return_parameters:
-                dWaveOp.append(solver.compute_dWaveOp('time', solver_data))
+                if k%imaging_period == 0: #Save every 'imaging_period' number of steps
+                    dWaveOp.append(solver.compute_dWaveOp('time', solver_data))
 
             # When k is the nth step, the next step is uneeded, so don't swap
             # any values.  This way, uk at the end is always the final step
@@ -158,7 +159,7 @@ class TemporalModeling(object):
         return retval
 
     def migrate_shot(self, shot, m0,
-                           operand_simdata, operand_dWaveOpAdj=None, operand_model=None,
+                           operand_simdata, imaging_period, operand_dWaveOpAdj=None, operand_model=None,
                            dWaveOp=None,
                            adjointfield=None, dWaveOpAdj=None):
         """Performs migration on a single shot.
@@ -178,7 +179,7 @@ class TemporalModeling(object):
 
         # If the imaging component has not already been computed, compute it.
         if dWaveOp is None:
-            retval = self.forward_model(shot, m0, return_parameters=['dWaveOp'])
+            retval = self.forward_model(shot, m0, imaging_period, return_parameters=['dWaveOp'])
             dWaveOp = retval['dWaveOp']
 
         rp = ['imaging_condition']
@@ -187,7 +188,7 @@ class TemporalModeling(object):
         if dWaveOpAdj is not None:
             rp.append('dWaveOpAdj')
 
-        rv = self.adjoint_model(shot, m0, operand_simdata, operand_dWaveOpAdj, operand_model, return_parameters=rp, dWaveOp=dWaveOp)
+        rv = self.adjoint_model(shot, m0, operand_simdata, imaging_period, operand_dWaveOpAdj, operand_model, return_parameters=rp, dWaveOp=dWaveOp)
 
         # If the adjoint field is desired as output.
         if adjointfield is not None:
@@ -212,7 +213,7 @@ class TemporalModeling(object):
 
         return rhs_array
 
-    def adjoint_model(self, shot, m0, operand_simdata, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None):
+    def adjoint_model(self, shot, m0, operand_simdata, imaging_period, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None):
         """Solves for the adjoint field.
 
         m*q_tt - lap q = resid
@@ -298,7 +299,9 @@ class TemporalModeling(object):
 
             # can maybe speed up by using only the bulk and not unpadding later
             if do_ic:
-                ic += vk*dWaveOp[k]
+                if k%imaging_period == 0: #Save every 'imaging_period' number of steps
+                    entry = k/imaging_period 
+                    ic += vk*dWaveOp[entry]
 
             if k == nsteps-1:
                 rhs_k   = self._setup_adjoint_rhs( rhs_k,   shot, k,   operand_simdata, operand_model, operand_dWaveOpAdj)
@@ -312,7 +315,8 @@ class TemporalModeling(object):
 
             # Compute time derivative of p at time k
             if 'dWaveOpAdj' in return_parameters:
-                dWaveOpAdj.append(solver.compute_dWaveOp('time', solver_data))
+                if k%imaging_period == 0: #Save every 'imaging_period' number of steps
+                    dWaveOpAdj.append(solver.compute_dWaveOp('time', solver_data))
 
             # If k is 0, we don't need results for k-1, so save computation and
             # stop early
@@ -325,6 +329,7 @@ class TemporalModeling(object):
 
         if do_ic:
             ic *= (-1*dt)
+            ic *= imaging_period #Compensate for doing fewer summations at higher imaging_period
             ic = ic.without_padding() # gradient is never padded
 
         retval = dict()
