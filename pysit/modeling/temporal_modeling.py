@@ -54,7 +54,7 @@ class TemporalModeling(object):
     def _setup_forward_rhs(self, rhs_array, data):
         return self.solver.mesh.pad_array(data, out_array=rhs_array)
 
-    def forward_model(self, shot, m0, return_parameters=[]):
+    def forward_model(self, shot, m0, imaging_period, return_parameters=[]):
         """Applies the forward model to the model for the given solver.
 
         Parameters
@@ -141,7 +141,8 @@ class TemporalModeling(object):
             # Compute time derivative of p at time k
             # Note that this is is returned as a PADDED array
             if 'dWaveOp' in return_parameters:
-                dWaveOp.append(solver.compute_dWaveOp('time', solver_data))
+                if k%imaging_period == 0:  #Save every 'imaging_period' number of steps
+                    dWaveOp.append(solver.compute_dWaveOp('time', solver_data))
 
             # When k is the nth step, the next step is uneeded, so don't swap
             # any values.  This way, uk at the end is always the final step
@@ -164,7 +165,7 @@ class TemporalModeling(object):
         return retval
 
     def migrate_shot(self, shot, m0,
-                           operand_simdata, operand_dWaveOpAdj=None, operand_model=None,
+                           operand_simdata, imaging_period, operand_dWaveOpAdj=None, operand_model=None,
                            dWaveOp=None,
                            adjointfield=None, dWaveOpAdj=None, wavefield=None):
         """Performs migration on a single shot.
@@ -184,7 +185,7 @@ class TemporalModeling(object):
 
         # If the imaging component has not already been computed, compute it.
         if dWaveOp is None:
-            retval = self.forward_model(shot, m0, return_parameters=['dWaveOp'])
+            retval = self.forward_model(shot, m0, imaging_period, return_parameters=['dWaveOp'])
             dWaveOp = retval['dWaveOp']
 
         rp = ['imaging_condition']
@@ -193,7 +194,7 @@ class TemporalModeling(object):
         if dWaveOpAdj is not None:
             rp.append('dWaveOpAdj')
 
-        rv = self.adjoint_model(shot, m0, operand_simdata, operand_dWaveOpAdj, operand_model, return_parameters=rp, dWaveOp=dWaveOp, wavefield=wavefield)
+        rv = self.adjoint_model(shot, m0, operand_simdata, imaging_period, operand_dWaveOpAdj, operand_model, return_parameters=rp, dWaveOp=dWaveOp, wavefield=wavefield)
 
         # If the adjoint field is desired as output.
         if adjointfield is not None:
@@ -218,7 +219,7 @@ class TemporalModeling(object):
 
         return rhs_array
 
-    def adjoint_model(self, shot, m0, operand_simdata, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None, wavefield=None):
+    def adjoint_model(self, shot, m0, operand_simdata, imaging_period, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None, wavefield=None):
         """Solves for the adjoint field.
 
         For constant density: m*q_tt - lap q = resid, where m = 1.0/c**2
@@ -318,12 +319,14 @@ class TemporalModeling(object):
 
             # can maybe speed up by using only the bulk and not unpadding later
             if do_ic:
+                if k%imaging_period == 0: #Save every 'imaging_period' number of steps
+                    entry = k/imaging_period 
                 # if we are dealing with variable density, we compute 2 parts to the imagaing condition seperatly. Otherwise, if it is just constant density- we compute only 1. 
-                if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
-                        ic.kappa += vk*dWaveOp[k]
+                    if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+                        ic.kappa += vk*dWaveOp[entry]
                         ic.rho += (D1[0]*uk)*(D1[1]*vk)+(D2[0]*uk)*(D2[1]*vk)
-                else:
-                    ic += vk*dWaveOp[k]
+                    else:
+                        ic += vk*dWaveOp[entry]
 
             if k == nsteps-1:
                 rhs_k   = self._setup_adjoint_rhs( rhs_k,   shot, k,   operand_simdata, operand_model, operand_dWaveOpAdj)
@@ -337,7 +340,8 @@ class TemporalModeling(object):
 
             # Compute time derivative of p at time k
             if 'dWaveOpAdj' in return_parameters:
-                dWaveOpAdj.append(solver.compute_dWaveOp('time', solver_data))
+                if k%imaging_period == 0: #Save every 'imaging_period' number of steps
+                    dWaveOpAdj.append(solver.compute_dWaveOp('time', solver_data))
 
             # If k is 0, we don't need results for k-1, so save computation and
             # stop early
@@ -350,6 +354,7 @@ class TemporalModeling(object):
 
         if do_ic:
             ic *= (-1*dt)
+            ic *= imaging_period #Compensate for doing fewer summations at higher imaging_period
             ic = ic.without_padding() # gradient is never padded
 
         retval = dict()
@@ -927,7 +932,7 @@ def adjoint_test_kappa():
     m1.kappa=1.0/v
     
 
-    fwdret = tools.forward_model(shot,  m0, ['wavefield', 'dWaveOp', 'simdata'])
+    fwdret = tools.forward_model(shot,  m0, 1,  ['wavefield', 'dWaveOp', 'simdata'])
     dWaveOp0 = fwdret['dWaveOp']
     inc_field = fwdret['wavefield']
     data = fwdret['simdata']
@@ -936,7 +941,7 @@ def adjoint_test_kappa():
     linfwdret = tools.linear_forward_model_kappa(shot, m0, m1, ['simdata'])
     lindata = linfwdret['simdata']
     
-    adjret = tools.adjoint_model(shot, m0, data, return_parameters=['imaging_condition', 'adjointfield'], dWaveOp=dWaveOp0,wavefield=inc_field)
+    adjret = tools.adjoint_model(shot, m0, data, 1,  return_parameters=['imaging_condition', 'adjointfield'], dWaveOp=dWaveOp0,wavefield=inc_field)
     
     # multiplied adjmodel by an additional m2 model.
     adjmodel = adjret['imaging_condition'].kappa
@@ -1023,7 +1028,7 @@ def adjoint_test_rho():
     m1.rho=1.0/v
     
 
-    fwdret = tools.forward_model(shot,  m0, ['wavefield', 'dWaveOp', 'simdata'])
+    fwdret = tools.forward_model(shot,  m0, 1, ['wavefield', 'dWaveOp', 'simdata'])
     dWaveOp0 = fwdret['dWaveOp']
     inc_field = fwdret['wavefield']
     data = fwdret['simdata']
@@ -1032,7 +1037,7 @@ def adjoint_test_rho():
     linfwdret = tools.linear_forward_model_rho(shot, m0, m1, ['simdata'],wavefield=inc_field)
     lindata = linfwdret['simdata']
     
-    adjret = tools.adjoint_model(shot, m0, data, return_parameters=['imaging_condition', 'adjointfield'], dWaveOp=dWaveOp0,wavefield=inc_field)
+    adjret = tools.adjoint_model(shot, m0, data, 1, return_parameters=['imaging_condition', 'adjointfield'], dWaveOp=dWaveOp0,wavefield=inc_field)
     
     # multiplied adjmodel by an additional m2 model.
     adjmodel = adjret['imaging_condition'].rho
