@@ -4,7 +4,7 @@ import numpy as np
 
 __all__ = ['ModelParameterBase', 'ModelPerturbationBase',
            'WaveSpeed', 'BulkModulus', 'Density',
-           'ConstantDensityAcousticParameters',
+           'ConstantDensityAcousticParameters', 'AcousticParameters'
            ]
 
 def finite(x):
@@ -440,7 +440,7 @@ class ModelParameterBase(object):
         return self.data.__repr__()
 
 class ModelPerturbationBase(object):
-
+    # ModelPertubation instances have the convienient property that the model of interest, (ie. C, rho, kappa, etc) can be referenced as a member variable.
     parameter_list = []
 
     # Automatically add convenience properties for the model names (C, rho, etc), not sure if this should happen as thesea re no longer the nonlinear things
@@ -761,11 +761,12 @@ class ConstantDensityAcousticParameters(ModelParameterBase):
 
         parameter_list = [WaveSpeed]
 
-#class AcousticParameters(ModelParameterBase):
-#
-#   parameter_list = [BulkModulus, Density]
-#
-#   class Perturbation(ModelPerturbationBase):
-#
-#       parameter_list = [BulkModulus, Density]
+# AcousticParameters is the standard model class for VariableDensity solvers. 
+class AcousticParameters(ModelParameterBase):
+
+   parameter_list = [BulkModulus, Density]
+
+   class Perturbation(ModelPerturbationBase):
+
+       parameter_list = [BulkModulus, Density]
 

@@ -20,7 +20,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
 
         self.parallel_wrap_shot = parallel_wrap_shot
 
-    def _residual(self, shot, m0, frequencies=None, dWaveOp=None):
+    def _residual(self, shot, m0, frequencies=None, dWaveOp=None, wavefield=None):
         """Computes residual in the usual sense.
 
         Parameters
@@ -44,7 +44,9 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
             rp = ['simdata','dWaveOp']
         else:
             rp = ['simdata']
-
+        # If we are dealing with variable density, we want the wavefield returned as well.
+        if wavefield is not None:
+            rp.append('wavefield')
         # Run the forward modeling step
         retval = self.modeling_tools.forward_model(shot, m0, frequencies, return_parameters=rp)
 
@@ -56,6 +58,9 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
         if dWaveOp is not None:
             for nu in frequencies:
                 dWaveOp[nu]  = retval['dWaveOp'][nu]
+        if wavefield is not None:
+            for nu in frequencies:
+                wavefield[nu] = retval['wavefield'][nu]
 
         return resid
 
@@ -100,12 +105,22 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
             Shot for which to compute the residual.
 
         """
-        # Compute the residual vector and its norm
+        
         dWaveOp = dict()
-        r = self._residual(shot, m0, frequencies, dWaveOp=dWaveOp)
+        
+        # If this is true, then we are dealing with variable density. In this case, we want our forward solve
+        # To also return the wavefield, because we need to take gradients of the wavefield in the adjoint model
+        # Step to calculate the gradient of our objective in terms of m2 (ie. 1/rho)
+        if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            wavefield=dict()
+        else:
+            wavefield=None
+
+        # Compute the residual vector and its norm
+        r = self._residual(shot, m0, frequencies, dWaveOp=dWaveOp, wavefield=wavefield)
 
         # Perform the migration or F* operation to get the gradient component
-        g = self.modeling_tools.migrate_shot(shot, m0, r, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp)
+        g = self.modeling_tools.migrate_shot(shot, m0, r, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp, wavefield=wavefield)
         g.toreal()
 
         if ignore_minus:
