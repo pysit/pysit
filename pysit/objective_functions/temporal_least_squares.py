@@ -110,13 +110,13 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         # Perform the migration or F* operation to get the gradient component
         g = self.modeling_tools.migrate_shot(shot, m0, r, self.imaging_period, dWaveOp=dWaveOp, wavefield=wavefield)
 
-        if ignore_minus:
-            return g, r
+        if not ignore_minus:
+            g = -1*g
 
         if ret_pseudo_hess_diag_comp:
             return g, r, self._pseudo_hessian_diagonal_component_shot(dWaveOp)
         else:
-            return -1*g, r
+            return g, r
 
     def _pseudo_hessian_diagonal_component_shot(self, dWaveOp):
         #Shin 2001: "Improved amplitude preservation for prestack depth migration by inverse scattering theory". 
