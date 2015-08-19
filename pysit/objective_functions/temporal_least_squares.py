@@ -13,11 +13,16 @@ __docformat__ = "restructuredtext en"
 class TemporalLeastSquares(ObjectiveFunctionBase):
     """ How to compute the parts of the objective you need to do optimization """
 
-    def __init__(self, solver, parallel_wrap_shot=ParallelWrapShotNull()):
+    def __init__(self, solver, parallel_wrap_shot=ParallelWrapShotNull(), imaging_period = 1):
+        """imaging_period: Imaging happens every 'imaging_period' timesteps. Use higher numbers to reduce memory consumption at the cost of lower gradient accuracy.
+            By assigning this value to the class, it will automatically be used when the gradient function of the temporal objective function is called in an inversion context.
+        """
         self.solver = solver
         self.modeling_tools = TemporalModeling(solver)
 
         self.parallel_wrap_shot = parallel_wrap_shot
+
+        self.imaging_period = int(imaging_period) #Needs to be an integer
 
     def _residual(self, shot, m0, dWaveOp=None, wavefield=None):
         """Computes residual in the usual sense.
@@ -44,7 +49,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             rp.append('wavefield')
 
         # Run the forward modeling step
-        retval = self.modeling_tools.forward_model(shot, m0, return_parameters=rp)
+        retval = self.modeling_tools.forward_model(shot, m0, self.imaging_period, return_parameters=rp)
 
         # Compute the residual vector by interpolating the measured data to the
         # timesteps used in the previous forward modeling stage.
@@ -76,7 +81,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         return 0.5*r_norm2*self.solver.dt
 
-    def _gradient_helper(self, shot, m0, ignore_minus=False, **kwargs):
+    def _gradient_helper(self, shot, m0, ignore_minus=False, ret_pseudo_hess_diag_comp = False, **kwargs):
         """Helper function for computing the component of the gradient due to a
         single shot.
 
@@ -103,12 +108,35 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         r = self._residual(shot, m0, dWaveOp=dWaveOp, wavefield=wavefield, **kwargs)
         
         # Perform the migration or F* operation to get the gradient component
-        g = self.modeling_tools.migrate_shot(shot, m0, r, dWaveOp=dWaveOp, wavefield=wavefield)
+        g = self.modeling_tools.migrate_shot(shot, m0, r, self.imaging_period, dWaveOp=dWaveOp, wavefield=wavefield)
 
         if ignore_minus:
             return g, r
+
+        if ret_pseudo_hess_diag_comp:
+            return g, r, self._pseudo_hessian_diagonal_component_shot(dWaveOp)
         else:
             return -1*g, r
+
+    def _pseudo_hessian_diagonal_component_shot(self, dWaveOp):
+        #Shin 2001: "Improved amplitude preservation for prestack depth migration by inverse scattering theory". 
+        #Basic illumination compensation. In here we compute the diagonal. It is not perfect, it does not include receiver coverage for instance.
+        #Currently only implemented for temporal modeling. Although very easy for frequency modeling as well. -> np.real(omega^4*wavefield * np.conj(wavefield)) -> np.real(dWaveOp*np.conj(dWaveOp))
+        
+        mesh = self.solver.mesh
+          
+        import time
+        tt = time.time()
+        pseudo_hessian_diag_contrib = np.zeros(mesh.unpad_array(dWaveOp[0], copy=True).shape)
+        for i in xrange(len(dWaveOp)):                          #Since dWaveOp is a list I cannot use a single numpy command but I need to loop over timesteps. May have been nicer if dWaveOp had been implemented as a single large ndarray I think
+            unpadded_dWaveOp_i = mesh.unpad_array(dWaveOp[i])   #This will modify dWaveOp[i] ! But that should be okay as it will not be used anymore.
+            pseudo_hessian_diag_contrib += unpadded_dWaveOp_i*unpadded_dWaveOp_i
+
+        pseudo_hessian_diag_contrib *= self.imaging_period #Compensate for doing fewer summations at higher imaging_period
+
+        print "Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%(time.time() - tt)
+
+        return pseudo_hessian_diag_contrib
 
     def compute_gradient(self, shots, m0, aux_info={}, **kwargs):
         """Compute the gradient for a set of shots.
@@ -122,14 +150,20 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             List of Shots for which to compute the gradient.
         m0 : ModelParameters
             The base point about which to compute the gradient
-
         """
+
 
         # compute the portion of the gradient due to each shot
         grad = m0.perturbation()
         r_norm2 = 0.0
+        pseudo_h_diag = np.zeros(m0.asarray().shape)
         for shot in shots:
-            g, r = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
+            if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
+                g, r, h = self._gradient_helper(shot, m0, ignore_minus=True, ret_pseudo_hess_diag_comp = True, **kwargs)
+                pseudo_h_diag += h 
+            else:
+                g, r = self._gradient_helper(shot, m0, ignore_minus=True, **kwargs)
+            
             grad -= g # handle the minus 1 in the definition of the gradient of this objective
             r_norm2 += np.linalg.norm(r)**2
 
@@ -143,15 +177,23 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
             ngrad = np.zeros_like(grad.asarray())
             self.parallel_wrap_shot.comm.Allreduce(grad.asarray(), ngrad)
             grad=m0.perturbation(data=ngrad)
+            
+            if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
+                pseudo_h_diag_temp = np.zeros(pseudo_h_diag.shape)
+                self.parallel_wrap_shot.comm.Allreduce(pseudo_h_diag, pseudo_h_diag_temp)
+                pseudo_h_diag = pseudo_h_diag_temp 
 
         # account for the measure in the integral over time
         r_norm2 *= self.solver.dt
+        pseudo_h_diag *= self.solver.dt #The gradient is implemented as a time integral in TemporalModeling.adjoint_model(). I think the pseudo Hessian (F*F in notation Shin) also represents a time integral. So multiply with dt as well to be consistent.
 
         # store any auxiliary info that is requested
         if ('residual_norm' in aux_info) and aux_info['residual_norm'][0]:
             aux_info['residual_norm'] = (True, np.sqrt(r_norm2))
         if ('objective_value' in aux_info) and aux_info['objective_value'][0]:
             aux_info['objective_value'] = (True, 0.5*r_norm2)
+        if ('pseudo_hess_diag' in aux_info) and aux_info['pseudo_hess_diag'][0]:
+            aux_info['pseudo_hess_diag'] = (True, pseudo_h_diag)
 
         return grad
 
