@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.sparse as spsp
+import os
 
 from pysit.solvers.wavefield_vector import *
 from constant_density_acoustic_time_scalar_base import *
@@ -15,10 +16,13 @@ from constant_density_acoustic_time_scalar_cpp import (
     constant_density_acoustic_time_scalar_1D_2os,
     constant_density_acoustic_time_scalar_1D_4os,
     constant_density_acoustic_time_scalar_1D_6os,
-    constant_density_acoustic_time_scalar_1D_8os)
+    constant_density_acoustic_time_scalar_1D_8os,
+    constant_density_acoustic_time_scalar_1D_4omp,
+    constant_density_acoustic_time_scalar_1D_6omp)
 
 __all__ = ['ConstantDensityAcousticTimeScalar_1D_numpy',
-           'ConstantDensityAcousticTimeScalar_1D_cpp']
+           'ConstantDensityAcousticTimeScalar_1D_cpp',
+           'ConstantDensityAcousticTimeScalar_1D_omp']
 
 __docformat__ = "restructuredtext en"
 
@@ -138,6 +142,47 @@ class ConstantDensityAcousticTimeScalar_1D_cpp(ConstantDensityAcousticTimeScalar
         nz = self.mesh.dof(include_bc=True)
 
         self._cpp_funcs[self.spatial_accuracy_order](solver_data.km1.u,
+                                                     solver_data.k.Phiz,
+                                                     solver_data.k.u,
+                                                     self.model_parameters.C,
+                                                     rhs_k,
+                                                     lpmlz, rpmlz,
+                                                     self.dt,
+                                                     self.mesh.z.delta,
+                                                     nz,
+                                                     solver_data.kp1.Phiz,
+                                                     solver_data.kp1.u)
+
+
+@inherit_dict('supports', '_local_support_spec')
+class ConstantDensityAcousticTimeScalar_1D_omp(ConstantDensityAcousticTimeScalar_1D):
+
+    _local_support_spec = {'kernel_implementation': 'omp',
+                           'spatial_accuracy_order': [4, 6],
+                           'precision': ['single', 'double']}
+
+    _omp_funcs = {4: constant_density_acoustic_time_scalar_1D_4omp,
+                  6: constant_density_acoustic_time_scalar_1D_6omp}
+
+    def time_step(self, solver_data, rhs_k, rhs_kp1):
+
+        lpmlz = self.mesh.z.lbc.sigma if self.mesh.z.lbc.type is 'pml' else np.array([])
+        rpmlz = self.mesh.z.rbc.sigma if self.mesh.z.rbc.type is 'pml' else np.array([])
+        nz = self.mesh.dof(include_bc=True)
+
+        try:
+          a = int(os.environ["OMP_NUM_THREADS"])
+        except ValueError:
+          raise ValueError('The enviroment variable \"OMP_NUM_THREADS\" has no integer\
+                            set the value and relaunch your script')
+        except KeyError:
+          raise KeyError('The enviroment variable \"OMP_NUM_THREADS\" is not defined\
+                          assign a value and relaunch your script')
+        except:
+          raise ImportError('The enviroment variable \"OMP_NUM_THREADS\" is unreadable\
+                             please assign it an integer value')
+
+        self._omp_funcs[self.spatial_accuracy_order](solver_data.km1.u,
                                                      solver_data.k.Phiz,
                                                      solver_data.k.u,
                                                      self.model_parameters.C,

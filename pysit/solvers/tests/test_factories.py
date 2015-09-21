@@ -66,6 +66,19 @@ class TestConstantDensityAcousticWaveFactory(object):
                                              kernel_implementation='cpp'))
         assert T == ConstantDensityAcousticTimeScalar_3D_cpp
 
+        T = type(ConstantDensityAcousticWave(self.m1,
+                                             kernel_implementation='omp'))
+        assert T == ConstantDensityAcousticTimeScalar_1D_cpp
+
+        T = type(ConstantDensityAcousticWave(self.m2,
+                                             kernel_implementation='omp'))
+        assert T == ConstantDensityAcousticTimeScalar_2D_cpp
+
+        T = type(ConstantDensityAcousticWave(self.m3,
+                                             kernel_implementation='omp'))
+        assert T == ConstantDensityAcousticTimeScalar_3D_cpp
+
+
         with pytest.raises(NoMatchError):
             T = type(ConstantDensityAcousticWave(self.m1,
                                                  equation_formulation='ode',

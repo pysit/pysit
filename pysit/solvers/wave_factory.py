@@ -5,10 +5,14 @@ from .constant_density_acoustic import(ConstantDensityAcousticTimeODE_1D,
                                        ConstantDensityAcousticTimeODE_3D,
                                        ConstantDensityAcousticTimeScalar_1D_numpy,
                                        ConstantDensityAcousticTimeScalar_1D_cpp,
+                                       ConstantDensityAcousticTimeScalar_1D_omp,
                                        ConstantDensityAcousticTimeScalar_2D_numpy,
                                        ConstantDensityAcousticTimeScalar_2D_cpp,
+                                       ConstantDensityAcousticTimeScalar_2D_omp,
                                        ConstantDensityAcousticTimeScalar_3D_numpy,
-                                       ConstantDensityAcousticTimeScalar_3D_cpp)
+                                       ConstantDensityAcousticTimeScalar_3D_cpp,
+                                       ConstantDensityAcousticTimeScalar_3D_omp)
+
 from .variable_density_acoustic import(VariableDensityAcousticTimeODE_1D,
                                        VariableDensityAcousticTimeODE_2D,
                                        VariableDensityAcousticTimeODE_3D,
@@ -44,10 +48,13 @@ VariableDensityAcousticWave = VariableDensityAcousticWaveFactory()
 # Constant Density Register:
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_numpy)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_1D_omp)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_numpy)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_2D_omp)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_numpy)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_cpp)
+ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeScalar_3D_omp)
 
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_1D)
 ConstantDensityAcousticWave.register(ConstantDensityAcousticTimeODE_2D)

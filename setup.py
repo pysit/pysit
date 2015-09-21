@@ -42,8 +42,10 @@ import os, os.path
 # This makes adding C from deep in the package trivial.  No more nested setup.py.
 extension_config = {'pysit.solvers.constant_density_acoustic.time.scalar._constant_density_acoustic_time_scalar_cpp' :
                           { 'sources' : [os.path.join(os.path.dirname(__file__), 'pysit','solvers','constant_density_acoustic','time','scalar','solvers_wrap.cxx')],
-                            'extra_compile_args' :  ["-O3"],
-                            'include_dirs' : [np.get_include(), os.path.join(os.path.dirname(__file__), 'pysit','solvers','fd_tools')]
+                            'extra_compile_args' :  ["-O3","-fopenmp","-ffast-math"],
+                            'include_dirs' : [np.get_include(), os.path.join(os.path.dirname(__file__), 'pysit','solvers','fd_tools')],
+                            'libraries' :  ['gomp'],
+                            'library_dirs' : ['/usr/lib64']
                           },
                    }
 
