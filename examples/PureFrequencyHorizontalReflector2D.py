@@ -1,9 +1,9 @@
 # Std import block
 import time
-import os
 
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 from pysit import *
 from pysit.gallery import horizontal_reflector
@@ -11,9 +11,7 @@ from pysit.gallery import horizontal_reflector
 if __name__ == '__main__':
     # Setup
     hybrid=False
-    # enable Open MP multithread solver
     os.environ["OMP_NUM_THREADS"] = "4"
-    
     #   Define Domain
     pmlx = PML(0.1, 100)
     pmlz = PML(0.1, 100)
@@ -23,7 +21,7 @@ if __name__ == '__main__':
 
     d = RectangularDomain(x_config, z_config)
 
-    m = CartesianMesh(d, 91, 71)
+    m = CartesianMesh(d, 100, 100)
 
     #   Generate true wave speed
     C, C0, m, d = horizontal_reflector(m)
@@ -46,15 +44,20 @@ if __name__ == '__main__':
     # Define and configure the wave solver
     trange = (0.0,3.0)
 
-    solver_time = ConstantDensityAcousticWave(m,
-                                              spatial_accuracy_order=6,
-                                              kernel_implementation='omp',
-                                              trange=trange)
+    # solver_time = ConstantDensityAcousticWave(m,
+    #                                           spatial_accuracy_order=6,
+    #                                           kernel_implementation='omp',
+    #                                           trange=trange)
+    
+    solver = ConstantDensityHelmholtz(m)
+    frequencies = [2.0, 3.5, 5.0]
+
     # Generate synthetic Seismic data
     print('Generating data...')
-    base_model = solver_time.ModelParameters(m,{'C': C})
+    base_model = solver.ModelParameters(m,{'C': C})
     tt = time.time()
-    generate_seismic_data(shots, solver_time, base_model)
+    generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mumps')
+    # generate_seismic_data_from_file(shots,save_method='h5py')
     print 'Data generation: {0}s'.format(time.time()-tt)
 
     # Define and configure the objective function
@@ -88,14 +91,14 @@ if __name__ == '__main__':
                             'run_time_frequency'        : 1,
                             'alpha_frequency'           : 1,
                             }
-    invalg.max_linesearch_iterations=40
+    invalg.max_linesearch_iterations=18
 
-    loop_configuration=[(60,{'frequencies' : [2.0, 3.5, 5.0]}), (15,{'frequencies' : [6.5, 8.0, 9.5]})] #3 steps at one set of frequencies and 3 at another set
 
-    loop_configuration=[(2,{'frequencies' : [2.0, 3.5, 5.0]})]
+    loop_configuration=[(14,{'frequencies' : [2.0, 3.5, 5.0]})]
 
-    result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration)
-
+    
+    result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mumps')
+    # result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration)
     print '...run time:  {0}s'.format(time.time()-tt)
 
     obj_vals = np.array([v for k,v in invalg.objective_history.items()])

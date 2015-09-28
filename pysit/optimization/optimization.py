@@ -339,10 +339,14 @@ class OptimizationBase(object):
             aux_info = {'objective_value': (True, None),
                         'residual_norm': (True, None)}
 
-            # Compute the gradient
+
+            # pass information for the solver type
+            objective_arguments.update(kwargs)
+
+            # Compute the gradient    
             gradient = self.objective_function.compute_gradient(shots, self.base_model, aux_info=aux_info, **objective_arguments)
             objective_value = aux_info['objective_value'][1]
-
+            
             # Process and store meta data about the gradient
             self.store_history('gradient', i, gradient)
             gradient_norm = gradient.norm()
@@ -449,7 +453,6 @@ class OptimizationBase(object):
         goldstein_c = 1e-3 #1e-4
 
         fp_comp = 1e-6
-
         if current_objective_value is None:
             fk = self.objective_function.evaluate(shots, self.base_model, **objective_arguments)
         else:
@@ -465,7 +468,6 @@ class OptimizationBase(object):
         itercnt = 1
         self._print("  Starting: ".format(itercnt), alpha, fk)
         while not stop:
-
             # Cut the initial alpha until it is as large as can be and still satisfy the valid conditions for an updated model.
             valid=False
             alpha *= 2

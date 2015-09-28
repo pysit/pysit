@@ -1,9 +1,12 @@
 from __future__ import absolute_import
 
 import itertools
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
+import sys
+
 import numpy as np
 from numpy.random import uniform
+
+from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
 
 __all__ = ['FrequencyModeling']
 
@@ -119,6 +122,118 @@ class FrequencyModeling(object):
 
         return retval
 
+    def forward_model_list(self, shot_list, m0, frequencies, return_parameters=[], **kwargs):
+        """Applies the forward model to the model for the given solver and severals shots
+
+        Parameters
+        ----------
+        shot_list : list of pysit.Shot
+            Gives the source signal approximation for the right hand side.
+        frequencies : list of 2-tuples
+            2-tuple, first element is the frequency to use, second element the weight.
+        return_parameters : list of {'wavefield', 'simdata', 'simdata_time', 'dWaveOp'}
+
+        Returns
+        -------
+        retval : dict
+            Dictionary whose keys are return_parameters that contains the specified data.
+
+        Notes
+        -----
+        * u is used as the target field universally.  It could be velocity potential, it could be displacement, it could be pressure.
+        * uhat is used to generically refer to the DFT of u that is needed to compute the imaging condition.
+
+        """
+
+        # importing the Petsc libraries for the multiple rhs solve
+        try:
+            import petsc4py
+            petsc4py.init(sys.argv)
+            from petsc4py import PETSc
+            from pysit.util.wrappers.petsc import PetscWrapper
+        except ImportError:
+            raise ImportError('petsc4py is not installed, please install it and try again')
+
+        # Local references
+        solver = self.solver
+        solver.model_parameters = m0 # this updates dt and the number of steps so that is appropriate for the current model
+
+        mesh = solver.mesh
+
+        d = solver.domain
+
+        # Sanitize the input
+        if not np.iterable(frequencies):
+            frequencies = [frequencies]
+
+        # Setup data storage for the forward modeled data
+        if 'simdata' in return_parameters:
+            Simdata = dict()
+
+        # Storage for the derivative of the propagation operator with respect to the model \frac{d\script{L}}{dm}
+        if 'dWaveOp' in return_parameters:
+            DWaveOp = dict()
+
+        # Initialize the DFT components
+        # Uhats is a dictionnary of dictionnary
+        Uhats = dict()
+
+
+        # Step k = 0
+        # p_0 is a zero array because if we assume the input signal is causal
+        # and we assume that the initial system (i.e., p_(-2) and p_(-1)) is
+        # uniformly zero, then the leapfrog scheme would compute that p_0 = 0 as
+        # well. ukm1 is needed to compute the temporal derivative.
+
+        solver_data_list = list()
+        for i in xrange(len(shot_list)):
+            solver_data = solver.SolverData()
+            solver_data_list.append(solver_data)
+            Uhats[i] = dict()
+            if 'simdata' in return_parameters:
+                Simdata[i] = dict()
+
+            if 'dWaveOp' in return_parameters:
+                DWaveOp[i] = dict()
+        
+        rhs_list = list()
+        
+        for nu in frequencies:
+            del rhs_list[:]
+            rhs = solver.WavefieldVector(mesh,dtype=solver.dtype)
+            for i in xrange(len(shot_list)):
+                source = shot_list[i].sources                
+                rhs = solver.build_rhs(mesh.pad_array(source.f(nu=nu)), rhs_wavefieldvector=rhs)
+                rhs_list.append(rhs.data.copy())
+
+            result = solver.solve_petsc(solver_data_list , rhs_list, nu, **kwargs)
+
+            for i in xrange(len(shot_list)):
+
+                uhat = solver_data_list[i].k.primary_wavefield
+                # Save the unpadded wavefield
+                if 'wavefield' in return_parameters:
+                    Uhats[i][nu] = mesh.unpad_array(uhat, copy=True)
+
+                # Record the data at t_k
+                if 'simdata' in return_parameters:
+                    Simdata[i][nu] = shot_list[i].receivers.sample_data_from_array(mesh.unpad_array(uhat))
+
+                # Save the derivative
+                if 'dWaveOp' in return_parameters:
+                    DWaveOp[i][nu] = solver.compute_dWaveOp('frequency', uhat, nu)
+
+        retval = dict()
+
+        if 'dWaveOp' in return_parameters:
+            retval['dWaveOp'] = DWaveOp
+        if 'simdata' in return_parameters:
+            retval['simdata'] = Simdata
+        if 'wavefield' in return_parameters:
+            retval['wavefield'] = Uhats
+
+        return retval
+
     def migrate_shot(self, shot, m0, operand_simdata, frequencies,
                            operand_dWaveOpAdj=None, operand_model=None,
                            frequency_weights=None,
@@ -129,6 +244,59 @@ class FrequencyModeling(object):
         Parameters
         ----------
         shot : pysit.Shot
+            List of shot for which to compute migration.
+        operand_simdata : ndarray
+            Operand, i.e., b in F*b. This data is in TIME to properly compute the adjoint.
+        frequencies : list of 2-tuples
+            2-tuple, first element is the frequency to use, second element the weight.
+        utt : list
+            Imaging condition components from the forward model for each receiver in the shot.
+        qs : list
+            Optional return list allowing us to retrieve the adjoint field as desired.
+
+        """
+
+        # If the imaging component has not already been computed, compute it.
+        prep_rp = list()
+        if dWaveOp is None:
+            prep_rp.append('dWaveOp')
+            dWaveOp = dict()
+
+        if len(prep_rp) > 0:
+            retval = self.forward_model_list(shots_list, m0, frequencies, return_parameters=prep_rp)
+            if 'dWaveOp' in prep_rp:
+                dWaveOp = retval['dWaveOp']
+
+        rp = ['imaging_condition']
+        if adjointfield is not None:
+            rp.append('adjointfield')
+        if dWaveOpAdj is not None:
+            rp.append('dWaveOpAdj')
+
+        rv = self.adjoint_model(shot, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp)
+
+        # If the adjoint field is desired as output.
+        for nu in frequencies:
+            if adjointfield is not None:
+                adjointfield[nu] = rv['adjointfield'][nu]
+            if dWaveOpAdj is not None:
+                dWaveOpAdj[nu] = rv['dWaveOpAdj'][nu]
+
+        # Get the imaging condition part from the result, this is the migrated image.
+        ic = rv['imaging_condition']
+
+        return ic
+
+    def migrate_shot_list(self, shots_list, m0, operand_simdata, frequencies,
+                           operand_dWaveOpAdj=None, operand_model=None,
+                           frequency_weights=None,
+                           dWaveOp=None,
+                           adjointfield=None, dWaveOpAdj=None, **kwargs):
+        """Performs migration a list of shot shot.
+
+        Parameters
+        ----------
+        shots_list : list of pysit.Shot
             Shot for which to compute migration.
         operand_simdata : ndarray
             Operand, i.e., b in F*b. This data is in TIME to properly compute the adjoint.
@@ -147,9 +315,8 @@ class FrequencyModeling(object):
             prep_rp.append('dWaveOp')
             dWaveOp = dict()
 
-
         if len(prep_rp) > 0:
-            retval = self.forward_model(shot, m0, frequencies, return_parameters=prep_rp)
+            retval = self.forward_model_list(shots_list, m0, frequencies, return_parameters=prep_rp)
             if 'dWaveOp' in prep_rp:
                 dWaveOp = retval['dWaveOp']
 
@@ -159,7 +326,7 @@ class FrequencyModeling(object):
         if dWaveOpAdj is not None:
             rp.append('dWaveOpAdj')
 
-        rv = self.adjoint_model(shot, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp, wavefield=wavefield)
+        rv = self.adjoint_model(shot, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp)
 
         # If the adjoint field is desired as output.
         for nu in frequencies:
@@ -172,6 +339,7 @@ class FrequencyModeling(object):
         ic = rv['imaging_condition']
 
         return ic
+
 
     def adjoint_model(self, shot, m0,
                            operand_simdata, frequencies,
@@ -318,6 +486,145 @@ class FrequencyModeling(object):
             retval['imaging_condition'] = ic.without_padding()
 
         return retval
+
+    def adjoint_model_list(self, shots_list, m0,
+                           operand_simdata, frequencies,
+                           operand_dWaveOpAdj=None, operand_model=None,
+                           frequency_weights=None,
+                           return_parameters=[],
+                           dWaveOp=None, **kwargs):
+        """Solves for the adjoint field in frequency.
+
+        m*q_tt - lap q = resid
+
+        Parameters
+        ----------
+        shot : pysit.Shot
+            Gives the receiver model for the right hand side.
+        operand : ndarray
+            Right hand side, usually the residual.
+        frequencies : list of 2-tuples
+            2-tuple, first element is the frequency to use, second element the weight.
+        return_parameters : list of {'q', 'qhat', 'ic'}
+        dWaveOp : ndarray
+            Imaging component from the forward model (in frequency).
+
+        Returns
+        -------
+        retval : dict
+            Dictionary whose keys are return_parameters that contains the specified data.
+
+        Notes
+        -----
+        * q is the adjoint field.
+        * qhat is the DFT of oq at the specified frequencies
+        * ic is the imaging component.  Because this function computes many of
+        the things required to compute the imaging condition, there is an option
+        to compute the imaging condition as we go.  This should be used to save
+        computational effort.  If the imaging condition is to be computed, the
+        optional argument utt must be present.
+
+        """
+        
+        # Sanitize the input
+        if not np.iterable(frequencies):
+            frequencies = [frequencies]
+
+        # Local references
+        solver = self.solver
+        solver.model_parameters = m0
+
+        mesh = solver.mesh
+
+        d = solver.domain
+
+        # Sanitize the input
+        if not np.iterable(frequencies):
+            frequencies = [frequencies]
+
+        Qhats = dict()
+
+        if 'dWaveOpAdj' in return_parameters:
+            DWaveOpAdj = dict()
+
+        # If we are computing the imaging condition, ensure that all of the parts are there.
+        if dWaveOp is None and 'imaging_condition' in return_parameters:
+            raise ValueError('To compute imaging condition, forward component must be specified.')
+
+        if 'imaging_condition' in return_parameters:
+            Ic = dict()
+
+            if frequency_weights is None:
+                frequency_weights = itertools.repeat(1.0)
+
+            freq_weights = {nu: weight for nu,weight in zip(frequencies,frequency_weights)}
+
+
+        solver_data_list = list()
+        #initialisation for the muliple rhs resolution
+        for i in xrange(len(shots_list)):
+            solver_data = solver.SolverData()
+            solver_data_list.append(solver_data)
+            Qhats[i] = dict()
+            if 'imaging_condition' in return_parameters:
+                Ic[i] = solver.model_parameters.perturbation(dtype=np.complex)
+
+            if 'dWaveOpAdj' in return_parameters:
+                DWaveOpAdj[i] = dict()
+
+        rhs_list = list()
+        if operand_model is not None:
+            operand_model = operand_model.with_padding()
+
+        for nu in frequencies:
+            del rhs_list[:]            
+            for i in xrange(len(shots_list)):
+                rhs = solver.WavefieldVector(mesh,dtype=solver.dtype)
+                rhs_ = mesh.pad_array(shots_list[i].receivers.extend_data_to_array(data=operand_simdata[i][nu]))
+                if (operand_dWaveOpAdj is not None) and (operand_model is not None):
+                    dWaveOpAdj_nu = operand_dWaveOpAdj[nu]
+                    rhs_ += reshape(operand_model*dWaveOpAdj_nu.reshape(operand_model.shape), rhs_.shape) # for secondary adjoint equation
+
+                rhs = solver.build_rhs(rhs_, rhs_wavefieldvector=rhs)
+                np.conj(rhs.data, rhs.data)
+                rhs_list.append(rhs.data.copy())
+
+            result = solver.solve_petsc(solver_data_list, rhs_list, nu, **kwargs)
+
+
+            for i in xrange(len(shots_list)):
+
+                vhat = solver_data_list[i].k.primary_wavefield
+                qhat = np.conj(vhat, vhat)
+                if 'adjointfield' in return_parameters:
+                    Qhats[i][nu] = mesh.unpad_array(qhat, copy=True)
+                if 'dWaveOpAdj' in return_parameters:
+                    DWaveOpAdj[i][nu] = solver.compute_dWaveOp('frequency', qhat,nu)
+                if 'imaging_condition' in return_parameters:
+                    weight = freq_weights[nu]
+                    Ic[i] -= weight*qhat*np.conj(dWaveOp[i][nu]) # note, no dnu here because the nus are not generally the complete set, so dnu makes little sense, otherwise dnu = 1./(nsteps*dt)
+            
+            
+
+            # If the imaging component needs to be computed, do it            
+
+        retval = dict()
+
+        if 'adjointfield' in return_parameters:
+            retval['adjointfield'] = Qhats
+
+        if 'dWaveOpAdj' in return_parameters:
+            retval['dWaveOpAdj'] = DWaveOpAdj
+
+        for i in xrange(len(Ic)):
+            Ic[i] = Ic[i].without_padding()
+        
+        # If the imaging component needs to be computed, do it
+        if 'imaging_condition' in return_parameters:
+            retval['imaging_condition'] = Ic
+
+        return retval
+
 
     def linear_forward_model(self, shot, m0, m1, frequencies, return_parameters=[], dWaveOp0=None):
         """Applies the forward model to the model for the given solver.

@@ -1,4 +1,5 @@
 import numpy as np
+import sys
 
 from constant_density_acoustic_frequency_base import *
 from pysit.solvers.solver_data import SolverDataFrequencyBase
@@ -26,7 +27,6 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
         ConstantDensityAcousticFrequencyBase.__init__(self, mesh, **kwargs)
 
     def solve(self, solver_data, rhs, nu, *args, **kwargs):
-
         if type(rhs) is self.WavefieldVector:
             _rhs = rhs.data.reshape(-1)
         else:
@@ -36,6 +36,93 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
         u.shape = solver_data.k.data.shape
 
         solver_data.k.data = u
+
+    def solve_petsc(self, solver_data_list, rhs_list, nu, *args, **kwargs ):
+        #try catch for the petsc4py use in multiple rhs solve
+        try:
+            import petsc4py
+            petsc4py.init(sys.argv)
+            from petsc4py import PETSc
+            from pysit.util.wrappers.petsc import PetscWrapper
+
+        except ImportError:
+            raise ImportError('petsc4py is not installed, please install it and try again')
+
+
+        petsc = kwargs['petsc']
+        if petsc is not None:
+            if len(solver_data_list) != len(rhs_list):
+                raise ValueError('solver and right hand side list must be the same size')
+            else:
+                #Building the Helmholtz operator for petsc
+                H = self._build_helmholtz_operator(nu).tocsr()
+                ndof = H.shape[1]
+                nshot = len(rhs_list)
+
+                # creating the B rhs Matrix            
+                B = PETSc.Mat().createDense([ndof, nshot])
+                B.setUp()
+                for i in range(nshot):
+                    B.setValues(range(0, ndof), [i], rhs_list[i])
+
+                B.assemblyBegin()
+                B.assemblyEnd()
+
+                # call the wrapper to solve the system
+                wrapper = PetscWrapper()
+                try:
+                    linear_solver = wrapper.factorize(H, petsc, PETSc.COMM_WORLD)
+                    Uhat = linear_solver(B.getDenseArray())
+                except:
+                    raise SyntaxError('petsc = '+str(petsc)+' is not a correct solver you can only use \'superlu_dist\', \'mumps\' or \'mkl_pardiso\' ')
+                
+
+                numb = 0
+                for solver_data in solver_data_list:
+                    u = Uhat[:,numb]
+                    u.shape = solver_data.k.data.shape
+                    solver_data.k.data = u
+                    numb += 1
+
+    def solve_petsc_uhat(self, solver, rhs_list, frequency, petsc='mkl_pardiso', *args, **kwargs):
+        #try catch for the petsc4py use in multiple rhs solve
+        try:
+            import petsc4py
+            petsc4py.init(sys.argv)
+            from petsc4py import PETSc
+            from pysit.util.wrappers.petsc import PetscWrapper
+        except ImportError:
+            raise ImportError('petsc4py is not installed, please install it and try again')
+
+        #Building the Helmholtz operator for petsc
+        H = self._build_helmholtz_operator(frequency)
+        
+        ndof = H.shape[1]
+        nshot = len(rhs_list)
+        nwfield = len(self.WavefieldVector.aux_names) + 1
+        usize = ndof/nwfield
+
+        # creating the B rhs Matrix
+        B = PETSc.Mat().createDense([ndof, nshot])
+        B.setUp()
+        for i in range(nshot):
+            B.setValues(range(0, ndof), [i], rhs_list[i])
+
+        B.assemblyBegin()
+        B.assemblyEnd()
+
+        # call the wrapper to solve the system
+        wrapper = PetscWrapper()
+        try:
+            linear_solver = wrapper.factorize(H, petsc, PETSc.COMM_WORLD)
+            Uhat = linear_solver(B.getDenseArray())
+        except:
+            raise SyntaxError('petsc = '+str(petsc)+' is not a correct solver you can only use \'superlu_dist\', \'mumps\' or \'mkl_pardiso\' ')               
+        
+        Uhat = Uhat[xrange(usize),:]
+
+        return Uhat
+
 
     def build_rhs(self, fhat, rhs_wavefieldvector=None):
 
