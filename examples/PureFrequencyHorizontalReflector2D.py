@@ -12,9 +12,14 @@ if __name__ == '__main__':
     # Setup
     hybrid=False
     os.environ["OMP_NUM_THREADS"] = "4"
+    
     #   Define Domain
-    pmlx = PML(0.1, 100)
-    pmlz = PML(0.1, 100)
+    # PML with auxilary fields
+    # pmlx = PML(0.1, 100)
+    # pmlz = PML(0.1, 100)
+    # PML without auxilary fields
+    pmlx = PML(0.1, 100,compact=True)
+    pmlz = PML(0.1, 100,compact=True)
 
     x_config = (0.1, 1.0, pmlx, pmlx)
     z_config = (0.1, 0.8, pmlz, pmlz)
@@ -33,7 +38,7 @@ if __name__ == '__main__':
 
     shots = equispaced_acquisition(m,
                                    RickerWavelet(10.0),
-                                   sources=1,
+                                   sources=4,
                                    source_depth=zpos,
                                    source_kwargs={},
                                    receivers='max',
@@ -94,7 +99,7 @@ if __name__ == '__main__':
     invalg.max_linesearch_iterations=18
 
 
-    loop_configuration=[(14,{'frequencies' : [2.0, 3.5, 5.0]})]
+    loop_configuration=[(4,{'frequencies' : [2.0, 3.5, 5.0]})]
 
     
     result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mumps')

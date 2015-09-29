@@ -1,4 +1,6 @@
 import numpy as np
+import warnings
+
 
 __all__ = ['WavefieldVectorBase']
 
@@ -9,7 +11,21 @@ class WavefieldVectorBase(object):
     def __init__(self, mesh, dtype=np.double, data=None):
 
         self.mesh = mesh
-        self.n_aux = len(self.aux_names)
+        #these if statements manage the compact operator flag
+        if self.mesh.z.lbc.type == 'pml':
+            if self.mesh.z.lbc.domain_bc.compact:
+                if self.mesh.dim==1:
+                    self.n_aux = len(self.aux_names)
+                    warnings.warn("Helmholtz compact operator is not implemented in 1D you are using auxiliary fields")
+                elif self.mesh.x.lbc.domain_bc.compact:
+                    self.n_aux = 0
+                else:
+                    raise ValueError('All PML boundary condition should be compact')
+            else:
+                self.n_aux = len(self.aux_names)                
+
+        else:
+            self.n_aux = len(self.aux_names)
         self.n_fields = 1 + self.n_aux
         self.dof = mesh.dof(include_bc=True)
         self.data_shape = (self.dof*(1+self.n_aux), 1)

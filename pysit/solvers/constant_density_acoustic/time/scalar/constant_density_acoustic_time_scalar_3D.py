@@ -44,6 +44,9 @@ class ConstantDensityAcousticTimeScalar_3D(ConstantDensityAcousticTimeScalarBase
                                                        mesh,
                                                        spatial_accuracy_order=spatial_accuracy_order,
                                                        **kwargs)
+        if self.mesh.x.lbc.type == 'pml':
+          if self.mesh.x.lbc.domain_bc.compact:
+            raise NotImplementedError('Compact option is not available for time solvers')
 
     def _rebuild_operators(self):
 
