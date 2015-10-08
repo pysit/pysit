@@ -24,7 +24,7 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         self.imaging_period = int(imaging_period) #Needs to be an integer
 
-    def _residual(self, shot, m0, dWaveOp=None):
+    def _residual(self, shot, m0, dWaveOp=None, wavefield=None):
         """Computes residual in the usual sense.
 
         Parameters
@@ -44,6 +44,9 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         rp = ['simdata']
         if dWaveOp is not None:
             rp.append('dWaveOp')
+        # If we are dealing with variable density, we want the wavefield returned as well.
+        if wavefield is not None:
+            rp.append('wavefield')
 
         # Run the forward modeling step
         retval = self.modeling_tools.forward_model(shot, m0, self.imaging_period, return_parameters=rp)
@@ -56,6 +59,8 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         # If the second derivative info is needed, copy it out
         if dWaveOp is not None:
             dWaveOp[:]  = retval['dWaveOp'][:]
+        if wavefield is not None:
+            wavefield[:] = retval['wavefield'][:]
 
         return resid
 
@@ -91,10 +96,19 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
 
         # Compute the residual vector and its norm
         dWaveOp=[]
-        r = self._residual(shot, m0, dWaveOp=dWaveOp, **kwargs)
 
+        # If this is true, then we are dealing with variable density. In this case, we want our forward solve
+        # To also return the wavefield, because we need to take gradients of the wavefield in the adjoint model
+        # Step to calculate the gradient of our objective in terms of m2 (ie. 1/rho)
+        if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            wavefield=[]
+        else:
+            wavefield=None
+            
+        r = self._residual(shot, m0, dWaveOp=dWaveOp, wavefield=wavefield, **kwargs)
+        
         # Perform the migration or F* operation to get the gradient component
-        g = self.modeling_tools.migrate_shot(shot, m0, r, self.imaging_period, dWaveOp=dWaveOp)
+        g = self.modeling_tools.migrate_shot(shot, m0, r, self.imaging_period, dWaveOp=dWaveOp, wavefield=wavefield)
 
         if not ignore_minus:
             g = -1*g

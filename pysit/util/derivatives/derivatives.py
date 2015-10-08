@@ -8,7 +8,7 @@ from pyamg.gallery import stencil_grid
 
 from pysit.util.derivatives.fdweight import *
 
-__all__ = ['build_derivative_matrix']
+__all__ = ['build_derivative_matrix','build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix']
 
 def build_derivative_matrix(mesh,
                             derivative, order_accuracy,
@@ -158,6 +158,163 @@ def apply_derivative(mesh, derivative, order_accuracy, vector, **kwargs):
     A = build_derivative_matrix(mesh, derivative, order_accuracy, **kwargs)
     return A*vector
 
+def build_heterogenous_laplacian(sh,alpha,deltas):
+    # This is a 2D "Heteogenous Laplacian" matrix operator constructor.
+    # It takes a mesh (including BC), and returns a square, sparse matrix of size 
+    # mesh.x.n*mesh.z.n. The operator is div(alpha grad), and is second order accurate.
+    # for our purposes, alpha usually is (1/rho), or, model m2. 
+    nz = sh[-1]
+    nx = sh[0]
+    P = build_permutation_matrix(nz,nx)
+    P_inv = build_permutation_matrix(nx,nz)
+
+    alpha_x, alpha_z = build_offcentered_alpha(sh,alpha)  # alpha is passed into this routine centered on the computational nodes.
+                                                          # build_offcentered_alpha returns alpha cenetered on the midpoints of the nodes.
+                                                          
+    # Builds x part of laplacian, assuming dirichlet boundaries at the edge of the PML
+    km1, k, kp1 = np.zeros(nx*nz-1), np.zeros(nx*nz), np.zeros(nx*nz-1)
+    for i in xrange(nz):
+        for j in xrange(nx-1):
+            if j!=(nx-2):
+                km1[i*nx+j]=alpha_x[i][j+1][0]
+            else:
+                km1[i*nx+j]=0.0
+            if j!=0:
+                k[i*nx+j]=-(alpha_x[i][j][0]+alpha_x[i][j+1][0])
+                kp1[i*nx+j]=alpha_x[i][j+1][0]
+            else:
+                k[i*nx+j]=deltas[0]**2    # this is so later, when we divice by delta[0]**2,
+                kp1[i*nx+j]=0.0           # this value turns to 1.0
+        k[i*nx+(nx-1)]=deltas[0]**2       
+        if i!=(nz-1):
+            km1[i*nx+(nx-1)]=0.0
+            kp1[i*nx+(nx-1)]=0.0
+
+    Lx=spsp.diags([km1,k,kp1],[-1,0,1],dtype='float')
+    Lx/=deltas[0]**2
+
+    # Builds z part of laplacian, assuming dirichlet boundaries at the edge of the PML
+    km1,k,kp1=np.zeros(nx*nz-1),np.zeros(nx*nz),np.zeros(nx*nz-1)
+    for i in xrange(nx):
+        for j in xrange(nz-1):
+            if j!=(nz-2):
+                km1[i*nz+j]=alpha_z[i][j+1][0]
+            else:
+                km1[i*nz+j]=0.0
+            if j!=0:
+                k[i*nz+j]=-(alpha_z[i][j][0]+alpha_z[i][j+1][0])
+                kp1[i*nz+j]=alpha_z[i][j+1][0]
+            else:
+                k[i*nz+j]=deltas[1]**2      # this is so later, when we divice by delta[0]**2,
+                kp1[i*nz+j]=0.0             # this value turns to 1.0
+        k[i*nz+(nz-1)]=deltas[1]**2         
+
+        if i!=(nx-1):
+            km1[i*nz+(nz-1)]=0.0
+            kp1[i*nz+(nz-1)]=0.0
+
+    Lz=spsp.diags([km1,k,kp1],[-1,0,1],dtype='float')
+    Lz/=deltas[1]**2
+    
+    # the permutation matrix (and following inverse permutation)
+    # allows us to use Lx against the same type of vector Lz acts against,
+    # because the permutation corrects the arrangment of the entries in 
+    # the vector Lx is applied against. 
+
+    Lap=Lz+P_inv*Lx*P
+
+    return Lap
+
+def build_permutation_matrix(nz,nx):
+    # This creates a permutation matrix which transforms a column vector of nx
+    # "component" columns of size nz, to the corresponding column vector of nz
+    # "component" columns of size nx.
+    P=np.zeros((nz*nx,nz*nx))
+    v=np.zeros(nz*nx)
+    for i in xrange(nz):
+        for j in xrange(nx):
+            P[nx*i+j][:]=v
+            P[nx*i+j][i+j*nz]=1
+    return spsp.csr_matrix(P)
+
+def build_offcentered_alpha(sh,alpha):
+    # This computes the midpoints of alpha which will be used in the heterogenous laplacian
+    nz=sh[-1]
+    nx=sh[0]
+    
+    v1z,v2z,v3z=np.ones(nz),np.ones(nz-1),np.zeros(nz)
+    v1z[-1],v3z[0]=2.0,2.0
+    v1x,v2x,v3x=np.ones(nx),np.ones(nx-1),np.zeros(nx)
+    v1x[-1],v3x[0]=2.0,2.0
+    v3z=v3z.reshape(1,nz)
+    v3x=v3x.reshape(1,nx)
+    Lz1=np.array(spsp.diags([v1z,v2z],[0,1]).todense())
+    Lx1=np.array(spsp.diags([v1x,v2x],[0,1]).todense())
+    Lz=np.matrix(0.5*np.concatenate((v3z,Lz1),axis=0))
+    Lx=np.matrix(0.5*np.concatenate((v3x,Lx1),axis=0))
+    # Lz and Lx simply (of length nz and nx respectively) act on a vector and return one which is one entry larger than before,
+    # with each entry being a weighted sum of the two adjacent entries. Boundary values are preserved.
+    P=build_permutation_matrix(nz,nx)
+    
+    alpha_perm=P*alpha
+    alpha_z,alpha_x=list(),list()
+    for i in xrange(nx):
+        alpha_z.append(Lz*alpha[nz*i:nz*(i+1)])
+    for i in xrange(nz):
+        alpha_x.append(Lx*alpha_perm[nx*i:nx*(i+1)])
+    return alpha_x, alpha_z
+
+def build_heterogenous_matrices(sh,deltas,alpha=None,rp=None):
+    # This builds 1st order, forward and backward derivative matrices. 
+    # alpha is a vector which goes inside of the operator, div (alpha grad)
+    # It can also build a hetergenous laplacian (if rp is not None),which differs from the above
+    # heterogenous laplacian only in its boundary conditions.
+    
+    nz=sh[-1]
+    nx=sh[0]
+    
+    #builds z derivative matrix
+    v=-np.ones(nx*nz)/deltas[-1]
+    v1=np.ones(nx*nz-1)/deltas[-1]
+    v1[range(nz-1,nz*nx-1,nz)]=0.0  # repair boundary terms.
+    D2=spsp.diags([v,v1],[0,1])
+    
+    D2_tilda=-1.0*D2.T
+
+    #builds x derivative matrix
+    p=-np.ones(nx*nz)/deltas[0]
+    p1=np.ones(nx*nz-1)/deltas[0]
+    #p[range(nx-1,nz*nx,nx)]=-1.0
+    p1[range(nx-1,nz*nx-1,nx)]=0.0
+    D1=spsp.diags([p,p1],[0,1])
+    
+    D1_tilda=-1.0*D1.T
+
+    P=build_permutation_matrix(nz,nx)
+    P_inv=build_permutation_matrix(nx,nz)
+
+    #builds exact adjoint gradient for z.
+    v=-np.ones(nx*nz)/deltas[-1]
+    v1=np.ones(nx*nz-1)/deltas[-1]
+    v1[range(nz-1,nz*nx-1,nz)]=0.0
+    v1[range(0,nz*nx-1,nz)]=0.0
+    D2_adj=spsp.diags([v,v1],[0,1])
+
+    #builds exact adjoint gradient for x.
+    p=-np.ones(nx*nz)/deltas[0]
+    p1=np.ones(nx*nz-1)/deltas[0]
+    p1[range(nx-1,nz*nx-1,nx)]=0.0
+    p1[range(0,nz*nx-1,nx)]=0.0
+    D1_adj=spsp.diags([p,p1],[0,1])
+
+    if rp is not None:
+        A=spsp.diags([alpha],[0])
+        Lap = D2_tilda*A*D2+P_inv*D1_tilda*P*A*P_inv*D1*P
+        return Lap
+    else:
+        D1=P_inv*D1*P
+        D1_adj=P_inv*D1_adj*P
+        return [D1,D1_adj],[D2,D2_adj] 
 
 if __name__ == '__main__':
 
