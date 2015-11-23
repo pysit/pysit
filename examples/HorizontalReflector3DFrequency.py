@@ -13,6 +13,7 @@ from pysit.gallery import horizontal_reflector
 if __name__ == '__main__':
     # Setup
     os.environ["OMP_NUM_THREADS"] = "16"
+    
     #   Define Domain with compact PML
     pmlx = PML(0.1, 100,compact=True)
     pmly = PML(0.1, 100,compact=True)
@@ -57,7 +58,8 @@ if __name__ == '__main__':
     tt = time.time()
     wavefields = []
     generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mumps')
-    generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mkl_pardiso')
+    # generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mkl_pardiso')
+    
     print 'Data generation: {0}s'.format(time.time()-tt)
 
 
@@ -92,8 +94,8 @@ if __name__ == '__main__':
 
     result = invalg(shots, initial_value, loop_configuration,
                     status_configuration=configuration, verbose=True, petsc='mumps')
-    result = invalg(shots, initial_value, loop_configuration,
-                    status_configuration=configuration, verbose=True, petsc='mkl_pardiso')
+    # result = invalg(shots, initial_value, loop_configuration,
+    #                 status_configuration=configuration, verbose=True, petsc='mkl_pardiso')
 
     print 'Run time:  {0}s'.format(time.time()-tt)
 

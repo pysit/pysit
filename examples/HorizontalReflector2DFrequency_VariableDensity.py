@@ -119,8 +119,9 @@ if __name__ == '__main__':
                             }
     invalg.max_linesearch_iterations=40
 
+    # result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mkl_pardiso')
     result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration)
-
+    
     print '...run time:  {0}s'.format(time.time()-tt)
     
     obj_vals = np.array([v for k,v in invalg.objective_history.items()])

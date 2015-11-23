@@ -1,8 +1,8 @@
 from __future__ import absolute_import
 
 import itertools
+from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
 import sys
-
 import numpy as np
 from numpy.random import uniform
 
@@ -244,7 +244,7 @@ class FrequencyModeling(object):
         Parameters
         ----------
         shot : pysit.Shot
-            List of shot for which to compute migration.
+            Shot for which to compute migration.
         operand_simdata : ndarray
             Operand, i.e., b in F*b. This data is in TIME to properly compute the adjoint.
         frequencies : list of 2-tuples
@@ -263,7 +263,7 @@ class FrequencyModeling(object):
             dWaveOp = dict()
 
         if len(prep_rp) > 0:
-            retval = self.forward_model_list(shots_list, m0, frequencies, return_parameters=prep_rp)
+            retval = self.forward_model(shot, m0, frequencies, return_parameters=prep_rp)
             if 'dWaveOp' in prep_rp:
                 dWaveOp = retval['dWaveOp']
 
@@ -273,7 +273,7 @@ class FrequencyModeling(object):
         if dWaveOpAdj is not None:
             rp.append('dWaveOpAdj')
 
-        rv = self.adjoint_model(shot, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp)
+        rv = self.adjoint_model(shot, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp, wavefield=wavefield)
 
         # If the adjoint field is desired as output.
         for nu in frequencies:
@@ -291,7 +291,7 @@ class FrequencyModeling(object):
                            operand_dWaveOpAdj=None, operand_model=None,
                            frequency_weights=None,
                            dWaveOp=None,
-                           adjointfield=None, dWaveOpAdj=None, **kwargs):
+                           adjointfield=None, dWaveOpAdj=None, wavefield=None, **kwargs):
         """Performs migration a list of shot shot.
 
         Parameters
@@ -326,7 +326,7 @@ class FrequencyModeling(object):
         if dWaveOpAdj is not None:
             rp.append('dWaveOpAdj')
 
-        rv = self.adjoint_model(shot, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp)
+        rv = self.adjoint_model_list(shots_list, m0, operand_simdata, frequencies, operand_dWaveOpAdj=operand_dWaveOpAdj, operand_model=operand_model, frequency_weights=frequency_weights, return_parameters=rp, dWaveOp=dWaveOp, wavefield=wavefield, **kwargs)
 
         # If the adjoint field is desired as output.
         for nu in frequencies:
@@ -424,6 +424,7 @@ class FrequencyModeling(object):
             sh = mesh.shape(include_bc=True,as_grid=True)
             D1, D2 = build_heterogenous_matrices(sh,deltas)
 
+
         if operand_model is not None:
             operand_model = operand_model.with_padding()
 
@@ -492,10 +493,11 @@ class FrequencyModeling(object):
                            operand_dWaveOpAdj=None, operand_model=None,
                            frequency_weights=None,
                            return_parameters=[],
-                           dWaveOp=None, **kwargs):
+                           dWaveOp=None, wavefield=None, **kwargs):
         """Solves for the adjoint field in frequency.
 
-        m*q_tt - lap q = resid
+        For constant density: -m*(omega**2)*q - lap q = resid, where m = 1.0/c**2
+        For variable density: -m1*(omega**2)*q - div(m2 grad)q = resid, where m1=1.0/kappa, m2=1.0/rho, and C = (kappa/rho)**0.5
 
         Parameters
         ----------
@@ -524,6 +526,9 @@ class FrequencyModeling(object):
         computational effort.  If the imaging condition is to be computed, the
         optional argument utt must be present.
 
+        Imaging Condition for variable density has terms:
+            ic.m1 = omegas**2 * conj(u) * q
+            ic.m2 = conj(grad(u)) dot grad(q), summed over all shots and frequencies.
         """
         
         # Sanitize the input
@@ -559,6 +564,10 @@ class FrequencyModeling(object):
 
             freq_weights = {nu: weight for nu,weight in zip(frequencies,frequency_weights)}
 
+        if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            deltas = [mesh.x.delta,mesh.z.delta]
+            sh = mesh.shape(include_bc=True,as_grid=True)
+            D1, D2 = build_heterogenous_matrices(sh,deltas)
 
         solver_data_list = list()
         #initialisation for the muliple rhs resolution
@@ -577,6 +586,7 @@ class FrequencyModeling(object):
             operand_model = operand_model.with_padding()
 
         for nu in frequencies:
+
             del rhs_list[:]            
             for i in xrange(len(shots_list)):
                 rhs = solver.WavefieldVector(mesh,dtype=solver.dtype)
@@ -593,6 +603,11 @@ class FrequencyModeling(object):
 
 
             for i in xrange(len(shots_list)):
+                # If we are dealing with variable density, we will need these values computed for the imagining condition in terms of m2.
+                if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+                    uhat = wavefield[i][nu]
+                    uhat = mesh.pad_array(uhat)
+                    D1u, D2u = np.conj(D1[0]*uhat), np.conj(D2[0]*uhat)  # Need the conj. of grad (uhat)
 
                 vhat = solver_data_list[i].k.primary_wavefield
                 qhat = np.conj(vhat, vhat)
@@ -602,7 +617,11 @@ class FrequencyModeling(object):
                     DWaveOpAdj[i][nu] = solver.compute_dWaveOp('frequency', qhat,nu)
                 if 'imaging_condition' in return_parameters:
                     weight = freq_weights[nu]
-                    Ic[i] -= weight*qhat*np.conj(dWaveOp[i][nu]) # note, no dnu here because the nus are not generally the complete set, so dnu makes little sense, otherwise dnu = 1./(nsteps*dt)
+                    if hasattr(m0, 'kappa') and hasattr(m0, 'rho'):
+                        Ic[i].rho -= weight*((D1u)*(D1[1]*qhat)+(D2u)*(D2[1]*qhat))
+                        Ic[i].kappa -= weight*qhat*np.conj(dWaveOp[i][nu])
+                    else:
+                        Ic[i] -= weight*qhat*np.conj(dWaveOp[i][nu]) # note, no dnu here because the nus are not generally the complete set, so dnu makes little sense, otherwise dnu = 1./(nsteps*dt)
             
             
 
@@ -732,6 +751,7 @@ class FrequencyModeling(object):
             retval['simdata'] = simdata
 
         return retval
+
 
     def linear_forward_model_kappa(self, shot, m0, m1, frequencies, return_parameters=[], dWaveOp0=None,wavefield=None):
         """Applies the forward model to the model for the given solver in terms of a pertubation of kappa

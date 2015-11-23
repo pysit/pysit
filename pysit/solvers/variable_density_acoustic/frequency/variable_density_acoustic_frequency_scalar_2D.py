@@ -1,4 +1,5 @@
 import scipy.sparse as spsp
+import numpy as np
 
 from pysit.solvers.wavefield_vector import *
 from variable_density_acoustic_frequency_scalar_base import *
@@ -41,17 +42,119 @@ class VariableDensityAcousticFrequencyScalar_2D(VariableDensityAcousticFrequency
                                                             spatial_accuracy_order=spatial_accuracy_order,
                                                             spatial_shifted_differences=spatial_shifted_differences,
                                                             **kwargs)
+        # if the solver is compact we have to indicate that we do not need auxiliary fields
+        if self.mesh.x.lbc.type == 'pml':
+          self.compact = self.mesh.x.lbc.domain_bc.compact
+        else:
+          self.compact = False
+
+    # Compact PML for Helmholtz operator 
+    def _sigma_PML(self, mesh):
+        nx, nz = mesh.shape(include_bc=True, as_grid=True)
+        oc = self.operator_components
+        oc.nx = nx
+        oc.nz = nz
+
+        sx  = np.zeros(nz*nx)
+        sz  = np.zeros(nz*nx)
+        sxp = np.zeros(nz*nx)
+        szp = np.zeros(nz*nx)
+        
+        npml_x_l = mesh.x.lbc.n
+        npml_x_r = mesh.x.rbc.n
+        npml_z_l = mesh.z.lbc.n
+        npml_z_r = mesh.z.rbc.n
+        
+        t_x_l = np.linspace(1, 0, npml_x_l)
+        t_x_r = np.linspace(0, 1, npml_x_r)
+        t_z_l = np.linspace(1, 0, npml_z_l)
+        t_z_r = np.linspace(0, 1, npml_z_r)
+        
+        amplitude_x_l = mesh.x.lbc.domain_bc.amplitude
+        amplitude_x_r = mesh.x.rbc.domain_bc.amplitude
+        
+        amplitude_z_l = mesh.z.lbc.domain_bc.amplitude
+        amplitude_z_r = mesh.z.rbc.domain_bc.amplitude
+        
+        # PML for the x direction
+        # left side
+        for i in xrange(nz):
+          for j in xrange(npml_x_l):
+            sx [i + j*nz] = amplitude_x_l * t_x_l[j]**2
+            sxp[i + j*nz] = -2 * amplitude_x_l * t_x_l[j]
+        # right side
+        for i in xrange(nz):
+          for j in xrange(npml_x_r):
+            sx [i + (j + (nx - npml_x_r))*nz] = amplitude_x_r * t_x_r[j]**2
+            sxp[i + (j + (nx - npml_x_r))*nz] = 2 * amplitude_x_r * t_x_r[j] 
+        
+        # PML for the z direction
+        # left side
+        for i in xrange(nx):
+          for j in xrange(npml_z_l):
+            sz [i*nz + j] = amplitude_z_l * t_z_l[j]**2 
+            szp[i*nz + j] = -2 * amplitude_z_l * t_z_l[j]
+
+        # rigth side
+        for i in xrange(nx):
+          for j in xrange(npml_z_r):
+            sz [i*nz + (nz - npml_z_r) + j] = amplitude_z_r * t_z_r[j]**2
+            szp[i*nz + (nz - npml_z_r) + j] = 2 * amplitude_z_r * t_z_r[j]
+
+        return (sx, sz, sxp, szp)
 
     def _rebuild_operators(self):
+        if self.mesh.x.lbc.type == 'pml' and self.compact:
+          # build intermediates for the compact operator
+          raise ValidationFunctionError(" This solver is in construction and is not yet complete. For variable density and compact PML.")
+          dof = self.mesh.dof(include_bc=True)
 
-        dof = self.mesh.dof(include_bc=True)
+          oc = self.operator_components
 
-        oc = self.operator_components
+          built = oc.get('_numpy_components_built', False)
+          oc.M = make_diag_mtx(self.model_parameters.C.squeeze()**-2)
+          # build the static components
+          if not built:          
+            # build Dxx
+            oc.Dxx = build_derivative_matrix(self.mesh,
+                                                  2,
+                                                  self.spatial_accuracy_order,
+                                                  dimension='x',
+                                                  use_shifted_differences=self.spatial_shifted_differences)
+            # build Dzz
+            oc.Dzz = build_derivative_matrix(self.mesh,
+                                                  2,
+                                                  self.spatial_accuracy_order,
+                                                  dimension='z',
+                                                  use_shifted_differences=self.spatial_shifted_differences)
+            # build Dx
+            oc.Dx = build_derivative_matrix(self.mesh,
+                                                  1,
+                                                  self.spatial_accuracy_order,
+                                                  dimension='x',
+                                                  use_shifted_differences=self.spatial_shifted_differences)
+            
+            # build Dz
+            oc.Dz = build_derivative_matrix(self.mesh,
+                                                  1,
+                                                  self.spatial_accuracy_order,
+                                                  dimension='z',
+                                                  use_shifted_differences=self.spatial_shifted_differences)
+                                                  
+            # build sigma
+            oc.sx, oc.sz, oc.sxp, oc.szp = self._sigma_PML(self.mesh)
 
-        built = oc.get('_numpy_components_built', False)
+            oc._numpy_components_built = True
+        else:
+          # build intermediates for operator with auxiliary fields
+          dof = self.mesh.dof(include_bc=True)
 
-        # build the static components
-        if not built:
+          oc = self.operator_components
+
+          built = oc.get('_numpy_components_built', False)
+
+          # build the static components
+          if not built:
             # build sigmax
             sx = build_sigma(self.mesh, self.mesh.x)
             oc.sigmax = make_diag_mtx(sx)

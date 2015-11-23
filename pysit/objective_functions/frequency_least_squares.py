@@ -20,7 +20,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
 
         self.parallel_wrap_shot = parallel_wrap_shot
 
-    def _residual_list(self, shots_list, m0, frequencies=None, frequency_weights=None, dWaveOp=None, **kwargs):
+    def _residual_list(self, shots_list, m0, frequencies=None, frequency_weights=None, dWaveOp=None, wavefield=None, **kwargs):
         """Computes residual in the usual sense for a list of shots
 
         Parameters
@@ -44,7 +44,9 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
             rp = ['simdata','dWaveOp']
         else:
             rp = ['simdata']
-
+        # If we are dealing with variable density, we want the wavefield returned as well.
+        if wavefield is not None:
+            rp.append('wavefield')
         # Run the forward modeling step
         retval = self.modeling_tools.forward_model_list(shots_list, m0, frequencies, return_parameters=rp, **kwargs)
         resid = 0.0
@@ -59,6 +61,9 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
             if dWaveOp is not None:
                 for nu in frequencies:
                     dWaveOp[i][nu]  = retval['dWaveOp'][i][nu]
+            if wavefield is not None:
+                for nu in frequencies:
+                    wavefield[i][nu] = retval['wavefield'][i][nu]        
 
         return resid , resid_list
 
@@ -151,7 +156,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
         """
         
         dWaveOp = dict()
-        
+
         # If this is true, then we are dealing with variable density. In this case, we want our forward solve
         # To also return the wavefield, because we need to take gradients of the wavefield in the adjoint model
         # Step to calculate the gradient of our objective in terms of m2 (ie. 1/rho)
@@ -184,14 +189,26 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
             Shot for which to compute the residual.
 
         """
-        # Compute the residual list and its norm
+        
         dWaveOp = dict()
+
         for i in xrange(len(shots_list)):
             dWaveOp[i] = dict()
 
-        r, resid_list = self._residual_list(shots_list, m0, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp, **kwargs)
+        # If this is true, then we are dealing with variable density. In this case, we want our forward solve
+        # To also return the wavefield, because we need to take gradients of the wavefield in the adjoint model
+        # Step to calculate the gradient of our objective in terms of m2 (ie. 1/rho)
+        if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            wavefield=dict()
+            for i in xrange(len(shots_list)):
+                wavefield[i] = dict()
+        else:
+            wavefield=None
 
-        g = self.modeling_tools.migrate_shot_list(shots_list, m0, resid_list, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp, **kwargs) 
+        # Compute the residual list and its norm
+        r, resid_list = self._residual_list(shots_list, m0, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp, wavefield=wavefield, **kwargs)
+
+        g = self.modeling_tools.migrate_shot_list(shots_list, m0, resid_list, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp, wavefield=wavefield, **kwargs) 
 
         for i in xrange(len(g)):
             if ignore_minus:
