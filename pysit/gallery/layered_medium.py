@@ -10,7 +10,7 @@ import math
 import numpy as np
 import scipy.signal as signal
 
-#from pysit.util.image_processing import blur_image
+from pysit.util.image_processing import blur_image
 from pysit.gallery.gallery_base import GeneratedGalleryModel
 
 from pysit import * #PML, Domain
@@ -199,7 +199,7 @@ class LayeredMediumModel(GeneratedGalleryModel):
         total_filled = 0
         for L in self.layers[::-1]:
             cutoff_depth = self.z_length - total_filled
-            vp[ZZ < cutoff_depth] = L.velocity
+            vp[ZZ <= cutoff_depth] = L.velocity
 
             total_filled += L.thickness
 
@@ -239,7 +239,7 @@ class LayeredMediumModel(GeneratedGalleryModel):
 
 
         # Construct final padded velocity profiles
-        C = np.pad(vp, _pad_tuple, 'edge')#.reshape(self._mesh.shape())
+        C = np.pad(vp, _pad_tuple, 'edge').reshape(self._mesh.shape())
         C0 = np.pad(vp0, _pad_tuple, 'edge').reshape(self._mesh.shape())
         self._true_model = C
         self._initial_model = C0
