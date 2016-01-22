@@ -225,6 +225,7 @@ class TemporalModeling(object):
         For constant density: m*q_tt - lap q = resid, where m = 1.0/c**2
         For variable density: m1*q_tt - div(m2 grad)q = resid, where m1=1.0/kappa, m2=1.0/rho, and C = (kappa/rho)**0.5
 
+
         Parameters
         ----------
         shot : pysit.Shot
@@ -307,7 +308,7 @@ class TemporalModeling(object):
             # Local reference
             vk = solver_data.k.primary_wavefield
             vk_bulk = mesh.unpad_array(vk)
-            
+
             # If we are dealing with variable density, we will need the wavefield to compute the gradient of the objective in terms of m2.
             if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
                 uk = mesh.pad_array(wavefield[k])
@@ -321,7 +322,7 @@ class TemporalModeling(object):
             if do_ic:
                 if k%imaging_period == 0: #Save every 'imaging_period' number of steps
                     entry = k/imaging_period 
-                # if we are dealing with variable density, we compute 2 parts to the imagaing condition seperatly. Otherwise, if it is just constant density- we compute only 1. 
+                    # if we are dealing with variable density, we compute 2 parts to the imagaing condition seperatly. Otherwise, if it is just constant density- we compute only 1. 
                     if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
                         ic.kappa += vk*dWaveOp[entry]
                         ic.rho += (D1[0]*uk)*(D1[1]*vk)+(D2[0]*uk)*(D2[1]*vk)

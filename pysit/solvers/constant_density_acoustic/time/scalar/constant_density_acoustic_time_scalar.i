@@ -3,8 +3,14 @@
 
 %{
 #include "constant_density_acoustic_time_scalar_1D.h"
+#include "constant_density_acoustic_time_scalar_1D_4.h"
+#include "constant_density_acoustic_time_scalar_1D_6.h"
 #include "constant_density_acoustic_time_scalar_2D.h"
+#include "constant_density_acoustic_time_scalar_2D_4.h"
+#include "constant_density_acoustic_time_scalar_2D_6.h"
 #include "constant_density_acoustic_time_scalar_3D.h"
+#include "constant_density_acoustic_time_scalar_3D_4.h"
+#include "constant_density_acoustic_time_scalar_3D_6.h"
 %}
 
 %define typemaps_constant_density_acoustic_scalar( DATA_TYPE )
@@ -39,8 +45,14 @@ typemaps_constant_density_acoustic_scalar( float  )
 typemaps_constant_density_acoustic_scalar( double  )
 
 %include "constant_density_acoustic_time_scalar_1D.h"
+%include "constant_density_acoustic_time_scalar_1D_4.h"
+%include "constant_density_acoustic_time_scalar_1D_6.h"
 %include "constant_density_acoustic_time_scalar_2D.h"
+%include "constant_density_acoustic_time_scalar_2D_4.h"
+%include "constant_density_acoustic_time_scalar_2D_6.h"
 %include "constant_density_acoustic_time_scalar_3D.h"
+%include "constant_density_acoustic_time_scalar_3D_4.h"
+%include "constant_density_acoustic_time_scalar_3D_6.h"
 
 %define INSTANTIATE_CDA_SCALAR( out_fname, in_fname , order )
 %template(out_fname) in_fname<float, order>;
@@ -48,18 +60,24 @@ typemaps_constant_density_acoustic_scalar( double  )
 %enddef
 
 # 1D
+INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_1D_4omp, cda_time_scalar_1D_4, 4)
+INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_1D_6omp, cda_time_scalar_1D_6, 6)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_1D_2os, cda_time_scalar_1D, 2)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_1D_4os, cda_time_scalar_1D, 4)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_1D_6os, cda_time_scalar_1D, 6)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_1D_8os, cda_time_scalar_1D, 8)
 
 # 2D
+INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_2D_4omp, cda_time_scalar_2D_4, 4)
+INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_2D_6omp, cda_time_scalar_2D_6, 6)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_2D_2os, cda_time_scalar_2D, 2)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_2D_4os, cda_time_scalar_2D, 4)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_2D_6os, cda_time_scalar_2D, 6)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_2D_8os, cda_time_scalar_2D, 8)
 
 # 3D
+INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_3D_4omp, cda_time_scalar_3D_4, 4)
+INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_3D_6omp, cda_time_scalar_3D_6, 6)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_3D_2os, cda_time_scalar_3D, 2)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_3D_4os, cda_time_scalar_3D, 4)
 INSTANTIATE_CDA_SCALAR(constant_density_acoustic_time_scalar_3D_6os, cda_time_scalar_3D, 6)

@@ -30,9 +30,9 @@ class VariableDensityAcousticFrequencyScalar_1D(VariableDensityAcousticFrequency
                  spatial_accuracy_order=4,
                  spatial_shifted_differences=True,
                  **kwargs):
-        
+
         raise ValidationFunctionError(" This solver is in construction and is not yet complete. For variable density, only 2D time and frequency is currently running.")
-        
+
         self.operator_components = Bunch()
 
         self.spatial_accuracy_order = spatial_accuracy_order

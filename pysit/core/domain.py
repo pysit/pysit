@@ -190,11 +190,14 @@ class PML(DomainBC):
 
     type = 'pml'
 
-    def __init__(self, length, amplitude, ftype='quadratic', boundary='dirichlet'):
+    def __init__(self, length, amplitude, ftype='quadratic', boundary='dirichlet',compact=False):
         # Length is currently in physical units.
         self.length = length
 
         self.amplitude = amplitude
+
+        #flag which constructs the compact operator
+        self.compact = compact
 
         # Function is the PML function
         self.ftype = ftype

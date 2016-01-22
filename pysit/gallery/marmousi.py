@@ -84,7 +84,7 @@ def download(parameter='all'):
     else:
         MarmousiModel._download_and_prepare(parameter)
 
-def marmousi(patch=None, **kwargs):
+def marmousi(patch=None, compact=False, **kwargs):
     """ Friendly wrapper for instantiating the Marmousi model. """
 
     model_config = dict(physics='acoustic',
@@ -101,8 +101,14 @@ def marmousi(patch=None, **kwargs):
 
     if patch in MarmousiModel.patches:
         model_config.update(MarmousiModel.patches[patch])
+    
+    C, C0, m, d = MarmousiModel(**model_config).get_setup()
+    if compact:
+        # we have to specify in the PML that we want to use the compact version of Helmholtz
+        # operator (without auxiliary fields)
+        m.x.lbc.domain_bc.compact = True
 
-    return MarmousiModel(**model_config).get_setup()
+    return C, C0, m, d
 
 if __name__ == '__main__':
 
