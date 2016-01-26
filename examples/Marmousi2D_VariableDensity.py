@@ -122,8 +122,8 @@ if __name__ == '__main__':
 
     loop_configuration=[(30,{'frequencies' : [1,1.5,2.0,2.5] }),(30,{'frequencies' : [3.0,3.5,4.0,4.5] }), (20,{'frequencies' : [5,5.5,6.0,6.5] }),(20,{'frequencies' : [7.0,7.5,8.0,8.5] }), (20,{'frequencies' : [9,10,11,12] }), (20,{'frequencies' : [13,13.5,14,14.5]}),(20,{'frequencies' : [15,16,17,18]}), (20,{'frequencies' : [19,20,21,22,23,24,25,26,27,28,29,30]})] #3 steps at one set of frequencies and 3 at another set
 
-    result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mkl_pardiso')
-
+    #result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mkl_pardiso')
+    result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mumps')
     print '...run time:  {0}s'.format(time.time()-tt)
 
     obj_vals = np.array([v for k,v in invalg.objective_history.items()])
