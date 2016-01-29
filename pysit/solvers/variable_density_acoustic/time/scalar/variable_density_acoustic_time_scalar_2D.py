@@ -189,8 +189,8 @@ class VariableDensityAcousticTimeScalar_2D_numpy(VariableDensityAcousticTimeScal
             #dot product between (grad(1/rho) and grad (p) at each pixel. 
             #The sum implements (grad 1/rho) dot grad(p)
             
-            d_rho_inv_dx_times_d_dx = d_rho_inv_dx_as_diag_mat * oc.Dx
-            d_rho_inv_dz_times_d_dz = d_rho_inv_dz_as_diag_mat * oc.Dz
+            d_rho_inv_dx_times_d_dx = d_rho_inv_dx_as_diag_mat * oc.Dx #mat-vec
+            d_rho_inv_dz_times_d_dz = d_rho_inv_dz_as_diag_mat * oc.Dz #mat-vec
             
             #oc.L applied to wavefield p: = (grad 1/rho) dot grad(p) + 1/rho*Laplacian(p)  
             oc.L = (d_rho_inv_dx_times_d_dx + d_rho_inv_dz_times_d_dz) + oc.m2*oc.L_hom

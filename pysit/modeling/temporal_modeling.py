@@ -54,7 +54,7 @@ class TemporalModeling(object):
     def _setup_forward_rhs(self, rhs_array, data):
         return self.solver.mesh.pad_array(data, out_array=rhs_array)
 
-    def forward_model(self, shot, m0, imaging_period, return_parameters=[]):
+    def forward_model(self, shot, m0, imaging_period=1, return_parameters=[]):
         """Applies the forward model to the model for the given solver.
 
         Parameters
@@ -219,7 +219,7 @@ class TemporalModeling(object):
 
         return rhs_array
 
-    def adjoint_model(self, shot, m0, operand_simdata, imaging_period, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None, wavefield=None):
+    def adjoint_model(self, shot, m0, operand_simdata, imaging_period=1, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None, wavefield=None):
         """Solves for the adjoint field.
 
         For constant density: m*q_tt - lap q = resid, where m = 1.0/c**2
@@ -1071,7 +1071,7 @@ def adjoint_test():
 
     #   Generate true wave speed
     #   (M = C^-2 - C0^-2)
-    C0, C = horizontal_reflector(m)
+    C, C0, m, d = horizontal_reflector(m)
 
     # Set up shots
     Nshots = 1
@@ -1123,7 +1123,7 @@ def adjoint_test():
     m1 = m0.perturbation()
     m1 += np.random.rand(*m1.data.shape)
 
-    fwdret = tools.forward_model(shot, m0, ['wavefield', 'dWaveOp', 'simdata'])
+    fwdret = tools.forward_model(shot, m0, return_parameters = ['wavefield', 'dWaveOp', 'simdata'])
     dWaveOp0 = fwdret['dWaveOp']
     inc_field = fwdret['wavefield']
     data = fwdret['simdata']
@@ -1153,6 +1153,8 @@ def adjoint_test():
         qhat += qs[k]*(np.exp(-1j*2.0*np.pi*10.0*t)*dt)
 
 if __name__ == '__main__':
+    print "Constant density solver adjoint test:"
+    adjoint_test()
     print "testing pertubation of rho:"
     adjoint_test_rho()
     print "testing pertubation of kappa:"
