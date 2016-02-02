@@ -8,7 +8,7 @@ from variable_density_acoustic_time_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
-from pysit.util.derivatives import build_derivative_matrix, build_derivative_matrix_VDA, build_heterogenous_laplacian
+from pysit.util.derivatives import build_derivative_matrix, build_derivative_matrix_VDA
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
 from pysit.util.solvers import inherit_dict
@@ -128,7 +128,7 @@ class VariableDensityAcousticTimeScalar_2D_numpy(VariableDensityAcousticTimeScal
             
     
             # oc.L is a heterogenous laplacian operator. It computes div(m2 grad), where m2 = 1/rho. 
-            # Ian's implementation used the regular Dx operators in the PML even though the heterogeneous Laplacian is used in the physical domain.
+            # Ian's implementation used the regular Dx operators in the PML even though the heterogeneous Laplacian with staggered derivative operators is used in the physical domain.
             # I (Bram) did not change this or investigate if this causes some problems but am noting it here for completeness. 
             
             K = spsp.bmat([[oc.m1*oc.sigma_xz-oc.L, oc.minus_Dx*oc.m2, oc.minus_Dz*oc.m2 ],

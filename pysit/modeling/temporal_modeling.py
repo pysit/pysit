@@ -289,6 +289,7 @@ class TemporalModeling(object):
 
         # Variable-Density will call this, giving us matrices needed for the ic in terms of m2 (or rho)
         if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            print "WARNING: Ian's operators are still used here even though the solver has changed. Gradient may be incorrect. These routines need to be updated."
             deltas = [mesh.x.delta,mesh.z.delta]
             sh = mesh.shape(include_bc=True,as_grid=True)
             D1,D2=build_heterogenous_matrices(sh,deltas)
@@ -730,6 +731,7 @@ class TemporalModeling(object):
         model_2=mesh.pad_array(model_2)
 
         #Lap = build_heterogenous_(sh,model_2,[mesh.x.delta,mesh.z.delta])
+        print "WARNING: Ian's operators are still used here even though the solver has changed. These tests need to be updated."
         rp=dict()
         rp['laplacian']=True
         Lap = build_heterogenous_matrices(sh,[mesh.x.delta,mesh.z.delta],model_2.reshape(-1,),rp=rp)
