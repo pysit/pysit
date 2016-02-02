@@ -9,7 +9,7 @@ from pyamg.gallery import stencil_grid
 from pysit.util.derivatives.fdweight import *
 from pysit.util.matrix_helpers import make_diag_mtx
 
-__all__ = ['build_derivative_matrix','build_derivative_matrix_VDA', 'build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix','_build_staggered_first_derivative_matrix_part', 'build_linear_interpolation_matrix_part', '_build_derivative_matrix_staggered_structured_cartesian']
+__all__ = ['build_derivative_matrix','build_derivative_matrix_VDA', 'build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix','_build_staggered_first_derivative_matrix_part', 'build_linear_interpolation_matrix_part']
 
 def build_derivative_matrix(mesh,
                             derivative, order_accuracy,
@@ -166,7 +166,13 @@ def _build_derivative_matrix_staggered_structured_cartesian(mesh,
                                                             alpha = None,
                                                             return_1D_matrix=False,
                                                             **kwargs):
+    
+    #Some of the operators could be cached the same way I did to make 'build_permutation_matrix' faster. 
+    #Could be considered if the current speed is ever considered to be insufficient.
 
+    import time
+    tt = time.time()
+    
     if return_1D_matrix:
         raise Exception('Not yet implemented')
 
@@ -193,9 +199,6 @@ def _build_derivative_matrix_staggered_structured_cartesian(mesh,
     
     dx = mesh.x.delta
     dz = mesh.z.delta
-    
-    #Because we will take 
-    print "Probably will need to pad everything because of density derivative"
     
     #Get 1D linear interpolation matrices
     Jx_1d = build_linear_interpolation_matrix_part(nx)
@@ -252,25 +255,44 @@ def _build_derivative_matrix_staggered_structured_cartesian(mesh,
     right_node_nrs = np.arange((nx-1)*nz,nx*nz)
     top_node_nrs   = np.arange(nz,(nx-1)*nz,nz) #does not include left and right top node
     bot_node_nrs   = top_node_nrs + nz - 1    #does not include left and right top node
-    all_node_nrs   = np.concatenate((left_node_nrs, right_node_nrs, top_node_nrs, bot_node_nrs))
-    nb             = all_node_nrs.size
+    all_boundary_node_nrs   = np.concatenate((left_node_nrs, right_node_nrs, top_node_nrs, bot_node_nrs))
+    nb             = all_boundary_node_nrs.size
     L = Dxx_2d + Dzz_2d
     
-    #We will now modify L, will temporarily change to lil (it may be possible to limit number of matrix conversions in case it becomes a problem)
-    L = L.tolil()
+    all_node_numbers = np.arange(0,(nx*nz), dtype='int32')
+    internal_node_numbers = list(set(all_node_numbers) - set(all_boundary_node_nrs))
+
+
+    L = L.tocsr() #so we can extract rows efficiently
     
-    temp_mat = spsp.lil_matrix((nb, L.shape[0]))
-    temp_mat[range(nb), all_node_nrs] = 1
+    #Operation below fixes the boundary rows quite efficiently.
+    L_fixed = _turn_sparse_rows_to_identity(L, internal_node_numbers, all_boundary_node_nrs)
+     
+    return L_fixed.tocsr()
     
-    #This erases the rows and places the identity terms
-    import time
-    tt = time.time()
-    L[all_node_nrs,:] = temp_mat
-    print time.time()-tt
-    print "Should do something more efficient than modifying sparse matrices. remove this timer"
+def _turn_sparse_rows_to_identity(A, rows_to_keep, rows_to_change): 
+    #Convenience function for removing some rows from the sparse laplacian
+    #Had some major performance problems by simply slicing in all the matrix formats I tried.
     
-    return L.tocsr()
+    nr,nc = A.shape
+    if nr != nc:
+        raise Exception('assuming square matrix')
     
+    #Create diagonal matrix. When we multiply A by this matrix we can remove rows
+    rows_to_keep_diag = np.zeros(nr, dtype='int32')
+    rows_to_keep_diag[rows_to_keep] = 1
+    diag_mat_remove_rows = make_diag_mtx(rows_to_keep_diag) 
+    
+    #The matrix below has the rows we want to turn into identity turned to 0
+    A_with_rows_removed = diag_mat_remove_rows*A
+    
+    #Make diag matrix that has diagonal entries in the rows we want to be identity
+    rows_to_change_diag = np.zeros(nr, dtype='int32')
+    rows_to_change_diag[rows_to_change] = 1
+    A_with_identity_rows = make_diag_mtx(rows_to_change_diag)    
+    
+    A_modified = A_with_rows_removed + A_with_identity_rows
+    return A_modified
     
     
 def _build_staggered_first_derivative_matrix_part(npoints, order_accuracy, h=1.0, lbc='d', rbc='d'):
