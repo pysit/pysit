@@ -7,8 +7,9 @@ import pyamg
 from pyamg.gallery import stencil_grid
 
 from pysit.util.derivatives.fdweight import *
+from pysit.util.matrix_helpers import make_diag_mtx
 
-__all__ = ['build_derivative_matrix','build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix']
+__all__ = ['build_derivative_matrix','build_derivative_matrix_VDA', 'build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix','_build_staggered_first_derivative_matrix_part', 'build_linear_interpolation_matrix_part', '_build_derivative_matrix_staggered_structured_cartesian']
 
 def build_derivative_matrix(mesh,
                             derivative, order_accuracy,
@@ -18,6 +19,12 @@ def build_derivative_matrix(mesh,
         return _build_derivative_matrix_structured_cartesian(mesh, derivative, order_accuracy, **kwargs)
     else:
         raise NotImplementedError('Derivative matrix builder not available (yet) for {0} meshes.'.format(mesh.discretization))
+
+def build_derivative_matrix_VDA(mesh, derivative, order_accuracy, alpha = None, **kwargs): #variable density acoustic
+    if mesh.type == 'structured-cartesian':
+        return _build_derivative_matrix_staggered_structured_cartesian(mesh, derivative, order_accuracy, alpha=alpha, **kwargs)
+    else:
+        raise NotImplementedError('Derivative matrix builder not available (yet) for {0} meshes.'.format(mesh.discretization))    
 
 def _set_bc(bc):
     if bc.type == 'pml':
@@ -153,6 +160,150 @@ def _build_derivative_matrix_part(npoints, derivative, order_accuracy, h=1.0, lb
 
     return mtx.tocsr()
 
+def _build_derivative_matrix_staggered_structured_cartesian(mesh,
+                                                            derivative, order_accuracy,
+                                                            dimension='all',
+                                                            alpha = None,
+                                                            return_1D_matrix=False,
+                                                            **kwargs):
+
+    if return_1D_matrix:
+        raise Exception('Not yet implemented')
+
+    if derivative < 1 or derivative > 2:
+        raise ValueError('Only defined for first and second order right now')
+    
+    if derivative == 1 and dimension not in ['x', 'y', 'z']:
+        raise ValueError('First derivative requires a direciton')
+    
+    sh = mesh.shape(include_bc = True, as_grid = True) #Will include PML padding
+    if len(sh) != 2: raise Exception('currently hardcoded 2D implementation, relatively straight-forward to change. Look at the function build_derivative_matrix to get a more general function.')
+    nx = sh[0]
+    nz = sh[-1]
+    
+    #Currently I am working with density input on the regular grid.
+    #In the derivation of the variable density solver we only require density at the stagger points
+    #For now I am just interpolating density defined on regular points towards the stagger points and use that as 'density model'.
+    #Later it is probably better to define the density directly on the stagger points (and evaluate density gradient there to update directly at these points?)
+    
+    if type(alpha) == None: #If no alpha is given, we set it to a uniform vector. The result should be the homogeneous Laplacian.
+        alpha = np.ones(nx*nz)
+    
+    alpha = alpha.flatten() #make 1D
+    
+    dx = mesh.x.delta
+    dz = mesh.z.delta
+    
+    #Because we will take 
+    print "Probably will need to pad everything because of density derivative"
+    
+    #Get 1D linear interpolation matrices
+    Jx_1d = build_linear_interpolation_matrix_part(nx)
+    Jz_1d = build_linear_interpolation_matrix_part(nz)
+
+
+    #Get 1D derivative matrix for first spatial derivative using the desired order of accuracy 
+    lbc_x = _set_bc(mesh.x.lbc)
+    rbc_x = _set_bc(mesh.x.rbc)
+    
+    lbc_z = _set_bc(mesh.z.lbc)
+    rbc_z = _set_bc(mesh.z.rbc)
+    
+    Dx_1d = _build_staggered_first_derivative_matrix_part(nx, order_accuracy, h=dx, lbc = lbc_x, rbc = rbc_x)
+    Dz_1d = _build_staggered_first_derivative_matrix_part(nz, order_accuracy, h=dz, lbc = lbc_z, rbc = rbc_z)
+    
+    #Some empty matrices of the right shape so we can use kronsum to get the proper 2D matrices for the operations we want.
+    #The same is used in the homogeneous 'build_derivative_matrix' function. 
+    Ix = spsp.eye(nx)
+    Iz = spsp.eye(nz)
+    
+    
+    
+    Dx_2d = spsp.kron(Dx_1d, Iz, format='csr')
+    if dimension == 'x' and derivative == 1:
+        return Dx_2d
+
+    Dz_2d = spsp.kron(Ix, Dz_1d, format='csr')
+    if dimension == 'z' and derivative == 1:
+        return Dz_2d
+    
+    #If we are evaluating this we want to make the heterogeneous Laplacian
+    Jx_2d = spsp.kron(Jx_1d, Iz, format='csr')
+    Jz_2d = spsp.kron(Ix, Jz_1d, format='csr')
+    
+    #alpha interpolated to x stagger points. Make diag mat
+    diag_alpha_x = make_diag_mtx(Jx_2d*alpha)
+    
+    #alpha interpolated to z stagger points. Make diag mat
+    diag_alpha_z = make_diag_mtx(Jz_2d*alpha)
+    
+    #Create laplacian components
+    #The negative transpose of Dx and Dz takes care of the divergence term of the heterogeneous laplacian  
+    Dxx_2d = -Dx_2d.T*diag_alpha_x*Dx_2d
+    Dzz_2d = -Dz_2d.T*diag_alpha_z*Dz_2d
+    
+    #Correct the Laplacian around the boundary. This is also done in the homogeneous Laplacian
+    #I want the heterogeneous Laplacian to be the same as the homogeneous Laplacian when alpha is uniform
+    #This is the only part of the Laplacian that deviates from symmetry, just as in the homogeneous case.
+    #But because of these conditions on the dirichlet boundary the wavefield will always equal 0 there and this deviation from symmetry is fine.
+    
+    #For indexing, get list of all boundary node numbers
+    left_node_nrs  = np.arange(nz)
+    right_node_nrs = np.arange((nx-1)*nz,nx*nz)
+    top_node_nrs   = np.arange(nz,(nx-1)*nz,nz) #does not include left and right top node
+    bot_node_nrs   = top_node_nrs + nz - 1    #does not include left and right top node
+    all_node_nrs   = np.concatenate((left_node_nrs, right_node_nrs, top_node_nrs, bot_node_nrs))
+    nb             = all_node_nrs.size
+    L = Dxx_2d + Dzz_2d
+    
+    #We will now modify L, will temporarily change to lil (it may be possible to limit number of matrix conversions in case it becomes a problem)
+    L = L.tolil()
+    
+    temp_mat = spsp.lil_matrix((nb, L.shape[0]))
+    temp_mat[range(nb), all_node_nrs] = 1
+    
+    #This erases the rows and places the identity terms
+    import time
+    tt = time.time()
+    L[all_node_nrs,:] = temp_mat
+    print time.time()-tt
+    print "Should do something more efficient than modifying sparse matrices. remove this timer"
+    
+    return L.tocsr()
+    
+    
+    
+def _build_staggered_first_derivative_matrix_part(npoints, order_accuracy, h=1.0, lbc='d', rbc='d'):
+    #npoints is the number of regular grid points.
+    
+    if order_accuracy%2:
+        raise ValueError('Only even accuracy orders supported.')
+    
+    #coefficients for the first derivative evaluated in between two regular grid points.
+    stagger_coeffs = staggered_difference(1, order_accuracy)/h
+    #Use the old 'stencil_grid' routine. 
+    #Because we do a staggered grid we need to shift the coeffs one entry and the matrix will not be square
+    incorrect_mtx = stencil_grid(np.insert(stagger_coeffs,0,0), (npoints, ), format='lil')
+    #Get rid of the last row which we dont want in our staggered approach
+    mtx = incorrect_mtx[0:-1,:]
+
+    if 'n' in lbc or 'n' in rbc:
+        raise ValueError('Did not yet implement Neumann boundaries. Perhaps looking at the centered grid implementation would be a good start?')
+
+    if 'g' in lbc or 'g' in rbc:
+        raise ValueError('Did not yet implement this boundary condition yet. Perhaps looking at the centered grid implementation would be a good start?')
+    
+    #For dirichlet we don't need to alter the matrix for the first derivative for the boundary nodes as is done in the centered approach
+    #The reason is that the first staggered point we evaluate at is in the interior of the domain.
+    return mtx.tocsr()
+
+def build_linear_interpolation_matrix_part(npoints):
+    #same logic as in function 'build_staggered_first_derivative_matrix_part
+    coeffs = np.array([0.5, 0.5])
+    incorrect_mtx = stencil_grid(np.insert(coeffs,0,0), (npoints, ), format='lil')
+    mtx = incorrect_mtx[0:-1,:]    
+    return mtx.tocsr()
+    
 
 def apply_derivative(mesh, derivative, order_accuracy, vector, **kwargs):
     A = build_derivative_matrix(mesh, derivative, order_accuracy, **kwargs)
