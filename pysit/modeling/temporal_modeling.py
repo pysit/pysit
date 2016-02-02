@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
+from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_matrices
 from numpy.random import uniform
 
 __all__ = ['TemporalModeling']

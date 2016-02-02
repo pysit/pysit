@@ -15,7 +15,6 @@
 
 from pysit import *
 from pysit_extensions.convenient_plot_functions.plot_functions import *
-from pysit.util.derivatives import build_heterogenous_laplacian
 import copy
 import numpy as np
 import sys

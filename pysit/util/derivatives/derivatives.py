@@ -9,7 +9,7 @@ from pyamg.gallery import stencil_grid
 from pysit.util.derivatives.fdweight import *
 from pysit.util.matrix_helpers import make_diag_mtx
 
-__all__ = ['build_derivative_matrix','build_derivative_matrix_VDA', 'build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix','_build_staggered_first_derivative_matrix_part', 'build_linear_interpolation_matrix_part']
+__all__ = ['build_derivative_matrix','build_derivative_matrix_VDA', 'build_heterogenous_matrices','build_permutation_matrix','_build_staggered_first_derivative_matrix_part', 'build_linear_interpolation_matrix_part']
 
 def build_derivative_matrix(mesh,
                             derivative, order_accuracy,
@@ -330,73 +330,6 @@ def build_linear_interpolation_matrix_part(npoints):
 def apply_derivative(mesh, derivative, order_accuracy, vector, **kwargs):
     A = build_derivative_matrix(mesh, derivative, order_accuracy, **kwargs)
     return A*vector
-
-def build_heterogenous_laplacian(sh,alpha,deltas):
-    # This is a 2D "Heteogenous Laplacian" matrix operator constructor.
-    # It takes a mesh (including BC), and returns a square, sparse matrix of size 
-    # mesh.x.n*mesh.z.n. The operator is div(alpha grad), and is second order accurate.
-    # for our purposes, alpha usually is (1/rho), or, model m2. 
-    nz = sh[-1]
-    nx = sh[0]
-    P = build_permutation_matrix(nz,nx)
-    P_inv = build_permutation_matrix(nx,nz)
-
-    alpha_x, alpha_z = build_offcentered_alpha(sh,alpha)  # alpha is passed into this routine centered on the computational nodes.
-                                                          # build_offcentered_alpha returns alpha cenetered on the midpoints of the nodes.
-                                                          
-    # Builds x part of laplacian, assuming dirichlet boundaries at the edge of the PML
-    km1, k, kp1 = np.zeros(nx*nz-1), np.zeros(nx*nz), np.zeros(nx*nz-1)
-    for i in xrange(nz):
-        for j in xrange(nx-1):
-            if j!=(nx-2):
-                km1[i*nx+j]=alpha_x[i][j+1][0]
-            else:
-                km1[i*nx+j]=0.0
-            if j!=0:
-                k[i*nx+j]=-(alpha_x[i][j][0]+alpha_x[i][j+1][0])
-                kp1[i*nx+j]=alpha_x[i][j+1][0]
-            else:
-                k[i*nx+j]=deltas[0]**2    # this is so later, when we divice by delta[0]**2,
-                kp1[i*nx+j]=0.0           # this value turns to 1.0
-        k[i*nx+(nx-1)]=deltas[0]**2       
-        if i!=(nz-1):
-            km1[i*nx+(nx-1)]=0.0
-            kp1[i*nx+(nx-1)]=0.0
-
-    Lx=spsp.diags([km1,k,kp1],[-1,0,1],dtype='float')
-    Lx/=deltas[0]**2
-
-    # Builds z part of laplacian, assuming dirichlet boundaries at the edge of the PML
-    km1,k,kp1=np.zeros(nx*nz-1),np.zeros(nx*nz),np.zeros(nx*nz-1)
-    for i in xrange(nx):
-        for j in xrange(nz-1):
-            if j!=(nz-2):
-                km1[i*nz+j]=alpha_z[i][j+1][0]
-            else:
-                km1[i*nz+j]=0.0
-            if j!=0:
-                k[i*nz+j]=-(alpha_z[i][j][0]+alpha_z[i][j+1][0])
-                kp1[i*nz+j]=alpha_z[i][j+1][0]
-            else:
-                k[i*nz+j]=deltas[1]**2      # this is so later, when we divice by delta[0]**2,
-                kp1[i*nz+j]=0.0             # this value turns to 1.0
-        k[i*nz+(nz-1)]=deltas[1]**2         
-
-        if i!=(nx-1):
-            km1[i*nz+(nz-1)]=0.0
-            kp1[i*nz+(nz-1)]=0.0
-
-    Lz=spsp.diags([km1,k,kp1],[-1,0,1],dtype='float')
-    Lz/=deltas[1]**2
-    
-    # the permutation matrix (and following inverse permutation)
-    # allows us to use Lx against the same type of vector Lz acts against,
-    # because the permutation corrects the arrangment of the entries in 
-    # the vector Lx is applied against. 
-
-    Lap=Lz+P_inv*Lx*P
-
-    return Lap
 
 def build_permutation_matrix(nz,nx):
     # This creates a permutation matrix which transforms a column vector of nx

@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 
 import itertools
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
+from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_matrices
 import sys
 import numpy as np
 from numpy.random import uniform
-
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
 
 __all__ = ['FrequencyModeling']
 
