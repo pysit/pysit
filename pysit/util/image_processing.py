@@ -79,7 +79,7 @@ def blur_image(im, sigma=None, freq=None, mesh_deltas=None, n_sigma=1.0):
         sigma = 1./freq
 
     # determine the size, in pixels, of the kernel
-    kernel_size_pixel = np.ceil(n_sigma*sigma / mesh_deltas)
+    kernel_size_pixel = (np.ceil(n_sigma*sigma / mesh_deltas)).astype('int32')
 
     kernel = gaussian_kernel(kernel_size_pixel, sigma, mesh_deltas)
 

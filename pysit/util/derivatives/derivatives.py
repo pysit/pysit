@@ -229,13 +229,27 @@ def build_permutation_matrix(nz,nx):
     # This creates a permutation matrix which transforms a column vector of nx
     # "component" columns of size nz, to the corresponding column vector of nz
     # "component" columns of size nx.
-    P=np.zeros((nz*nx,nz*nx))
-    v=np.zeros(nz*nx)
-    for i in xrange(nz):
-        for j in xrange(nx):
-            P[nx*i+j][:]=v
-            P[nx*i+j][i+j*nz]=1
-    return spsp.csr_matrix(P)
+    
+    def generate_matrix(nz, nx): #local function
+        P = spsp.lil_matrix((nz*nx,nz*nx)) 
+        for i in xrange(nz): #Looping is not efficient, but we only need to do it once as setup
+            for j in xrange(nx):
+                P[nx*i+j,i+j*nz]=1
+    
+        return P.tocsr()
+    
+    #Start body of code for 'build_permutation_matrix'
+    try: #See if there are already stored results from previous calls to this function
+        current_storage_dict = build_permutation_matrix.storage_dict
+    except: #If not, initialize
+        current_storage_dict = dict()
+        build_permutation_matrix.storage_dict = current_storage_dict
+    
+    if (nz,nx) not in current_storage_dict.keys(): #Have not precomputed this!
+        mat = generate_matrix(nz,nx)
+        current_storage_dict[nz,nx] = mat
+ 
+    return current_storage_dict[nz,nx]
 
 def build_offcentered_alpha(sh,alpha):
     # This computes the midpoints of alpha which will be used in the heterogenous laplacian
