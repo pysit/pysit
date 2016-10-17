@@ -6,7 +6,7 @@ from variable_density_acoustic_frequency_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
-from pysit.util.derivatives import build_derivative_matrix, build_heterogenous_laplacian
+from pysit.util.derivatives import build_derivative_matrix, build_derivative_matrix_VDA
 from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
 from pysit.util.solvers import inherit_dict
@@ -199,7 +199,11 @@ class VariableDensityAcousticFrequencyScalar_2D(VariableDensityAcousticFrequency
         # build heterogenous laplacian
         sh = self.mesh.shape(include_bc=True,as_grid=True)
         deltas = [self.mesh.x.delta,self.mesh.z.delta]
-        oc.L = build_heterogenous_laplacian(sh,rho**-1,deltas)
+        oc.L = build_derivative_matrix_VDA(self.mesh,
+                                           2,
+                                           self.spatial_accuracy_order,
+                                           alpha = rho**-1
+                                           )
 
         # oc.L is a heterogenous laplacian operator. It computes div(m2 grad), where m2 = 1/rho. 
         # Currently the creation of oc.L is slow. This is because we have implemented a cenetered heterogenous laplacian.

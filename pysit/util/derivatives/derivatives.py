@@ -7,8 +7,9 @@ import pyamg
 from pyamg.gallery import stencil_grid
 
 from pysit.util.derivatives.fdweight import *
+from pysit.util.matrix_helpers import make_diag_mtx
 
-__all__ = ['build_derivative_matrix','build_heterogenous_laplacian','build_heterogenous_matrices','build_permutation_matrix']
+__all__ = ['build_derivative_matrix','build_derivative_matrix_VDA', 'build_heterogenous_matrices','build_permutation_matrix','_build_staggered_first_derivative_matrix_part', 'build_linear_interpolation_matrix_part']
 
 def build_derivative_matrix(mesh,
                             derivative, order_accuracy,
@@ -18,6 +19,12 @@ def build_derivative_matrix(mesh,
         return _build_derivative_matrix_structured_cartesian(mesh, derivative, order_accuracy, **kwargs)
     else:
         raise NotImplementedError('Derivative matrix builder not available (yet) for {0} meshes.'.format(mesh.discretization))
+
+def build_derivative_matrix_VDA(mesh, derivative, order_accuracy, alpha = None, **kwargs): #variable density acoustic
+    if mesh.type == 'structured-cartesian':
+        return _build_derivative_matrix_staggered_structured_cartesian(mesh, derivative, order_accuracy, alpha=alpha, **kwargs)
+    else:
+        raise NotImplementedError('Derivative matrix builder not available (yet) for {0} meshes.'.format(mesh.discretization))    
 
 def _set_bc(bc):
     if bc.type == 'pml':
@@ -153,77 +160,176 @@ def _build_derivative_matrix_part(npoints, derivative, order_accuracy, h=1.0, lb
 
     return mtx.tocsr()
 
+def _build_derivative_matrix_staggered_structured_cartesian(mesh,
+                                                            derivative, order_accuracy,
+                                                            dimension='all',
+                                                            alpha = None,
+                                                            return_1D_matrix=False,
+                                                            **kwargs):
+    
+    #Some of the operators could be cached the same way I did to make 'build_permutation_matrix' faster. 
+    #Could be considered if the current speed is ever considered to be insufficient.
+
+    import time
+    tt = time.time()
+    
+    if return_1D_matrix:
+        raise Exception('Not yet implemented')
+
+    if derivative < 1 or derivative > 2:
+        raise ValueError('Only defined for first and second order right now')
+    
+    if derivative == 1 and dimension not in ['x', 'y', 'z']:
+        raise ValueError('First derivative requires a direciton')
+    
+    sh = mesh.shape(include_bc = True, as_grid = True) #Will include PML padding
+    if len(sh) != 2: raise Exception('currently hardcoded 2D implementation, relatively straight-forward to change. Look at the function build_derivative_matrix to get a more general function.')
+    nx = sh[0]
+    nz = sh[-1]
+    
+    #Currently I am working with density input on the regular grid.
+    #In the derivation of the variable density solver we only require density at the stagger points
+    #For now I am just interpolating density defined on regular points towards the stagger points and use that as 'density model'.
+    #Later it is probably better to define the density directly on the stagger points (and evaluate density gradient there to update directly at these points?)
+    
+    if type(alpha) == None: #If no alpha is given, we set it to a uniform vector. The result should be the homogeneous Laplacian.
+        alpha = np.ones(nx*nz)
+    
+    alpha = alpha.flatten() #make 1D
+    
+    dx = mesh.x.delta
+    dz = mesh.z.delta
+    
+    #Get 1D linear interpolation matrices
+    Jx_1d = build_linear_interpolation_matrix_part(nx)
+    Jz_1d = build_linear_interpolation_matrix_part(nz)
+
+
+    #Get 1D derivative matrix for first spatial derivative using the desired order of accuracy 
+    lbc_x = _set_bc(mesh.x.lbc)
+    rbc_x = _set_bc(mesh.x.rbc)
+    
+    lbc_z = _set_bc(mesh.z.lbc)
+    rbc_z = _set_bc(mesh.z.rbc)
+    
+    Dx_1d = _build_staggered_first_derivative_matrix_part(nx, order_accuracy, h=dx, lbc = lbc_x, rbc = rbc_x)
+    Dz_1d = _build_staggered_first_derivative_matrix_part(nz, order_accuracy, h=dz, lbc = lbc_z, rbc = rbc_z)
+    
+    #Some empty matrices of the right shape so we can use kronsum to get the proper 2D matrices for the operations we want.
+    #The same is used in the homogeneous 'build_derivative_matrix' function. 
+    Ix = spsp.eye(nx)
+    Iz = spsp.eye(nz)
+    
+    
+    
+    Dx_2d = spsp.kron(Dx_1d, Iz, format='csr')
+    if dimension == 'x' and derivative == 1:
+        return Dx_2d
+
+    Dz_2d = spsp.kron(Ix, Dz_1d, format='csr')
+    if dimension == 'z' and derivative == 1:
+        return Dz_2d
+    
+    #If we are evaluating this we want to make the heterogeneous Laplacian
+    Jx_2d = spsp.kron(Jx_1d, Iz, format='csr')
+    Jz_2d = spsp.kron(Ix, Jz_1d, format='csr')
+    
+    #alpha interpolated to x stagger points. Make diag mat
+    diag_alpha_x = make_diag_mtx(Jx_2d*alpha)
+    
+    #alpha interpolated to z stagger points. Make diag mat
+    diag_alpha_z = make_diag_mtx(Jz_2d*alpha)
+    
+    #Create laplacian components
+    #The negative transpose of Dx and Dz takes care of the divergence term of the heterogeneous laplacian  
+    Dxx_2d = -Dx_2d.T*diag_alpha_x*Dx_2d
+    Dzz_2d = -Dz_2d.T*diag_alpha_z*Dz_2d
+    
+    #Correct the Laplacian around the boundary. This is also done in the homogeneous Laplacian
+    #I want the heterogeneous Laplacian to be the same as the homogeneous Laplacian when alpha is uniform
+    #This is the only part of the Laplacian that deviates from symmetry, just as in the homogeneous case.
+    #But because of these conditions on the dirichlet boundary the wavefield will always equal 0 there and this deviation from symmetry is fine.
+    
+    #For indexing, get list of all boundary node numbers
+    left_node_nrs  = np.arange(nz)
+    right_node_nrs = np.arange((nx-1)*nz,nx*nz)
+    top_node_nrs   = np.arange(nz,(nx-1)*nz,nz) #does not include left and right top node
+    bot_node_nrs   = top_node_nrs + nz - 1    #does not include left and right top node
+    all_boundary_node_nrs   = np.concatenate((left_node_nrs, right_node_nrs, top_node_nrs, bot_node_nrs))
+    nb             = all_boundary_node_nrs.size
+    L = Dxx_2d + Dzz_2d
+    
+    all_node_numbers = np.arange(0,(nx*nz), dtype='int32')
+    internal_node_numbers = list(set(all_node_numbers) - set(all_boundary_node_nrs))
+
+
+    L = L.tocsr() #so we can extract rows efficiently
+    
+    #Operation below fixes the boundary rows quite efficiently.
+    L_fixed = _turn_sparse_rows_to_identity(L, internal_node_numbers, all_boundary_node_nrs)
+     
+    return L_fixed.tocsr()
+    
+def _turn_sparse_rows_to_identity(A, rows_to_keep, rows_to_change): 
+    #Convenience function for removing some rows from the sparse laplacian
+    #Had some major performance problems by simply slicing in all the matrix formats I tried.
+    
+    nr,nc = A.shape
+    if nr != nc:
+        raise Exception('assuming square matrix')
+    
+    #Create diagonal matrix. When we multiply A by this matrix we can remove rows
+    rows_to_keep_diag = np.zeros(nr, dtype='int32')
+    rows_to_keep_diag[rows_to_keep] = 1
+    diag_mat_remove_rows = make_diag_mtx(rows_to_keep_diag) 
+    
+    #The matrix below has the rows we want to turn into identity turned to 0
+    A_with_rows_removed = diag_mat_remove_rows*A
+    
+    #Make diag matrix that has diagonal entries in the rows we want to be identity
+    rows_to_change_diag = np.zeros(nr, dtype='int32')
+    rows_to_change_diag[rows_to_change] = 1
+    A_with_identity_rows = make_diag_mtx(rows_to_change_diag)    
+    
+    A_modified = A_with_rows_removed + A_with_identity_rows
+    return A_modified
+    
+    
+def _build_staggered_first_derivative_matrix_part(npoints, order_accuracy, h=1.0, lbc='d', rbc='d'):
+    #npoints is the number of regular grid points.
+    
+    if order_accuracy%2:
+        raise ValueError('Only even accuracy orders supported.')
+    
+    #coefficients for the first derivative evaluated in between two regular grid points.
+    stagger_coeffs = staggered_difference(1, order_accuracy)/h
+    #Use the old 'stencil_grid' routine. 
+    #Because we do a staggered grid we need to shift the coeffs one entry and the matrix will not be square
+    incorrect_mtx = stencil_grid(np.insert(stagger_coeffs,0,0), (npoints, ), format='lil')
+    #Get rid of the last row which we dont want in our staggered approach
+    mtx = incorrect_mtx[0:-1,:]
+
+    if 'n' in lbc or 'n' in rbc:
+        raise ValueError('Did not yet implement Neumann boundaries. Perhaps looking at the centered grid implementation would be a good start?')
+
+    if 'g' in lbc or 'g' in rbc:
+        raise ValueError('Did not yet implement this boundary condition yet. Perhaps looking at the centered grid implementation would be a good start?')
+    
+    #For dirichlet we don't need to alter the matrix for the first derivative for the boundary nodes as is done in the centered approach
+    #The reason is that the first staggered point we evaluate at is in the interior of the domain.
+    return mtx.tocsr()
+
+def build_linear_interpolation_matrix_part(npoints):
+    #same logic as in function 'build_staggered_first_derivative_matrix_part
+    coeffs = np.array([0.5, 0.5])
+    incorrect_mtx = stencil_grid(np.insert(coeffs,0,0), (npoints, ), format='lil')
+    mtx = incorrect_mtx[0:-1,:]    
+    return mtx.tocsr()
+    
 
 def apply_derivative(mesh, derivative, order_accuracy, vector, **kwargs):
     A = build_derivative_matrix(mesh, derivative, order_accuracy, **kwargs)
     return A*vector
-
-def build_heterogenous_laplacian(sh,alpha,deltas):
-    # This is a 2D "Heteogenous Laplacian" matrix operator constructor.
-    # It takes a mesh (including BC), and returns a square, sparse matrix of size 
-    # mesh.x.n*mesh.z.n. The operator is div(alpha grad), and is second order accurate.
-    # for our purposes, alpha usually is (1/rho), or, model m2. 
-    nz = sh[-1]
-    nx = sh[0]
-    P = build_permutation_matrix(nz,nx)
-    P_inv = build_permutation_matrix(nx,nz)
-
-    alpha_x, alpha_z = build_offcentered_alpha(sh,alpha)  # alpha is passed into this routine centered on the computational nodes.
-                                                          # build_offcentered_alpha returns alpha cenetered on the midpoints of the nodes.
-                                                          
-    # Builds x part of laplacian, assuming dirichlet boundaries at the edge of the PML
-    km1, k, kp1 = np.zeros(nx*nz-1), np.zeros(nx*nz), np.zeros(nx*nz-1)
-    for i in xrange(nz):
-        for j in xrange(nx-1):
-            if j!=(nx-2):
-                km1[i*nx+j]=alpha_x[i][j+1][0]
-            else:
-                km1[i*nx+j]=0.0
-            if j!=0:
-                k[i*nx+j]=-(alpha_x[i][j][0]+alpha_x[i][j+1][0])
-                kp1[i*nx+j]=alpha_x[i][j+1][0]
-            else:
-                k[i*nx+j]=deltas[0]**2    # this is so later, when we divice by delta[0]**2,
-                kp1[i*nx+j]=0.0           # this value turns to 1.0
-        k[i*nx+(nx-1)]=deltas[0]**2       
-        if i!=(nz-1):
-            km1[i*nx+(nx-1)]=0.0
-            kp1[i*nx+(nx-1)]=0.0
-
-    Lx=spsp.diags([km1,k,kp1],[-1,0,1],dtype='float')
-    Lx/=deltas[0]**2
-
-    # Builds z part of laplacian, assuming dirichlet boundaries at the edge of the PML
-    km1,k,kp1=np.zeros(nx*nz-1),np.zeros(nx*nz),np.zeros(nx*nz-1)
-    for i in xrange(nx):
-        for j in xrange(nz-1):
-            if j!=(nz-2):
-                km1[i*nz+j]=alpha_z[i][j+1][0]
-            else:
-                km1[i*nz+j]=0.0
-            if j!=0:
-                k[i*nz+j]=-(alpha_z[i][j][0]+alpha_z[i][j+1][0])
-                kp1[i*nz+j]=alpha_z[i][j+1][0]
-            else:
-                k[i*nz+j]=deltas[1]**2      # this is so later, when we divice by delta[0]**2,
-                kp1[i*nz+j]=0.0             # this value turns to 1.0
-        k[i*nz+(nz-1)]=deltas[1]**2         
-
-        if i!=(nx-1):
-            km1[i*nz+(nz-1)]=0.0
-            kp1[i*nz+(nz-1)]=0.0
-
-    Lz=spsp.diags([km1,k,kp1],[-1,0,1],dtype='float')
-    Lz/=deltas[1]**2
-    
-    # the permutation matrix (and following inverse permutation)
-    # allows us to use Lx against the same type of vector Lz acts against,
-    # because the permutation corrects the arrangment of the entries in 
-    # the vector Lx is applied against. 
-
-    Lap=Lz+P_inv*Lx*P
-
-    return Lap
 
 def build_permutation_matrix(nz,nx):
     # This creates a permutation matrix which transforms a column vector of nx

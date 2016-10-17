@@ -1,7 +1,7 @@
 from __future__ import absolute_import
 
 import numpy as np
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
+from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_matrices
 from numpy.random import uniform
 
 __all__ = ['TemporalModeling']
@@ -54,7 +54,7 @@ class TemporalModeling(object):
     def _setup_forward_rhs(self, rhs_array, data):
         return self.solver.mesh.pad_array(data, out_array=rhs_array)
 
-    def forward_model(self, shot, m0, imaging_period, return_parameters=[]):
+    def forward_model(self, shot, m0, imaging_period=1, return_parameters=[]):
         """Applies the forward model to the model for the given solver.
 
         Parameters
@@ -219,7 +219,7 @@ class TemporalModeling(object):
 
         return rhs_array
 
-    def adjoint_model(self, shot, m0, operand_simdata, imaging_period, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None, wavefield=None):
+    def adjoint_model(self, shot, m0, operand_simdata, imaging_period=1, operand_dWaveOpAdj=None, operand_model=None, return_parameters=[], dWaveOp=None, wavefield=None):
         """Solves for the adjoint field.
 
         For constant density: m*q_tt - lap q = resid, where m = 1.0/c**2
@@ -289,6 +289,7 @@ class TemporalModeling(object):
 
         # Variable-Density will call this, giving us matrices needed for the ic in terms of m2 (or rho)
         if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            print "WARNING: Ian's operators are still used here even though the solver has changed. Gradient may be incorrect. These routines need to be updated."
             deltas = [mesh.x.delta,mesh.z.delta]
             sh = mesh.shape(include_bc=True,as_grid=True)
             D1,D2=build_heterogenous_matrices(sh,deltas)
@@ -730,6 +731,7 @@ class TemporalModeling(object):
         model_2=mesh.pad_array(model_2)
 
         #Lap = build_heterogenous_(sh,model_2,[mesh.x.delta,mesh.z.delta])
+        print "WARNING: Ian's operators are still used here even though the solver has changed. These tests need to be updated."
         rp=dict()
         rp['laplacian']=True
         Lap = build_heterogenous_matrices(sh,[mesh.x.delta,mesh.z.delta],model_2.reshape(-1,),rp=rp)
@@ -1071,7 +1073,7 @@ def adjoint_test():
 
     #   Generate true wave speed
     #   (M = C^-2 - C0^-2)
-    C0, C = horizontal_reflector(m)
+    C, C0, m, d = horizontal_reflector(m)
 
     # Set up shots
     Nshots = 1
@@ -1123,7 +1125,7 @@ def adjoint_test():
     m1 = m0.perturbation()
     m1 += np.random.rand(*m1.data.shape)
 
-    fwdret = tools.forward_model(shot, m0, ['wavefield', 'dWaveOp', 'simdata'])
+    fwdret = tools.forward_model(shot, m0, return_parameters = ['wavefield', 'dWaveOp', 'simdata'])
     dWaveOp0 = fwdret['dWaveOp']
     inc_field = fwdret['wavefield']
     data = fwdret['simdata']
@@ -1153,6 +1155,8 @@ def adjoint_test():
         qhat += qs[k]*(np.exp(-1j*2.0*np.pi*10.0*t)*dt)
 
 if __name__ == '__main__':
+    print "Constant density solver adjoint test:"
+    adjoint_test()
     print "testing pertubation of rho:"
     adjoint_test_rho()
     print "testing pertubation of kappa:"

@@ -1,12 +1,10 @@
 from __future__ import absolute_import
 
 import itertools
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
+from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_matrices
 import sys
 import numpy as np
 from numpy.random import uniform
-
-from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_laplacian, build_heterogenous_matrices
 
 __all__ = ['FrequencyModeling']
 
@@ -420,6 +418,7 @@ class FrequencyModeling(object):
 
         # if we are dealing with variable density, we need to collect the gradient operators, D1 and D2. (note: D2 is the negative adjoint of the leftmost gradient used in our heterogenous laplacian)
         if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
+            print "WARNING: Ian's operators are still used here even though the solver has changed. Gradient may be incorrect. These routines need to be updated."
             deltas = [mesh.x.delta,mesh.z.delta]
             sh = mesh.shape(include_bc=True,as_grid=True)
             D1, D2 = build_heterogenous_matrices(sh,deltas)
@@ -906,6 +905,7 @@ class FrequencyModeling(object):
 
         rp=dict()
         rp['laplacian']=True
+        print "WARNING: Ian's operators are still used here even though the solver has changed. These tests need to be updated."
         Lap = build_heterogenous_matrices(sh,[mesh.x.delta,mesh.z.delta],model_2.reshape(-1,),rp=rp)
         # Storage for the field     
         u1hats = dict()

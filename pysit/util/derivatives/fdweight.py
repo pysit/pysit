@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-__all__ = ['finite_difference_coefficients', 'centered_difference', 'shifted_difference']
+__all__ = ['finite_difference_coefficients', 'centered_difference', 'shifted_difference', 'staggered_difference']
 
 def centered_difference(deriv, order):
     if order%2:
@@ -12,6 +12,19 @@ def centered_difference(deriv, order):
     npoints = deriv + order + deriv%2 - 1
     center_idx = math.floor(npoints/2)
     return finite_difference_coefficients(center_idx, np.arange(npoints),deriv)
+
+def staggered_difference(deriv, order):
+    if deriv != 1:
+        raise ValueError('Only tested for first derivative. Probably extends like center_difference though. Not yet implemented.')
+
+    if order%2:
+        raise ValueError('Untested when order not even.')
+    
+    #Using Fornberg paper "CALCULATION OF WEIGHTS IN FINITE DIFFERENCE FORMULAS. Similar to case 2 in table 3
+    
+    npoints = order
+    center_idx = 0
+    return finite_difference_coefficients(center_idx, np.arange(npoints)-(npoints/2.)+0.5,deriv)
 
 def shifted_difference(deriv, order, shift):
     npoints = deriv+order
