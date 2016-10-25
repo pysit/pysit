@@ -6,8 +6,14 @@ import os
 import petsc4py
 import sys
 
-petsc4py.init(sys.argv)
-from petsc4py import PETSc
+try:
+    import petsc4py
+    petsc4py.init(sys.argv)
+    from petsc4py import PETSc
+
+    haspetsc = True
+except:
+    haspetsc = False
 
 import scipy.sparse as spsp
 
@@ -15,6 +21,10 @@ import scipy.sparse as spsp
 class PetscWrapper():
 
     def __init__(self):
+
+        if not haspetsc:
+            raise NotImplementedError("petsc4py not supported")
+
         self.solverType = []
         self.H_inv = []
 
