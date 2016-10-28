@@ -27,7 +27,11 @@ class PetscWrapper():
         self.solverType = []
         self.H_inv = []
 
-    def factorize(self, H, solverType, comm=PETSc.COMM_WORLD):
+    def factorize(self, H, solverType, comm=None):
+        
+        if comm is None:
+            comm = PETSc.COMM_WORLD
+        
         self.solverType = solverType
         
         # check if H is a csr matrix otherwise converts H into csr format
