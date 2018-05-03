@@ -1,6 +1,6 @@
 import numpy as np
 
-import obspy.segy.core as segy
+import obspy.io.segy.core as segy
 
 __all__ = ['read_model']
 
