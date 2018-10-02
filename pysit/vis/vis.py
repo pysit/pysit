@@ -111,7 +111,7 @@ def animate(data, mesh, display_rate=30,pause=1, scale=None, show=True, **kwargs
 
 
     anim = animation.FuncAnimation(fig, _animate, fargs=_animate_args, #init_func=init,
-            interval=pause, frames=xrange(0,len(data),display_rate), blit=False, repeat=False)
+            interval=pause, frames=range(0,len(data),display_rate), blit=False, repeat=False)
 
     if show:
         plt.show()

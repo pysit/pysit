@@ -213,7 +213,7 @@ class SourceEncodedSupershot(Shot):
                     #Set the codes for this frequency. Not much of an overhead since no timestepping.
                     #In contrast to a time simulation, the intensity (used for code) has to be set again each time frequencies are varied. Each frequency can have a different code.
                     
-                    for source_nr in xrange(self.source_count):
+                    for source_nr in range(self.source_count):
                         source = self.source_list[source_nr]
                         source.intensity = self.codes[nu][source_nr]                        
                         
@@ -237,7 +237,7 @@ class SourceEncodedSupershot(Shot):
                     
                     #Set the codes here already. Applying them at each time step when f() is called is an overhead.
                     
-                    for source_nr in xrange(self.source_count):
+                    for source_nr in range(self.source_count):
                         source = self.source_list[source_nr]
                         source.intensity = self.codes[source_nr]
                         

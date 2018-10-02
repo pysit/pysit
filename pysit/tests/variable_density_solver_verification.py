@@ -117,8 +117,8 @@ shotgather_time_vda = shots_time_vda[0].receivers.data
 #divide by max: scalar difference due to density
 #shotgather_time_vda = shotgather_time_vda * (shotgather_time_cda.max()/shotgather_time_vda.max())
 rel_dif_time = np.linalg.norm(shotgather_time_vda - shotgather_time_cda)/np.linalg.norm(shotgather_time_vda)
-print "1: Relative difference in CDA and VDA solver on uniform grid and 2nd order in space: " + str(rel_dif_time) 
-print "Exactly the same for second order accuracy."
+print("1: Relative difference in CDA and VDA solver on uniform grid and 2nd order in space: " + str(rel_dif_time)) 
+print("Exactly the same for second order accuracy.")
 
 L_cda = solver_time_cda.operator_components.L
 L_vda = solver_time_vda.operator_components.L
@@ -143,7 +143,7 @@ VDA_deviation_self_adjoint.data *= elements_not_within_plus_min_eps
 VDA_deviation_self_adjoint.eliminate_zeros()
 
 
-print "2: Displaying entries with deviation from self adjoint larger than %e \n"%eps
+print("2: Displaying entries with deviation from self adjoint larger than %e \n"%eps)
 plt.figure(1); plt.spy(CDA_deviation_self_adjoint, markersize=3); plt.title('CDA entries deviating from self-adjoint')
 plt.figure(2); plt.spy(VDA_deviation_self_adjoint, markersize=3); plt.title('VDA entries deviating from self-adjoint')
 
@@ -178,8 +178,8 @@ shotgather_time_cda = shots_time_cda[0].receivers.data
 shotgather_time_vda = shots_time_vda[0].receivers.data
 
 rel_dif_time = np.linalg.norm(shotgather_time_vda - shotgather_time_cda)/np.linalg.norm(shotgather_time_vda)
-print "3: Relative difference in CDA and VDA solver on uniform grid and 8th order in space: " + str(rel_dif_time)
-print "Slightly different because VDA solver has more bands. But difference is tiny \n"
+print("3: Relative difference in CDA and VDA solver on uniform grid and 8th order in space: " + str(rel_dif_time))
+print("Slightly different because VDA solver has more bands. But difference is tiny \n")
 
 #######################################################################
 ############### NOW LOOK AT A CASE WITH A DENSITY CONTRAST ############
@@ -225,7 +225,7 @@ wavefields = []
 base_model_vda_bump = solver_time_vda_bump.ModelParameters(m,model_param_vda)
 generate_seismic_data(shots_time_vda_bump, solver_time_vda_bump, base_model_vda_bump, wavefields=wavefields)
 
-print "4: Plotting trace, constant velocity but density bump introduces reflection as expected"
+print("4: Plotting trace, constant velocity but density bump introduces reflection as expected")
 
 shotgather_time_vda_bump = shots_time_vda_bump[0].receivers.data
 plt.figure(4)
@@ -244,9 +244,9 @@ elements_not_within_plus_min_eps = np.logical_not(elements_within_plus_min_eps)
 VDA_bump_deviation_self_adjoint.data *= elements_not_within_plus_min_eps 
 VDA_bump_deviation_self_adjoint.eliminate_zeros()
 
-print "5: Displaying entries with deviation from self adjoint larger than for density jump model %e \n"%eps
+print("5: Displaying entries with deviation from self adjoint larger than for density jump model %e \n"%eps)
 plt.figure(5); plt.spy(VDA_bump_deviation_self_adjoint, markersize=3); plt.title('VDA entries deviating from self-adjoint dens bump model')
 plt.show()
 
-print "6: Plotting wavefield, constant velocity but density bump introduces reflection as expected"  
+print("6: Plotting wavefield, constant velocity but density bump introduces reflection as expected")  
 vis.animate(wavefields, m, display_rate = 3)

@@ -60,7 +60,7 @@ if __name__ == '__main__':
     generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mumps')
     # generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mkl_pardiso')
     
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
 
     solver = ConstantDensityHelmholtz(m,
@@ -97,7 +97,7 @@ if __name__ == '__main__':
     # result = invalg(shots, initial_value, loop_configuration,
     #                 status_configuration=configuration, verbose=True, petsc='mkl_pardiso')
 
-    print 'Run time:  {0}s'.format(time.time()-tt)
+    print('Run time:  {0}s'.format(time.time()-tt))
 
     plt.figure()
     vis.plot(C, m)

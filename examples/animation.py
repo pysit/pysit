@@ -51,7 +51,7 @@ def test_1d():
     base_model = solver.ModelParameters(m,{'C': C})
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     return wavefields, m
 
@@ -102,7 +102,7 @@ def test_2d():
     base_model = solver.ModelParameters(m,{'C': C})
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     return wavefields, m
 
@@ -154,7 +154,7 @@ def test_3d():
     base_model = solver.ModelParameters(m,{'C': C})
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     return wavefields, m
 

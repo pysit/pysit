@@ -33,7 +33,7 @@ if __name__ == '__main__':
     shots = []
     zpos = 0
     xpos = np.linspace(xmin, xmax, nx)
-    for i in xrange(Nshots):
+    for i in range(Nshots):
 
         # Define source location and type
         source = PointSource(m, (xmax*(i+1.0)/(Nshots+1.0), 0.1), RickerWavelet(4.0), approximation='delta')
@@ -83,7 +83,7 @@ if __name__ == '__main__':
     #loop_configuration=[(6,{'frequencies' : [2.0, 3.5]}), (3,{'frequencies' : [3.5, 5.0]})]
     loop_configuration=[(6,{'frequencies' : [1.0]}), (6,{'frequencies' : [1.5, 2.0]}), (6,{'frequencies' : [2.5, 3.0, 3.5]}), (6,{'frequencies' : [4.0, 4.5, 5.0]}), (6,{'frequencies' : [5.0, 7.5, 10.0]})]
     result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration)
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
 
     clim = C.min(),C.max()
 

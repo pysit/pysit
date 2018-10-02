@@ -12,7 +12,7 @@ class SolverDataTimeBase(SolverDataBase):
         self.solver = solver
 
         # self.us[0] is kp1, [1] is k or current, [2] is km1, [3] is km2, etc
-        self.us = [solver.WavefieldVector(solver.mesh, dtype=solver.dtype) for x in xrange(3)]
+        self.us = [solver.WavefieldVector(solver.mesh, dtype=solver.dtype) for x in range(3)]
 
     def advance(self):
 

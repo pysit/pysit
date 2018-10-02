@@ -4,7 +4,7 @@ import numpy as np
 import scipy.sparse as spsp
 from scipy.interpolate import interp1d
 
-from mesh_representation import MeshRepresentationBase, PointRepresentationBase, PlaneRepresentationBase
+from .mesh_representation import MeshRepresentationBase, PointRepresentationBase, PlaneRepresentationBase
 
 __all__ = ['PointSource', 'SourceSet']
 

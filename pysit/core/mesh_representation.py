@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.sparse as spsp
 from scipy.interpolate import interp1d
+from functools import reduce
 
 __all__ = ['MeshRepresentationBase', 'PointRepresentationBase']
 
@@ -156,9 +157,9 @@ class PointRepresentationBase(MeshRepresentationBase):
             window_width = np.ceil(np.around(approximation_deviations*sigma / np.array(deltas), 3)).astype(np.int)
 
             # (Position - boundary) / grid spacing, for each direction
-            gc = map(lambda x,y,z: int(round((z - x)/y)), mins, deltas, pos)
+            gc = list(map(lambda x,y,z: int(round((z - x)/y)), mins, deltas, pos))
 
-            subranges = [range(max(0,c-w),min(g.size,c+w+1)) for g,w,c in zip(grid,window_width,gc)]
+            subranges = [list(range(max(0,c-w),min(g.size,c+w+1))) for g,w,c in zip(grid,window_width,gc)]
             subwindows = [g.flatten()[r] for g,r in zip(grid,subranges)]
 
             dim = self.domain.dim
@@ -172,7 +173,7 @@ class PointRepresentationBase(MeshRepresentationBase):
 
             normalization = 1./((np.sqrt(2*np.pi)**dim)*(sigma**dim))
             # reduce(X, map(Y, (Grid,Pos))) nicely handles both 2D and 3D gaussians
-            data = normalization * np.exp( (-0.5/sigma**2) * reduce(lambda x,y: x+y, map(lambda x: (x[0]-x[1])**2, zip(subgrid,pos))))
+            data = normalization * np.exp( (-0.5/sigma**2) * reduce(lambda x,y: x+y, [(x[0]-x[1])**2 for x in zip(subgrid,pos)]))
             indices = np.ravel_multi_index(np.array([g.flatten() for g in subranges]).astype(np.int), self.mesh.shape(as_grid=True))
             if self._sample_interp_method == 'sparse':
                 indptr = np.array([0,len(indices)])
@@ -186,7 +187,7 @@ class PointRepresentationBase(MeshRepresentationBase):
             mins = self.domain.collect('lbound')
 
             # (Position - boundary) / grid spacing, for each direction
-            gc = tuple(map(lambda x: int(round((x[2] - x[0])/x[1])), zip(mins, deltas, pos)))
+            gc = tuple([int(round((x[2] - x[0])/x[1])) for x in zip(mins, deltas, pos)])
 
             # Get a flat index for that grid coordinate
             grid_coord = np.ravel_multi_index(gc,self.mesh.shape(as_grid=True))
@@ -208,7 +209,9 @@ class PointRepresentationBase(MeshRepresentationBase):
 
 
         self.sampling_operator = self._sampling_operator_base * self._prod_deltas
-        self.adjoint_sampling_operator = self._sampling_operator_base.T
+        self.adjoint_sampling_operator = self._sampling_operator_base.T # Zhilong comment out
+        #self.adjoint_sampling_operator = self.sampling_operator.T # Zhilong add
+
 
 class PlaneRepresentationBase(MeshRepresentationBase):
     def __init__(self, *args, **kwargs):

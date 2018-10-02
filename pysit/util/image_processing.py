@@ -85,7 +85,7 @@ def blur_image(im, sigma=None, freq=None, mesh_deltas=None, n_sigma=1.0):
 
     # Pad the image by the kernel size on all sides, to get smoothing without
     # edge effects
-    im_ = np.pad(im, zip(kernel_size_pixel,kernel_size_pixel), mode='edge')
+    im_ = np.pad(im, list(zip(kernel_size_pixel,kernel_size_pixel)), mode='edge')
 
     improc = signal.fftconvolve(im_, kernel, mode='valid')
 

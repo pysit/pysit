@@ -139,7 +139,7 @@ class RectangularDomain(DomainBase):
 
     def collect(self, prop):
         """ Collects a ndim-tuple of property `prop`."""
-        return tuple([self.parameters[i][prop] for i in xrange(self.dim)])
+        return tuple([self.parameters[i][prop] for i in range(self.dim)])
 
     def get_lengths(self):
         """Returns the physical size of the domain as a ndim-tuple."""

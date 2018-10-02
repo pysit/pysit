@@ -42,7 +42,7 @@ if __name__ == '__main__':
     # generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mkl_pardiso')
     generate_seismic_data(shots, solver, base_model, frequencies=frequencies, petsc='mumps')
     # generate_seismic_data_from_file(shots,save_method='h5py')
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     objective = FrequencyLeastSquares(solver)
 
@@ -71,9 +71,9 @@ if __name__ == '__main__':
 
     # result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mkl_pardiso')
     result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mumps')
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
 
-    obj_vals = np.array([v for k,v in invalg.objective_history.items()])
+    obj_vals = np.array([v for k,v in list(invalg.objective_history.items())])
 
     plt.figure()
     plt.semilogy(obj_vals)

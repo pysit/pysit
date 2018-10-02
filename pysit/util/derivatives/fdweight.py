@@ -1,4 +1,4 @@
-from __future__ import division
+
 
 import math
 
@@ -63,24 +63,24 @@ def finite_difference_coefficients(z, x, m, tol=1e-10):
     C = np.zeros((len(x),m+1))
     C[0,0] = 1.
 
-    for i in xrange(1,n+1):
+    for i in range(1,n+1):
         mn = min(i,m)
         c2 = 1.
         c5 = c4
         c4 = x[i]-z
 
-        for j in xrange(0,i):
+        for j in range(0,i):
 
             c3 = x[i]-x[j]
             c2 *= c3
 
             if j == i-1:
-                for k in xrange(mn,0,-1):
+                for k in range(mn,0,-1):
                     C[i,k] = c1*(k*C[i-1,k-1]-c5*C[i-1,k])/c2
 
                 C[i,0] = -c1*c5*C[i-1,0]/c2
 
-            for k in xrange(mn,0,-1):
+            for k in range(mn,0,-1):
                 C[j,k] = (c4*C[j,k]-k*C[j,k-1])/c3
 
             C[j,0] = c4*C[j,0]/c3
@@ -106,25 +106,25 @@ def rational_weights(center, npoints, deriv, dtype=np.int):
     C_num[0,0] = 1
     C_den[0,0] = 1
 
-    for i in xrange(1,n+1):
+    for i in range(1,n+1):
         mn = min(i,deriv)
         c2 = 1.
         c5 = c4
         c4 = i-center
 
-        for j in xrange(0,i):
+        for j in range(0,i):
             c3 = i-j
             c2 *= c3
 
             if j == i-1:
-                for k in xrange(mn,0,-1):
+                for k in range(mn,0,-1):
                     C_num[i,k] = (c1*(k*C_num[i-1,k-1]*C_den[i-1,k]-c5*C_num[i-1,k]*C_den[i-1,k-1]))
                     C_den[i,k] = C_den[i-1,k-1]*C_den[i-1,k]*c2
 
                 C_num[i,0] = -c1*c5*C_num[i-1,0]
                 C_den[i,0] = C_den[i-1,0]*c2
 
-            for k in xrange(mn,0,-1):
+            for k in range(mn,0,-1):
                 C_num[j,k] = (c4*C_num[j,k]*C_den[j,k-1]-k*C_num[j,k-1]*C_den[j,k])
                 C_den[j,k] = (C_den[j,k]*C_den[j,k-1])*c3
 

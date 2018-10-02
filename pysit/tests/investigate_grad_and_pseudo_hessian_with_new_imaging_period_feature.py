@@ -44,7 +44,7 @@ if __name__ == '__main__':
     true_model    = solver.ModelParameters(m,{'C':  C})
     generate_seismic_data(shots, solver, true_model)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
         
     tt = time.time()
     
@@ -61,12 +61,12 @@ if __name__ == '__main__':
     objective_3 = TemporalLeastSquares(solver, imaging_period = 2.0*imaging_period)
         
     grad1      = objective_1.compute_gradient(shots,initial_model, aux_info = aux_info_1)
-    print 'generated gradient using normal imaging period'
+    print('generated gradient using normal imaging period')
     grad2      = objective_2.compute_gradient(shots,initial_model, aux_info = aux_info_2)
-    print 'generated gradient using reduced imaging period \n'
+    print('generated gradient using reduced imaging period \n')
     grad3      = objective_3.compute_gradient(shots,initial_model, aux_info = aux_info_3)
-    print 'generated gradient using further reduced imaging period \n'
-    print 'Gradient generation: {0}s'.format(time.time()-tt)
+    print('generated gradient using further reduced imaging period \n')
+    print('Gradient generation: {0}s'.format(time.time()-tt))
     
     pseudo_hess_diag_1 = aux_info_1['pseudo_hess_diag'][1]; pseudo_hess_diag_2 = aux_info_2['pseudo_hess_diag'][1]; pseudo_hess_diag_3 = aux_info_3['pseudo_hess_diag'][1]
     
@@ -76,4 +76,4 @@ if __name__ == '__main__':
     rel_diff_pseudo_2 = np.linalg.norm(pseudo_hess_diag_2 - pseudo_hess_diag_1)/np.linalg.norm(pseudo_hess_diag_1)
     rel_diff_pseudo_3 = np.linalg.norm(pseudo_hess_diag_3 - pseudo_hess_diag_1)/np.linalg.norm(pseudo_hess_diag_1)
     
-    print rel_dif_grad_2, rel_dif_grad_3, rel_diff_pseudo_2, rel_diff_pseudo_3  
+    print(rel_dif_grad_2, rel_dif_grad_3, rel_diff_pseudo_2, rel_diff_pseudo_3)  

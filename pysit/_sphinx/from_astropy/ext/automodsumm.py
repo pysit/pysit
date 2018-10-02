@@ -228,7 +228,7 @@ class Automoddiagram(InheritanceDiagram):
         oldargs = self.arguments
         try:
             if len(clsnms) > 0:
-                self.arguments = [u' '.join(clsnms)]
+                self.arguments = [' '.join(clsnms)]
             return InheritanceDiagram.run(self)
         finally:
             self.arguments = oldargs
@@ -414,7 +414,7 @@ def generate_automodsumm_docs(lines, srcfn, suffix='.rst', warn=None,
 #    info('[automodsumm] generating autosummary for: ' + ', '.join(gennms))
 
     # remove possible duplicates
-    items = dict([(item, True) for item in items]).keys()
+    items = list(dict([(item, True) for item in items]).keys())
 
     # keep track of new files
     new_files = []
@@ -431,7 +431,7 @@ def generate_automodsumm_docs(lines, srcfn, suffix='.rst', warn=None,
 
         try:
             name, obj, parent = import_by_name(name)
-        except ImportError, e:
+        except ImportError as e:
             warn('[automodapi] failed to import %r: %s' % (name, e))
             continue
 
@@ -490,7 +490,7 @@ def generate_automodsumm_docs(lines, srcfn, suffix='.rst', warn=None,
                     if hasattr(obj, '__slots__'):
                         names = tuple(getattr(obj, '__slots__'))
                     else:
-                        names = getattr(obj, '__dict__').keys()
+                        names = list(getattr(obj, '__dict__').keys())
 
                 for name in names:
                     try:

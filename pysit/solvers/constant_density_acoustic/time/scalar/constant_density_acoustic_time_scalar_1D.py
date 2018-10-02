@@ -3,7 +3,7 @@ import scipy.sparse as spsp
 import os
 
 from pysit.solvers.wavefield_vector import *
-from constant_density_acoustic_time_scalar_base import *
+from .constant_density_acoustic_time_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
@@ -12,7 +12,7 @@ from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
 from pysit.util.solvers import inherit_dict
 
-from constant_density_acoustic_time_scalar_cpp import (
+from ._constant_density_acoustic_time_scalar_cpp import (
     constant_density_acoustic_time_scalar_1D_2os,
     constant_density_acoustic_time_scalar_1D_4os,
     constant_density_acoustic_time_scalar_1D_6os,
@@ -44,6 +44,9 @@ class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase
                                                        mesh,
                                                        spatial_accuracy_order=spatial_accuracy_order,
                                                        **kwargs)
+
+        lpmlz_tmp = self.mesh.z.lbc.sigma.copy()
+        self.mesh.z.lbc.sigma = lpmlz_tmp.copy()
 
     def _rebuild_operators(self):
 
@@ -101,7 +104,7 @@ class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScal
             oc.empty = spsp.csr_matrix((dof, dof))
 
             # Stiffness matrix K doesn't change
-            oc.K = spsp.bmat([[          -oc.L,    -oc.Dz],
+            oc.K = spsp.bmat([[-oc.L,    -oc.Dz],
                               [oc.sigmaz*oc.Dz, oc.sigmaz]])
 
             oc._numpy_components_built = True
@@ -110,7 +113,7 @@ class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScal
         oc.m = make_diag_mtx((C**-2).reshape(-1,))
 
         C = spsp.bmat([[oc.sigmaz*oc.m, None],
-                       [          None, oc.I]]) / self.dt
+                       [None, oc.I]]) / self.dt
 
         M = spsp.bmat([[oc.m,     None],
                        [None, oc.empty]]) / self.dt**2
@@ -118,9 +121,9 @@ class ConstantDensityAcousticTimeScalar_1D_numpy(ConstantDensityAcousticTimeScal
         Stilde_inv = M+C
         Stilde_inv.data = 1./Stilde_inv.data
 
-        self.A_k   = Stilde_inv*(2*M - oc.K + C)
+        self.A_k = Stilde_inv*(2*M - oc.K + C)
         self.A_km1 = -1*Stilde_inv*(M)
-        self.A_f   = Stilde_inv
+        self.A_f = Stilde_inv
 
 
 @inherit_dict('supports', '_local_support_spec')
@@ -139,7 +142,28 @@ class ConstantDensityAcousticTimeScalar_1D_cpp(ConstantDensityAcousticTimeScalar
 
         lpmlz = self.mesh.z.lbc.sigma if self.mesh.z.lbc.type is 'pml' else np.array([])
         rpmlz = self.mesh.z.rbc.sigma if self.mesh.z.rbc.type is 'pml' else np.array([])
+        # lpmlz2 = np.linspace(11.1, -.1, 43)
+        # lpmlz2 = lpmlz.copy()
+        # rpmlz2 = np.linspace(-0.1, 11.1, 43)
         nz = self.mesh.dof(include_bc=True)
+
+        # self._cpp_funcs[self.spatial_accuracy_order](solver_data.km1.u,
+        #                                              solver_data.k.Phiz,
+        #                                              solver_data.k.u,
+        #                                              self.model_parameters.C,
+        #                                              rhs_k,
+        #                                              lpmlz, rpmlz,
+        #                                              self.dt,
+        #                                              self.mesh.z.delta,
+        #                                              nz,
+        #                                              solver_data.kp1.Phiz,
+        #                                              solver_data.kp1.u)
+
+        # print('uk-1 =',    np.linalg.norm(solver_data.km1.u))
+        # print('phizk-1 =', np.linalg.norm(solver_data.k.Phiz))
+        # print('uk =',      np.linalg.norm(solver_data.k.u))
+        # print('Phizk+1 =', np.linalg.norm(solver_data.kp1.Phiz))
+        # print('uk+1 =',    np.linalg.norm(solver_data.kp1.u))
 
         self._cpp_funcs[self.spatial_accuracy_order](solver_data.km1.u,
                                                      solver_data.k.Phiz,
@@ -152,6 +176,12 @@ class ConstantDensityAcousticTimeScalar_1D_cpp(ConstantDensityAcousticTimeScalar
                                                      nz,
                                                      solver_data.kp1.Phiz,
                                                      solver_data.kp1.u)
+        print('uk-1 =',    np.linalg.norm(solver_data.km1.u))
+        print('phizk-1 =', np.linalg.norm(solver_data.k.Phiz))
+        print('uk =',      np.linalg.norm(solver_data.k.u))
+        print('Phizk+1 =', np.linalg.norm(solver_data.kp1.Phiz))
+        print('uk+1 =',    np.linalg.norm(solver_data.kp1.u))
+        a=3
 
 
 @inherit_dict('supports', '_local_support_spec')
@@ -171,15 +201,15 @@ class ConstantDensityAcousticTimeScalar_1D_omp(ConstantDensityAcousticTimeScalar
         nz = self.mesh.dof(include_bc=True)
 
         try:
-          a = int(os.environ["OMP_NUM_THREADS"])
+            a = int(os.environ["OMP_NUM_THREADS"])
         except ValueError:
-          raise ValueError('The enviroment variable \"OMP_NUM_THREADS\" has no integer\
+            raise ValueError('The enviroment variable \"OMP_NUM_THREADS\" has no integer\
                             set the value and relaunch your script')
         except KeyError:
-          raise KeyError('The enviroment variable \"OMP_NUM_THREADS\" is not defined\
+            raise KeyError('The enviroment variable \"OMP_NUM_THREADS\" is not defined\
                           assign a value and relaunch your script')
         except:
-          raise ImportError('The enviroment variable \"OMP_NUM_THREADS\" is unreadable\
+            raise ImportError('The enviroment variable \"OMP_NUM_THREADS\" is unreadable\
                              please assign it an integer value')
 
         self._omp_funcs[self.spatial_accuracy_order](solver_data.km1.u,

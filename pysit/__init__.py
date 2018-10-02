@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 # PySIT main __init__ file
 

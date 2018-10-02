@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import itertools
 import math
@@ -147,7 +147,7 @@ class HybridModeling(object):
         rhs_k   = np.zeros(mesh.shape(include_bc=True))
         rhs_kp1 = np.zeros(mesh.shape(include_bc=True))
 
-        for k in xrange(nsteps):
+        for k in range(nsteps):
 
             # Local reference
 
@@ -363,7 +363,7 @@ class HybridModeling(object):
         max_energy = 0.0
 
         # Loop goes over the valid indices backwards
-        for k in xrange(nsteps-1, -1, -1): #xrange(int(solver.nsteps)):
+        for k in range(nsteps-1, -1, -1): #xrange(int(solver.nsteps)):
 
             # Local references
             vk = solver_data.k.primary_wavefield
@@ -404,7 +404,7 @@ class HybridModeling(object):
         # so this part simply does the DFT on the conjugate (time-reversed)
         # adjoint field vk.  The right-hand-side should be zero.
         rhs_k *= 0
-        for k in xrange(1,nsteps):
+        for k in range(1,nsteps):
 
             vk = solver_data.k.primary_wavefield
             t = -k*dt
@@ -561,7 +561,7 @@ class HybridModeling(object):
         # to compute u0_kp2, which is what we need to compute dWaveOp0_kp1
         rhs_u0_kp1, rhs_u0_kp2 = rhs_u0_k, rhs_u0_kp1 # to reuse the allocated space and setup the swap that occurs a few lines down
 
-        for k in xrange(nsteps):
+        for k in range(nsteps):
 
             uk = solver_data.k.primary_wavefield
             uk_bulk = mesh.unpad_array(uk)
@@ -684,7 +684,7 @@ def adjoint_test(frequencies=[10.0, 10.5, 10.1413515123], plots=False, data_nois
 
     point_approx = 'delta'
 
-    for i in xrange(Nshots):
+    for i in range(Nshots):
 
         # Define source location and type
         source = PointSource(m, (.188888, 0.18888), RickerWavelet(10.0), approximation=point_approx)
@@ -742,12 +742,12 @@ def adjoint_test(frequencies=[10.0, 10.5, 10.1413515123], plots=False, data_nois
     dhat = dict()
     for nu in freqs: dhat[nu]=0
     assert data.shape[0] == solver.nsteps
-    for k in xrange(solver.nsteps):
+    for k in range(solver.nsteps):
         t = k*solver.dt
         for nu in freqs:
             dhat[nu] += data[k,:]*np.exp(-1j*2*np.pi*nu*t)*solver.dt
 
-    print "Hybrid:"
+    print("Hybrid:")
     linfwdret = tools.linear_forward_model(shot, m0, m1, freqs, ['simdata','wavefield1','simdata_time'])
     lindata = linfwdret['simdata']
     lindata_time = linfwdret['simdata_time']
@@ -763,12 +763,12 @@ def adjoint_test(frequencies=[10.0, 10.5, 10.1413515123], plots=False, data_nois
     for nu in freqs:
         temp_data_prod += np.dot(lindata[nu].reshape(dhat[nu].shape), np.conj(dhat[nu]))
 
-    print temp_data_prod
-    print np.dot(m1_.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas)
-    print np.dot(m1_.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod
+    print(temp_data_prod)
+    print(np.dot(m1_.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas))
+    print(np.dot(m1_.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod)
 
     if purefrequency:
-        print "Frequency:"
+        print("Frequency:")
         linfwdret_freq = frequencytools.linear_forward_model(shot, m0, m1, freqs, ['simdata','wavefield1', 'dWaveOp0'])
         lindata_freq = linfwdret_freq['simdata']
         u1hat_freq = linfwdret_freq['wavefield1'][freqs[0]]
@@ -782,9 +782,9 @@ def adjoint_test(frequencies=[10.0, 10.5, 10.1413515123], plots=False, data_nois
         for nu in freqs:
             temp_data_prod += np.dot(lindata_freq[nu].reshape(dhat[nu].shape).T, np.conj(dhat[nu]))
 
-        print temp_data_prod.squeeze()
-        print np.dot(m1_.T, np.conj(adjmodel_freq)).squeeze()*np.prod(m.deltas)
-        print np.dot(m1_.T, np.conj(adjmodel_freq)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze()
+        print(temp_data_prod.squeeze())
+        print(np.dot(m1_.T, np.conj(adjmodel_freq)).squeeze()*np.prod(m.deltas))
+        print(np.dot(m1_.T, np.conj(adjmodel_freq)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze())
 
     if plots:
 
@@ -934,7 +934,7 @@ if __name__ == '__main__':
 
             self.fwd_time = time.time() - tt
 
-            print self.name + ": fwd run time ({0} frequency) -- {1:.6f}s".format(len(freqs), self.fwd_time)
+            print(self.name + ": fwd run time ({0} frequency) -- {1:.6f}s".format(len(freqs), self.fwd_time))
 
             np.random.seed(1)
             data = self.fwd_results['simdata_time']
@@ -943,7 +943,7 @@ if __name__ == '__main__':
             dhat = dict()
             for nu in freqs: dhat[nu]=0
             assert data.shape[0] == self.tools.solver.nsteps
-            for k in xrange(self.tools.solver.nsteps):
+            for k in range(self.tools.solver.nsteps):
                 t = k*self.tools.solver.dt
                 for nu in freqs:
                     dhat[nu] += data[k,:]*np.exp(-1j*2*np.pi*nu*t)*self.tools.solver.dt
@@ -957,7 +957,7 @@ if __name__ == '__main__':
 
             self.lin_time = time.time() - tt
 
-            print self.name + ": lin run time ({0} frequency) -- {1:.6f}s".format(len(freqs), self.lin_time)
+            print(self.name + ": lin run time ({0} frequency) -- {1:.6f}s".format(len(freqs), self.lin_time))
 
         def run_adj(self,freqs):
 
@@ -967,7 +967,7 @@ if __name__ == '__main__':
 
             self.adj_time = time.time() - tt
 
-            print self.name + ": adj run time ({0} frequency) -- {1:.6f}s".format(len(freqs), self.adj_time)
+            print(self.name + ": adj run time ({0} frequency) -- {1:.6f}s".format(len(freqs), self.adj_time))
 
 
 
@@ -982,7 +982,7 @@ if __name__ == '__main__':
 
             diff = uhat0_1 - uhat0_2
 
-            print "Error norm ({0} - {1}) {3: 09.4f}Hz: {2:.4e}".format(exp1.name, exp2.name, np.linalg.norm(diff)/np.linalg.norm(uhat0_1), nu)
+            print("Error norm ({0} - {1}) {3: 09.4f}Hz: {2:.4e}".format(exp1.name, exp2.name, np.linalg.norm(diff)/np.linalg.norm(uhat0_1), nu))
 
             if plot:
 
@@ -1013,11 +1013,11 @@ if __name__ == '__main__':
 
         nsteps = exp1.tools.solver.nsteps
 
-        print "\nTime steps: {0}".format(nsteps)
-        print "Per step improvement (fwd): {0: .4e} ({1:.4f}x)".format((exp1.fwd_time - exp2.fwd_time)/nsteps, exp1.fwd_time/exp2.fwd_time)
-        print "Per step improvement (lin): {0: .4e} ({1:.4f}x)".format((exp1.lin_time - exp2.lin_time)/nsteps, exp1.lin_time/exp2.lin_time)
-        print "Per step improvement (adj): {0: .4e} ({1:.4f}x)".format((exp1.adj_time - exp2.adj_time)/nsteps, exp1.adj_time/exp2.adj_time)
-        print ""
+        print("\nTime steps: {0}".format(nsteps))
+        print("Per step improvement (fwd): {0: .4e} ({1:.4f}x)".format((exp1.fwd_time - exp2.fwd_time)/nsteps, exp1.fwd_time/exp2.fwd_time))
+        print("Per step improvement (lin): {0: .4e} ({1:.4f}x)".format((exp1.lin_time - exp2.lin_time)/nsteps, exp1.lin_time/exp2.lin_time))
+        print("Per step improvement (adj): {0: .4e} ({1:.4f}x)".format((exp1.adj_time - exp2.adj_time)/nsteps, exp1.adj_time/exp2.adj_time))
+        print("")
 
 
 
@@ -1040,12 +1040,12 @@ if __name__ == '__main__':
 
         pt2 = np.dot(m1_.T, np.conj(adjmodel)).squeeze()*np.prod(deltas)
 
-        print "{0}: ".format(exp.name)
-        print "<Fm1, d>             = {0: .4e} ({1:.4e})".format(pt1, np.linalg.norm(pt1))
-        print "<m1, F*d>            = {0: .4e} ({1:.4e})".format(pt2, np.linalg.norm(pt2))
-        print "<Fm1, d> - <m1, F*d> = {0: .4e} ({1:.4e})".format(pt1-pt2, np.linalg.norm(pt1-pt2))
+        print("{0}: ".format(exp.name))
+        print("<Fm1, d>             = {0: .4e} ({1:.4e})".format(pt1, np.linalg.norm(pt1)))
+        print("<m1, F*d>            = {0: .4e} ({1:.4e})".format(pt2, np.linalg.norm(pt2)))
+        print("<Fm1, d> - <m1, F*d> = {0: .4e} ({1:.4e})".format(pt1-pt2, np.linalg.norm(pt1-pt2)))
 
-        print "Relative error       = {0: .4e}\n".format(np.linalg.norm(pt1-pt2)/np.linalg.norm(pt1))
+        print("Relative error       = {0: .4e}\n".format(np.linalg.norm(pt1-pt2)/np.linalg.norm(pt1)))
 
     tools_old = pysit.modeling.HybridModeling(solver)
     tools_new = HybridModeling(solver, adjoint_energy_threshold=1e-3)
@@ -1073,12 +1073,12 @@ if __name__ == '__main__':
     old.run_fwd(freqs)
     old.run_lin_fwd(freqs)
     old.run_adj(freqs)
-    print ""
+    print("")
 
     new.run_fwd(freqs)
     new.run_lin_fwd(freqs)
     new.run_adj(freqs)
-    print ""
+    print("")
 
     compare_fwd(old, new, freqs, plot=False)
 

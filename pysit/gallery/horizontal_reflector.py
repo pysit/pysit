@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import numpy as np
 
@@ -43,7 +43,7 @@ class HorizontalReflectorModel(GeneratedGalleryModel):
     def __init__(self, mesh,
                        reflector_depth=[0.45, 0.65], # as percentage of domain
                        reflector_scaling=[1.0, 1.0],
-                       background_velocity=1.0,
+                       background_velocity=2.0,
                        drop_threshold=1e-7,
                        pulse_style='gaussian_derivative',
                        pulse_config={},
@@ -145,7 +145,7 @@ def horizontal_reflector( mesh, **kwargs):
     # Setup the defaults
     model_config = dict(reflector_depth=[0.45, 0.65], # as percentage of domain
                         reflector_scaling=[1.0, 1.0],
-                        background_velocity=1.0,
+                        background_velocity=2.0,
                         drop_threshold=1e-7,
                         pulse_style='gaussian_derivative',
                         pulse_config={},)

@@ -44,7 +44,7 @@ class WavefieldVectorBase(object):
 
         self._uslice = slice(0,self.dof,None)
 
-        for i in xrange(self.n_aux):
+        for i in range(self.n_aux):
             self.add_auxiliary_wavefield(self.aux_names[i], i+1)
 
     @property

@@ -2,7 +2,7 @@ import numpy as np
 import scipy.sparse as spsp
 
 from pysit.solvers.wavefield_vector import *
-from variable_density_acoustic_time_scalar_base import *
+from .variable_density_acoustic_time_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
