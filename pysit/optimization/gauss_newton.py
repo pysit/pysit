@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import time
 import copy
@@ -59,11 +59,11 @@ class GaussNewton(OptimizationBase):
         direction = m0.perturbation(data=d)
 
         if info < 0:
-            print "CG Failure"
+            print("CG Failure")
         if info == 0:
-            print "CG Converge"
+            print("CG Converge")
         if info > 0:
-            print "CG ran {0} iterations".format(info)
+            print("CG ran {0} iterations".format(info))
 
         alpha0_kwargs = {'reset' : False}
         if iteration == 0:

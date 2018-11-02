@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import itertools
 from pysit.util.derivatives import build_derivative_matrix, build_permutation_matrix, build_heterogenous_matrices
@@ -184,7 +184,7 @@ class FrequencyModeling(object):
         # well. ukm1 is needed to compute the temporal derivative.
 
         solver_data_list = list()
-        for i in xrange(len(shot_list)):
+        for i in range(len(shot_list)):
             solver_data = solver.SolverData()
             solver_data_list.append(solver_data)
             Uhats[i] = dict()
@@ -199,14 +199,14 @@ class FrequencyModeling(object):
         for nu in frequencies:
             del rhs_list[:]
             rhs = solver.WavefieldVector(mesh,dtype=solver.dtype)
-            for i in xrange(len(shot_list)):
+            for i in range(len(shot_list)):
                 source = shot_list[i].sources                
                 rhs = solver.build_rhs(mesh.pad_array(source.f(nu=nu)), rhs_wavefieldvector=rhs)
                 rhs_list.append(rhs.data.copy())
 
             result = solver.solve_petsc(solver_data_list , rhs_list, nu, **kwargs)
 
-            for i in xrange(len(shot_list)):
+            for i in range(len(shot_list)):
 
                 uhat = solver_data_list[i].k.primary_wavefield
                 # Save the unpadded wavefield
@@ -418,7 +418,7 @@ class FrequencyModeling(object):
 
         # if we are dealing with variable density, we need to collect the gradient operators, D1 and D2. (note: D2 is the negative adjoint of the leftmost gradient used in our heterogenous laplacian)
         if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
-            print "WARNING: Ian's operators are still used here even though the solver has changed. Gradient may be incorrect. These routines need to be updated."
+            print("WARNING: Ian's operators are still used here even though the solver has changed. Gradient may be incorrect. These routines need to be updated.")
             deltas = [mesh.x.delta,mesh.z.delta]
             sh = mesh.shape(include_bc=True,as_grid=True)
             D1, D2 = build_heterogenous_matrices(sh,deltas)
@@ -445,8 +445,8 @@ class FrequencyModeling(object):
                 rhs_ += reshape(operand_model*dWaveOpAdj_nu.reshape(operand_model.shape), rhs_.shape) # for secondary adjoint equation
 
             rhs = solver.build_rhs(rhs_, rhs_wavefieldvector=rhs)
-
-            np.conj(rhs.data, rhs.data)
+            
+            np.conj(rhs.data, rhs.data) 
             result = solver.solve(solver_data, rhs, nu)
 
             vhat = solver_data.k.primary_wavefield
@@ -455,7 +455,8 @@ class FrequencyModeling(object):
             # match the mathematics.  This is done to save computation, as computing
             # the conjufation in place requires no further allocation.  vhats should
             # not be used beyond this point, so it is assigned to None.
-            qhat = np.conj(vhat, vhat)
+            qhat = np.conj(vhat, vhat) 
+            
 
             if 'adjointfield' in return_parameters:
                 qhats[nu] = mesh.unpad_array(qhat, copy=True)
@@ -483,7 +484,9 @@ class FrequencyModeling(object):
 
         # If the imaging component needs to be computed, do it
         if 'imaging_condition' in return_parameters:
-            retval['imaging_condition'] = ic.without_padding()
+            # retval['imaging_condition'] = ic.without_padding() # Comment out by Zhilong, simply cutting the pml can not produce a correct gradient
+            # In order to make the gradient correct, you should add all the weights in the pml to the last layer of the computational grid
+            retval['imaging_condition'] = ic.add_padding() 
 
         return retval
 
@@ -570,7 +573,7 @@ class FrequencyModeling(object):
 
         solver_data_list = list()
         #initialisation for the muliple rhs resolution
-        for i in xrange(len(shots_list)):
+        for i in range(len(shots_list)):
             solver_data = solver.SolverData()
             solver_data_list.append(solver_data)
             Qhats[i] = dict()
@@ -587,7 +590,7 @@ class FrequencyModeling(object):
         for nu in frequencies:
 
             del rhs_list[:]            
-            for i in xrange(len(shots_list)):
+            for i in range(len(shots_list)):
                 rhs = solver.WavefieldVector(mesh,dtype=solver.dtype)
                 rhs_ = mesh.pad_array(shots_list[i].receivers.extend_data_to_array(data=operand_simdata[i][nu]))
                 if (operand_dWaveOpAdj is not None) and (operand_model is not None):
@@ -601,7 +604,7 @@ class FrequencyModeling(object):
             result = solver.solve_petsc(solver_data_list, rhs_list, nu, **kwargs)
 
 
-            for i in xrange(len(shots_list)):
+            for i in range(len(shots_list)):
                 # If we are dealing with variable density, we will need these values computed for the imagining condition in terms of m2.
                 if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
                     uhat = wavefield[i][nu]
@@ -634,7 +637,7 @@ class FrequencyModeling(object):
         if 'dWaveOpAdj' in return_parameters:
             retval['dWaveOpAdj'] = DWaveOpAdj
 
-        for i in xrange(len(Ic)):
+        for i in range(len(Ic)):
             Ic[i] = Ic[i].without_padding()
         
         # If the imaging component needs to be computed, do it
@@ -684,7 +687,7 @@ class FrequencyModeling(object):
         d = solver.domain
         source = shot.sources
 
-        m1_padded = m1.with_padding()
+        m1_padded = m1.with_padding(padding_mode='edge') # added the padding_mode by Zhilong, still needs to discuss which padding mode to use
 
         # Storage for the field
         u1hats = dict()
@@ -905,7 +908,7 @@ class FrequencyModeling(object):
 
         rp=dict()
         rp['laplacian']=True
-        print "WARNING: Ian's operators are still used here even though the solver has changed. These tests need to be updated."
+        print("WARNING: Ian's operators are still used here even though the solver has changed. These tests need to be updated.")
         Lap = build_heterogenous_matrices(sh,[mesh.x.delta,mesh.z.delta],model_2.reshape(-1,),rp=rp)
         # Storage for the field     
         u1hats = dict()
@@ -1015,7 +1018,7 @@ def adjoint_test_kappa():
     
     point_approx = 'delta'
     
-    for i in xrange(Nshots):
+    for i in range(Nshots):
 
         # Define source location and type
         source = PointSource(m, (.188888, 0.18888), RickerWavelet(10.0), approximation=point_approx)
@@ -1084,9 +1087,9 @@ def adjoint_test_kappa():
     for nu in freqs:
         temp_data_prod += np.dot(lindata[nu].reshape(data[nu].shape).T, np.conj(data[nu]))
     
-    print "data space: ", temp_data_prod.squeeze()
-    print "model space: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas)
-    print "their diff: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze()
+    print("data space: ", temp_data_prod.squeeze())
+    print("model space: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas))
+    print("their diff: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze())
 
 def adjoint_test_rho():
 #if __name__ == '__main__':
@@ -1127,7 +1130,7 @@ def adjoint_test_rho():
     
     point_approx = 'delta'
     
-    for i in xrange(Nshots):
+    for i in range(Nshots):
 
         # Define source location and type
         source = PointSource(m, (.188888, 0.18888), RickerWavelet(10.0), approximation=point_approx)
@@ -1196,9 +1199,9 @@ def adjoint_test_rho():
     for nu in freqs:
         temp_data_prod += np.dot(lindata[nu].reshape(data[nu].shape).T, np.conj(data[nu]))
     
-    print "data space: ", temp_data_prod.squeeze()
-    print "model space: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas)
-    print "their diff: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze()
+    print("data space: ", temp_data_prod.squeeze())
+    print("model space: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas))
+    print("their diff: ", np.dot(v.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze())
 
 
 def adjoint_test():
@@ -1237,7 +1240,7 @@ def adjoint_test():
 
     point_approx = 'delta'
 
-    for i in xrange(Nshots):
+    for i in range(Nshots):
 
         # Define source location and type
         source = PointSource(m, (.188888, 0.18888), RickerWavelet(10.0), approximation=point_approx)
@@ -1310,9 +1313,9 @@ def adjoint_test():
     for nu in freqs:
         temp_data_prod += np.dot(lindata[nu].reshape(data[nu].shape).T, np.conj(data[nu]))
 
-    print temp_data_prod.squeeze()
-    print np.dot(m1.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas)
-    print np.dot(m1.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze()
+    print(temp_data_prod.squeeze())
+    print(np.dot(m1.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas))
+    print(np.dot(m1.T, np.conj(adjmodel)).squeeze()*np.prod(m.deltas) - temp_data_prod.squeeze())
 
 
 
@@ -1366,7 +1369,7 @@ def adjoint_test():
 #   plt.show()
 
 if __name__ == '__main__':
-    print "testing pertubation of rho:"
+    print("testing pertubation of rho:")
     adjoint_test_rho()
-    print "testing pertubation of kappa:"
+    print("testing pertubation of kappa:")
     adjoint_test_kappa()

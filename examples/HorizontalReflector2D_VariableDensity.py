@@ -81,7 +81,7 @@ if __name__ == '__main__':
     base_model = solver.ModelParameters(m,model_param)
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)   # This step uses the TRUE MODEL to compute the data the true model would produce at the recievers. 
                                                                               # We then optimize our "trial" models such that our optimized models produce the same data at the recievers as nearly as possible (using the adjoint state method).
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     objective = TemporalLeastSquares(solver)
 
@@ -117,9 +117,9 @@ if __name__ == '__main__':
                     line_search=line_search,
                     status_configuration=status_configuration, verbose=True)
 
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
     
-    obj_vals = np.array([v for k,v in invalg.objective_history.items()])
+    obj_vals = np.array([v for k,v in list(invalg.objective_history.items())])
     plt.figure()
     plt.semilogy(obj_vals)
 

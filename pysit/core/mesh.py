@@ -302,7 +302,7 @@ class CartesianMesh(StructuredMesh):
     @property
     def deltas(self):
         "Tuple of grid deltas"
-        return tuple([self.parameters[i].delta for i in xrange(self.dim)])
+        return tuple([self.parameters[i].delta for i in range(self.dim)])
 
     def _compute_shape(self, include_bc):
         """ Precomputes the shape of a mesh, both as a grid and as a vector.
@@ -320,7 +320,7 @@ class CartesianMesh(StructuredMesh):
         """
 
         sh = []
-        for i in xrange(self.dim):
+        for i in range(self.dim):
             p = self.parameters[i]
 
             n = p.n
@@ -423,7 +423,7 @@ class CartesianMesh(StructuredMesh):
             # unpadded section of the array.  Slice excludes the left and right
             # boundary nodes.
             sl = list()
-            for i in xrange(self.dim):
+            for i in range(self.dim):
                 p = self.parameters[i]
 
                 nleft = p.lbc.n
@@ -496,7 +496,7 @@ class CartesianMesh(StructuredMesh):
         # Otherwise, pads with zeros in a faster way.  This is a necessary
         # optimization.
         if padding_mode is not None:
-            _pad_tuple = tuple([(self.parameters[i].lbc.n, self.parameters[i].rbc.n) for i in xrange(self.dim)])
+            _pad_tuple = tuple([(self.parameters[i].lbc.n, self.parameters[i].rbc.n) for i in range(self.dim)])
             _out_array = np.pad(in_array.reshape(sh_in_grid), _pad_tuple, mode=padding_mode).copy()
 
             # If the output memory is allocated, copy padded array into it.
@@ -514,7 +514,7 @@ class CartesianMesh(StructuredMesh):
             # unpadded section of the output array.  Slice excludes the left
             # and right boundary nodes.
             sl = list()
-            for i in xrange(self.dim):
+            for i in range(self.dim):
                 p = self.parameters[i]
 
                 nleft = p.lbc.n
@@ -772,11 +772,11 @@ class StructuredPML(StructuredBCBase):
         # function an extra node to work with, to ensure that the delta is
         # correct, then we take that extra node off of the sigma function.
         s = domain_bc.evaluate(self._n+1, side)
-        
+
         if side == 'right':
-	       self.sigma = s[1:]
+            self.sigma = s[1:]
         elif side == 'left':
-	       self.sigma= s[:-1]
+            self.sigma= s[:-1]
 
         # Get the physical boundary type
         self._boundary_type = domain_bc.boundary_type
@@ -796,7 +796,7 @@ class StructuredPML(StructuredBCBase):
         if self.side == 'left':
             nleft = self._n
 
-            for k in xrange(self.mesh.dim):
+            for k in range(self.mesh.dim):
                 if self.dim != k:
                     s = slice(None)
                 else:
@@ -806,7 +806,7 @@ class StructuredPML(StructuredBCBase):
         else:  # self.side == 'right'
             nright = self._n
 
-            for k in xrange(self.mesh.dim):
+            for k in range(self.mesh.dim):
                 if self.dim != k:
                     s = slice(None)
                 else:
@@ -817,7 +817,7 @@ class StructuredPML(StructuredBCBase):
 
         # Get the shape of sigma in the appropriate dimension
         sh = list()
-        for k in xrange(self.mesh.dim):
+        for k in range(self.mesh.dim):
             if self.sigma.shape[0] == out_array[sl_block].shape[k]:
                 sh.append(-1)
             else:

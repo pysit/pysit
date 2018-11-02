@@ -117,7 +117,7 @@ if __name__ == '__main__':
                     line_search=line_search,
                     status_configuration=status_configuration, verbose=True)
 
-    print 'Run time:  {0}s'.format(time.time()-tt)
+    print('Run time:  {0}s'.format(time.time()-tt))
 
 
     if rank == 0:

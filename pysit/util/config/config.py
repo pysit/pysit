@@ -2,7 +2,7 @@
 import os
 import os.path
 
-import ConfigParser
+import configparser
 
 import pysit
 
@@ -23,12 +23,12 @@ def load_configuration():
         cfg_files.append(user_config)
 
     # Load the configuration
-    config = ConfigParser.ConfigParser()
+    config = configparser.ConfigParser()
     config.read(cfg_files)
 
     # Ensure that there is a gallery section with a data dir
     if not config.has_option('pysit.gallery', 'gallery_data_path'):
-        print config.get('pysit.gallery', 'gallery_data_path')
+        print(config.get('pysit.gallery', 'gallery_data_path'))
         raise Exception('A proper gallery data path should have been specified in the default pysit.cfg.')
 
     return config

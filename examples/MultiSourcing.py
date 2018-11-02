@@ -33,7 +33,7 @@ if __name__ == '__main__':
     zmax = d.z.rbound
 
     source_list = []
-    for i in xrange(Nshots):
+    for i in range(Nshots):
         source_list.append(PointSource(m, (xmax*(i+1.0)/(Nshots+1.0), 0.1), RickerWavelet(10.0), intensity = (1))) #intensity of sources is different
 
     #2 PointSource objects are defined above. Group them together in a single SourceSet

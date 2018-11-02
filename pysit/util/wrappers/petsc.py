@@ -90,8 +90,8 @@ class PetscWrapper():
         BPetsc.setUp()
 
         # coping the RHS matrix to ta Petsc matrix
-        for ii in xrange(0, nrhs, 1):
-            BPetsc.setValues(range(0, N), [ii], B[:, ii])
+        for ii in range(0, nrhs, 1):
+            BPetsc.setValues(list(range(0, N)), [ii], B[:, ii])
 
         # BPetsc.setValues(range(0, B.shape[0]), range(0, B.shape[1]), B)
 

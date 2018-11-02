@@ -61,7 +61,7 @@ if __name__ == '__main__':
     tt = time.time()
     wavefields = []
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     objective = TemporalLeastSquares(solver)
 
@@ -93,7 +93,7 @@ if __name__ == '__main__':
                     line_search=line_search,
                     status_configuration=configuration, verbose=True)
 
-    print 'Run time:  {0}s'.format(time.time()-tt)
+    print('Run time:  {0}s'.format(time.time()-tt))
 
     plt.figure()
     vis.plot(C, m)

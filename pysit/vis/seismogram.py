@@ -105,7 +105,7 @@ if __name__ == '__main__':
     base_model = solver.ModelParameters(m,{'C': C})
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     plot_seismogram(shots[0])
 

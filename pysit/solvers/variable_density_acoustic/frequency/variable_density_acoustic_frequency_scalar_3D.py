@@ -2,7 +2,7 @@ import scipy.sparse as spsp
 import numpy as np
 
 from pysit.solvers.wavefield_vector import *
-from variable_density_acoustic_frequency_scalar_base import *
+from .variable_density_acoustic_frequency_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
@@ -88,37 +88,37 @@ class VariableDensityAcousticFrequencyScalar_3D(VariableDensityAcousticFrequency
         szp = np.zeros(nx*ny*nz)
 
         # PML for the x direction
-        for i in xrange(ny*nz):
-          for j in xrange(npml_x_l):
+        for i in range(ny*nz):
+          for j in range(npml_x_l):
             sx [i + j*nz] = amplitude_x_l * t_x_l[j]**2 
             sxp[i + j*nz] = -2 * amplitude_x_l * t_x_l[j]
 
-        for i in xrange(ny*nz):
-          for j in xrange(npml_x_r):
+        for i in range(ny*nz):
+          for j in range(npml_x_r):
             sx [i + (j + (nx - npml_x_r))*nz] = amplitude_x_r * t_x_r[j]**2
             sxp[i + (j + (nx - npml_x_r))*nz] = 2 * amplitude_x_r * t_x_r[j]
 
         # PML for the y direction
-        for i in xrange(nz):
-          for j in xrange(nx):
-            for k in xrange(npml_y_l):
+        for i in range(nz):
+          for j in range(nx):
+            for k in range(npml_y_l):
               sy [i*nx*ny + j + k*nx] = amplitude_y_l * t_y_l[k]**2
               syp[i*nx*ny + j + k*nx] = -2 * amplitude_y_l * t_y_l[k]
 
-        for i in xrange(nz):
-          for j in xrange(nx):
-            for k in xrange(npml_y_r):
+        for i in range(nz):
+          for j in range(nx):
+            for k in range(npml_y_r):
               sy [i*nx*ny + j + (k + (ny - npml_y_r))*nx] = amplitude_y_r * t_y_r[k]**2
               syp[i*nx*ny + j + (k + (ny - npml_y_r))*nx] = 2 * amplitude_y_r * t_y_r[k]
 
         # PML for the z direction
-        for i in xrange(nx*ny):
-          for j in xrange(npml_z_l):
+        for i in range(nx*ny):
+          for j in range(npml_z_l):
             sz [i*nz + j] = amplitude_z_l * t_z_l[j]**2
             szp[i*nz + j] = -2 * amplitude_z_l * t_z_l[j]
 
-        for i in xrange(nx*ny):
-          for j in xrange(npml_z_r):
+        for i in range(nx*ny):
+          for j in range(npml_z_r):
             sz [i*nz + (nz - npml_z_r) + j] = amplitude_z_r * t_z_r[j]**2
             szp[i*nz + (nz - npml_z_r) + j] = 2 * amplitude_z_r * t_z_r[j]
 

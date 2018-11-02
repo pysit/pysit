@@ -8,7 +8,7 @@ if PY3:
     from itertools import zip_longest as izip_longest
 else:
     # FIXME: not present in py25
-    from itertools import izip_longest
+    from itertools import zip_longest
 import os
 from shutil import copyfile
 # site
@@ -170,7 +170,7 @@ class ExtendedRSTTable(RSTTable):
                 # colspec, but html doesn't inherit much from colgroup)
                 assert isinstance(row, nodes.row)
                 for idx, (entry, align, wrap, clist) in \
-                  enumerate(izip_longest(row, *opts)):
+                  enumerate(zip_longest(row, *opts)):
                     if entry is None:
                         # FIXME: make into propert rst error
                         raise ValueError("not enough columns for field options")

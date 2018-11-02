@@ -2,7 +2,7 @@ import scipy.sparse as spsp
 import numpy as np
 
 from pysit.solvers.wavefield_vector import *
-from variable_density_acoustic_frequency_scalar_base import *
+from .variable_density_acoustic_frequency_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
@@ -78,26 +78,26 @@ class VariableDensityAcousticFrequencyScalar_2D(VariableDensityAcousticFrequency
         
         # PML for the x direction
         # left side
-        for i in xrange(nz):
-          for j in xrange(npml_x_l):
+        for i in range(nz):
+          for j in range(npml_x_l):
             sx [i + j*nz] = amplitude_x_l * t_x_l[j]**2
             sxp[i + j*nz] = -2 * amplitude_x_l * t_x_l[j]
         # right side
-        for i in xrange(nz):
-          for j in xrange(npml_x_r):
+        for i in range(nz):
+          for j in range(npml_x_r):
             sx [i + (j + (nx - npml_x_r))*nz] = amplitude_x_r * t_x_r[j]**2
             sxp[i + (j + (nx - npml_x_r))*nz] = 2 * amplitude_x_r * t_x_r[j] 
         
         # PML for the z direction
         # left side
-        for i in xrange(nx):
-          for j in xrange(npml_z_l):
+        for i in range(nx):
+          for j in range(npml_z_l):
             sz [i*nz + j] = amplitude_z_l * t_z_l[j]**2 
             szp[i*nz + j] = -2 * amplitude_z_l * t_z_l[j]
 
         # rigth side
-        for i in xrange(nx):
-          for j in xrange(npml_z_r):
+        for i in range(nx):
+          for j in range(npml_z_r):
             sz [i*nz + (nz - npml_z_r) + j] = amplitude_z_r * t_z_r[j]**2
             szp[i*nz + (nz - npml_z_r) + j] = 2 * amplitude_z_r * t_z_r[j]
 

@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import numpy as np
 
@@ -92,8 +92,8 @@ class SonarModel(GeneratedGalleryModel):
         config_list = list()
 
         # Configure X direction
-        x_lbc = kwargs['x_lbc'] if ('x_lbc' in kwargs.keys()) else PML(0.1, 100.0)
-        x_rbc = kwargs['x_rbc'] if ('x_rbc' in kwargs.keys()) else PML(0.1, 100.0)
+        x_lbc = kwargs['x_lbc'] if ('x_lbc' in list(kwargs.keys())) else PML(0.1, 100.0)
+        x_rbc = kwargs['x_rbc'] if ('x_rbc' in list(kwargs.keys())) else PML(0.1, 100.0)
 
         xmin, xmax = 0.0, 2.5
         x_config = (xmin, xmax, x_lbc, x_rbc)
@@ -103,16 +103,16 @@ class SonarModel(GeneratedGalleryModel):
         if len(n_pixels) == 3:
 
             # If it is there, configure Y direction
-            y_lbc = kwargs['y_lbc'] if ('y_lbc' in kwargs.keys()) else PML(0.1, 100.0)
-            y_rbc = kwargs['y_rbc'] if ('y_rbc' in kwargs.keys()) else PML(0.1, 100.0)
+            y_lbc = kwargs['y_lbc'] if ('y_lbc' in list(kwargs.keys())) else PML(0.1, 100.0)
+            y_rbc = kwargs['y_rbc'] if ('y_rbc' in list(kwargs.keys())) else PML(0.1, 100.0)
 
             ymin, ymax = 0.0, 2.5
             y_config = (ymin, ymax, y_lbc, y_rbc)
             config_list.append(y_config)
 
         # Configure Z direction
-        z_lbc = kwargs['z_lbc'] if ('z_lbc' in kwargs.keys()) else PML(0.1, 100.0)
-        z_rbc = kwargs['z_rbc'] if ('z_rbc' in kwargs.keys()) else PML(0.1, 100.0)
+        z_lbc = kwargs['z_lbc'] if ('z_lbc' in list(kwargs.keys())) else PML(0.1, 100.0)
+        z_rbc = kwargs['z_rbc'] if ('z_rbc' in list(kwargs.keys())) else PML(0.1, 100.0)
 
         zmin, zmax = 0.0, 1.5
         z_config = (zmin, zmax, z_lbc, z_rbc)
