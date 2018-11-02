@@ -39,21 +39,43 @@ import os
 import os.path
 import platform
 
+
+platform_swig_extension_args = dict()
+
+# Assume gcc
+if platform.system() == "Linux":
+    platform_swig_extension_args['extra_compile_args'] = ["-O3", "-fopenmp", "-ffast-math"]
+    platform_swig_extension_args['libraries'] = ['gomp']
+    platform_swig_extension_args['library_dirs'] = ['/usr/lib64']
+
+
+# Assume gcc
 if platform.system() == 'Darwin':
     os.environ["CC"] = "gcc-8"
     os.environ["CXX"] = "g++-8"
+    platform_swig_extension_args['extra_compile_args'] = ["-O3", "-fopenmp", "-ffast-math"]
+    platform_swig_extension_args['libraries'] = ['gomp']
+    platform_swig_extension_args['library_dirs'] = ['/usr/lib64']
+
+# Assume msvc
+if platform.system() == "Windows":
+    platform_swig_extension_args['extra_compile_args'] = []
+    platform_swig_extension_args['libraries'] = []
+    platform_swig_extension_args['library_dirs'] = []
 
 # An extension configuration has the following format:
 # module_name' : { 'extension kwarg' : argument }
 # This makes adding C from deep in the package trivial.  No more nested setup.py.
-extension_config = {'pysit.solvers.constant_density_acoustic.time.scalar._constant_density_acoustic_time_scalar_cpp':
-                    {'sources': [os.path.join(os.path.dirname(__file__), 'pysit', 'solvers', 'constant_density_acoustic', 'time', 'scalar', 'solvers_wrap.cxx')],
-                     'extra_compile_args':  ["-O3", "-fopenmp", "-ffast-math"],
-                     'include_dirs': [np.get_include(), os.path.join(os.path.dirname(__file__), 'pysit', 'solvers', 'fd_tools')],
-                     'libraries':  ['gomp'],
-                     'library_dirs': ['/usr/lib64']
-                     },
-                    }
+
+extension_config = dict()
+
+module_name = 'pysit.solvers.constant_density_acoustic.time.scalar._constant_density_acoustic_time_scalar_cpp'
+module_extension_args = dict()
+module_extension_args['sources'] = [os.path.join(os.path.dirname(__file__), 'pysit', 'solvers', 'constant_density_acoustic', 'time', 'scalar', 'solvers_wrap.cxx')]
+module_extension_args['include_dirs'] = [np.get_include(), os.path.join(os.path.dirname(__file__), 'pysit', 'solvers', 'fd_tools')]
+module_extension_args.update(platform_swig_extension_args)
+
+extension_config[module_name] = module_extension_args
 
 extensions = [Extension(key, **value) for key, value in extension_config.items()]
 
