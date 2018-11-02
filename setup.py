@@ -107,7 +107,7 @@ package_data.update({'pysit.solvers.constant_density_acoustic.time.scalar': [
 
 setup(
     name="pysit",
-    version="0.6.dev0",
+    version="1.0",
     packages=find_packages(),
     install_requires=['numpy>=1.15.1',
                       'scipy>=1.1',
