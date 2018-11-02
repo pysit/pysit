@@ -4,6 +4,7 @@ import copy
 import numpy as np
 import scipy
 import scipy.linalg
+from functools import reduce
 
 __all__ = ['ImplicitSurface',
            'ImplicitCollection',
@@ -65,7 +66,7 @@ class ImplicitPlane(ImplicitSurface):
         self.d = -np.dot(self.p,self.n)
 
     def __call__(self, grid):
-        return self.d + reduce(lambda x,y:x+y, map(lambda x,y:x*y,self.n,grid))
+        return self.d + reduce(lambda x,y:x+y, list(map(lambda x,y:x*y,self.n,grid)))
 
 class ImplicitSphere(ImplicitSurface):
     def __init__(self, c=None, r=1.0):
@@ -80,7 +81,7 @@ class ImplicitSphere(ImplicitSurface):
             c = np.zeros_like(grid[0].shape)
         else:
             c = self.c
-        return reduce(lambda x,y:x+y, map(lambda x,y:(y-x)**2,c,grid)) - self.r**2
+        return reduce(lambda x,y:x+y, list(map(lambda x,y:(y-x)**2,c,grid))) - self.r**2
 
 class ImplicitXAlignedCylinder(ImplicitSurface):
     def __init__(self, c=None, length=1.0, r=1.0):
@@ -100,7 +101,7 @@ class ImplicitXAlignedCylinder(ImplicitSurface):
         g = grid[1:]
         cc = c[1:]
 #       longways = (grid[1]-c[1])**2 - self.r**2
-        longways =  reduce(lambda x,y:x+y, map(lambda x,y:(y-x)**2,cc,g)) - self.r**2
+        longways =  reduce(lambda x,y:x+y, list(map(lambda x,y:(y-x)**2,cc,g))) - self.r**2
         cutoff   = np.abs(grid[0] - c[0]) -  self.len/2
         return np.maximum(longways, cutoff)
 
@@ -125,21 +126,21 @@ class ImplicitEllipse(ImplicitSurface):
             a = np.ones(len(grid))
         else:
             a = self.a
-        return reduce(lambda x,y:x+y, map(lambda x,y,z:(((y-x)**2)/z), c,grid,a) ) - self.r**2
+        return reduce(lambda x,y:x+y, list(map(lambda x,y,z:(((y-x)**2)/z), c,grid,a)) ) - self.r**2
 
 class ImplicitIntersection(ImplicitCollection):
     def __init__(self, *items):
         ImplicitCollection.__init__(self, *items)
 
     def __call__(self, grid):
-        return reduce(lambda x,y: np.maximum(x,y), map(lambda x: x(grid), self.items))
+        return reduce(lambda x,y: np.maximum(x,y), [x(grid) for x in self.items])
 
 class ImplicitUnion(ImplicitCollection):
     def __init__(self, *items):
         ImplicitCollection.__init__(self, *items)
 
     def __call__(self, grid):
-        return reduce(lambda x,y: np.minimum(x,y), map(lambda x: x(grid), self.items))
+        return reduce(lambda x,y: np.minimum(x,y), [x(grid) for x in self.items])
 
 class ImplicitDifference(ImplicitCollection):
 
@@ -151,7 +152,7 @@ class ImplicitDifference(ImplicitCollection):
 
     def __call__(self, grid):
         items = [self.base] + self.items
-        return reduce(lambda x,y: np.maximum(x,-y), map(lambda x: x(grid), items))
+        return reduce(lambda x,y: np.maximum(x,-y), [x(grid) for x in items])
 
 class ImplicitComplement(ImplicitSurface):
 
@@ -246,7 +247,7 @@ class GridSlip(GridMapBase):
         proj = amount*proj
 
         # Evaluate the plane to figure out what components of the old grid are shifted.
-        val = self.d + reduce(lambda x,y:x+y, map(lambda x,y:x*y,self.n,grid))
+        val = self.d + reduce(lambda x,y:x+y, list(map(lambda x,y:x*y,self.n,grid)))
         loc = np.where(val >= 0.0)
 
         # Perform the shift.
@@ -282,9 +283,9 @@ class Weird(ImplicitSurface):
 #
 #       return 4*val1/np.max(val1)+val2
 
-        val1 = reduce(lambda x,y:x+y, map(lambda x,y:(y-x)**2,c,grid)) - self.r**2
+        val1 = reduce(lambda x,y:x+y, list(map(lambda x,y:(y-x)**2,c,grid))) - self.r**2
 
-        val2 = self.d + reduce(lambda x,y:x+y, map(lambda x,y:x*y,self.n,grid))
+        val2 = self.d + reduce(lambda x,y:x+y, list(map(lambda x,y:x*y,self.n,grid)))
 
         return 4*val1/np.max(val1)+val2
 
@@ -302,7 +303,7 @@ class Hyperbola(ImplicitSurface):
         else:
             c = self.c
 
-        return  reduce(lambda x,y:-x+y, map(lambda x,y:(y-x)**2,c,grid)) - self.r**2
+        return  reduce(lambda x,y:-x+y, list(map(lambda x,y:(y-x)**2,c,grid))) - self.r**2
 
 class Weird2(ImplicitSurface):
     def __init__(self, c=None, r=1.0, s=None):

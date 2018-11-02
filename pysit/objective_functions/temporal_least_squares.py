@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import numpy as np
 
@@ -128,13 +128,13 @@ class TemporalLeastSquares(ObjectiveFunctionBase):
         import time
         tt = time.time()
         pseudo_hessian_diag_contrib = np.zeros(mesh.unpad_array(dWaveOp[0], copy=True).shape)
-        for i in xrange(len(dWaveOp)):                          #Since dWaveOp is a list I cannot use a single numpy command but I need to loop over timesteps. May have been nicer if dWaveOp had been implemented as a single large ndarray I think
+        for i in range(len(dWaveOp)):                          #Since dWaveOp is a list I cannot use a single numpy command but I need to loop over timesteps. May have been nicer if dWaveOp had been implemented as a single large ndarray I think
             unpadded_dWaveOp_i = mesh.unpad_array(dWaveOp[i])   #This will modify dWaveOp[i] ! But that should be okay as it will not be used anymore.
             pseudo_hessian_diag_contrib += unpadded_dWaveOp_i*unpadded_dWaveOp_i
 
         pseudo_hessian_diag_contrib *= self.imaging_period #Compensate for doing fewer summations at higher imaging_period
 
-        print "Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%(time.time() - tt)
+        print("Time elapsed when computing pseudo hessian diagonal contribution shot: %e"%(time.time() - tt))
 
         return pseudo_hessian_diag_contrib
 

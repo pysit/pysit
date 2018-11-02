@@ -1,6 +1,6 @@
 import numpy as np
 
-from solver_data import SolverDataBase
+from .solver_data import SolverDataBase
 
 from pysit.util.basic_registration_factory import DoesNotMatch
 from pysit.util.basic_registration_factory import CompleteMatch
@@ -78,13 +78,13 @@ class SolverBase(object):
         complete_match = True
         incomplete_match = True
 
-        for parameter, values in cls.supports.items():
+        for parameter, values in list(cls.supports.items()):
             if parameter in kwargs:
                 if not supports(kwargs[parameter], values):
                     return DoesNotMatch
             elif parameter == 'boundary_conditions':
                 valid_bc = True
-                for i in xrange(mesh.dim):
+                for i in range(mesh.dim):
                     L = supports(mesh.parameters[i].lbc.type, values)
                     R = supports(mesh.parameters[i].rbc.type, values)
                     valid_bc &= L and R

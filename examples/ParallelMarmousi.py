@@ -84,7 +84,7 @@ if __name__ == '__main__':
                     status_configuration=status_configuration,
                     verbose=True)
 
-    print 'Run time:  {0}s'.format(time.time()-tt)
+    print('Run time:  {0}s'.format(time.time()-tt))
 
 
     if rank == 0:
@@ -92,7 +92,7 @@ if __name__ == '__main__':
         model = result.C.reshape(m.shape(as_grid=True))
 
         vals = list()
-        for k,v in invalg.objective_history.items():
+        for k,v in list(invalg.objective_history.items()):
             vals.append(v)
         obj_vals = np.array(vals)
 

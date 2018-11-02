@@ -1,7 +1,7 @@
 # Std import block
 import time 
 import os
-import cPickle # for shot saving
+import pickle # for shot saving
 import shutil # for shots saved folder deletion
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,17 +30,17 @@ if __name__ == '__main__':
     # To save computation time, we sample the imported ~(450x150) node marmousi model by taking every third x node,
     # and every other z node. 
     C = C.reshape(m.x.n,m.z.n)
-    Nx = len(range(0,m.x.n,3))
+    Nx = len(list(range(0,m.x.n,3)))
     C0 = C0.reshape(m.x.n,m.z.n)
-    Nz = len(range(0,m.z.n,2))
-    print "new shape", Nx, Nz
+    Nz = len(list(range(0,m.z.n,2)))
+    print("new shape", Nx, Nz)
     C_ = np.zeros((Nx,Nz))
     C0_ = np.zeros((Nx,Nz))
-    for i,j in zip(range(0, m.x.n, 3),range(Nx)):
+    for i,j in zip(list(range(0, m.x.n, 3)),list(range(Nx))):
         v = C[i,:]
-        v_ = v[range(0,m.z.n,2)]
+        v_ = v[list(range(0,m.z.n,2))]
         v0 = C0[i,:]
-        v0_ = v0[range(0,m.z.n,2)]
+        v0_ = v0[list(range(0,m.z.n,2))]
         C_[j,:] = v_
         C0_[j,:] = v0_
     C = C_.reshape((Nx*Nz,1))
@@ -124,9 +124,9 @@ if __name__ == '__main__':
 
     #result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mkl_pardiso')
     result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration, petsc='mumps')
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
 
-    obj_vals = np.array([v for k,v in invalg.objective_history.items()])
+    obj_vals = np.array([v for k,v in list(invalg.objective_history.items())])
 
     plt.figure()
     plt.semilogy(obj_vals)

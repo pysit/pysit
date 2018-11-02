@@ -1,2 +1,2 @@
-from vis import *
-from seismogram import *
+from .vis import *
+from .seismogram import *

@@ -1,10 +1,11 @@
-from __future__ import absolute_import
+
 
 import math
 
 import numpy as np
 
 from pysit.gallery.gallery_base import GeneratedGalleryModel
+from functools import reduce
 
 __all__ = ['PointReflectorModel', 'point_reflector']
 
@@ -14,7 +15,7 @@ def _gaussian_reflector(grid, pos, rad, amp, threshold):
     sigma = rad / math.sqrt(2.0*math.log(2.0))
 
     # reduce(X, map(Y, (Grid,Pos))) nicely handles both 2D and 3D gaussians
-    T = amp * np.exp( -1.0* reduce(lambda x,y: x+y, map(lambda x: (x[0]-x[1])**2, zip(grid,pos)))  / (2.0*sigma**2))
+    T = amp * np.exp( -1.0* reduce(lambda x,y: x+y, [(x[0]-x[1])**2 for x in zip(grid,pos)])  / (2.0*sigma**2))
     T[np.where(abs(T) < threshold)] = 0
     return T
 
@@ -105,7 +106,7 @@ class PointReflectorModel(GeneratedGalleryModel):
 
         for pos, rad, amp in zip(self.reflector_position, self.reflector_radius, self.reflector_amplitude):
 
-            p = tuple([domain.parameters[i].lbound + pos[i]*domain.parameters[i].length for i in xrange(domain.dim)])
+            p = tuple([domain.parameters[i].lbound + pos[i]*domain.parameters[i].length for i in range(domain.dim)])
 
             dC += _gaussian_reflector(grid, p, rad, amp, self.drop_threshold)
 

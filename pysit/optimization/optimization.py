@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 
 import sys
 import time
@@ -187,7 +187,7 @@ class OptimizationBase(object):
 #               loc[i] = []
 #           # Always make a copy of things that are stored
 #           loc[i].append(copy.deepcopy(val))
-            if not loc.has_key(i):
+            if i not in loc:
                 loc[i] = None
             # Always make a copy of things that are stored
             loc[i] = copy.deepcopy(val)
@@ -212,7 +212,7 @@ class OptimizationBase(object):
         # Only store the history if this index matches the frequency.
         if f:
             hist = getattr(self, arg + "_history")
-            return zip(*sorted(hist.items()))
+            return list(zip(*sorted(hist.items())))
         else:
             return None, None
 
@@ -324,7 +324,7 @@ class OptimizationBase(object):
 
         """
 
-        for step in xrange(steps):
+        for step in range(steps):
             # Zeroth step is always the initial condition.
             tt = time.time()
             i = self.iteration

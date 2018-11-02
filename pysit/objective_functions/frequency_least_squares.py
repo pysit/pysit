@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import itertools
 
@@ -51,7 +51,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
         retval = self.modeling_tools.forward_model_list(shots_list, m0, frequencies, return_parameters=rp, **kwargs)
         resid = 0.0
         resid_list = dict()
-        for i in xrange(len(shots_list)):
+        for i in range(len(shots_list)):
             shots_list[i].receivers.compute_data_dft(frequencies)
             resid_list[i] = dict()
             for nu,weight in zip(frequencies,frequency_weights):
@@ -192,7 +192,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
         
         dWaveOp = dict()
 
-        for i in xrange(len(shots_list)):
+        for i in range(len(shots_list)):
             dWaveOp[i] = dict()
 
         # If this is true, then we are dealing with variable density. In this case, we want our forward solve
@@ -200,7 +200,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
         # Step to calculate the gradient of our objective in terms of m2 (ie. 1/rho)
         if hasattr(m0, 'kappa') and hasattr(m0,'rho'):
             wavefield=dict()
-            for i in xrange(len(shots_list)):
+            for i in range(len(shots_list)):
                 wavefield[i] = dict()
         else:
             wavefield=None
@@ -210,7 +210,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
 
         g = self.modeling_tools.migrate_shot_list(shots_list, m0, resid_list, frequencies, frequency_weights=frequency_weights, dWaveOp=dWaveOp, wavefield=wavefield, **kwargs) 
 
-        for i in xrange(len(g)):
+        for i in range(len(g)):
             if ignore_minus:
                 g[i].toreal()
             else:
@@ -243,7 +243,7 @@ class FrequencyLeastSquares(ObjectiveFunctionBase):
             grad = m0.perturbation()
             g, r_norm2 = self._gradient_helper_list(shots, m0, frequencies, frequency_weights, ignore_minus=True, **kwargs)
         
-            for i in xrange(len(g)):
+            for i in range(len(g)):
                 grad -= g[i]
 
         else:

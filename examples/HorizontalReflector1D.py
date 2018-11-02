@@ -66,12 +66,12 @@ if __name__ == '__main__':
     wavefields1 =  []
     generate_seismic_data(shots, solver1, base_model, wavefields=wavefields1)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
     tt = time.time()
     wavefields2 =  []
     generate_seismic_data(shots, solver2, base_model, wavefields=wavefields2)
 
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     # Define and configure the objective function
     objective = TemporalLeastSquares(solver2)
@@ -102,9 +102,9 @@ if __name__ == '__main__':
 
     result = invalg(shots, initial_value, nsteps, verbose=True, status_configuration=status_configuration)
 
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
 
-    obj_vals = np.array([v for k,v in invalg.objective_history.items()])
+    obj_vals = np.array([v for k,v in list(invalg.objective_history.items())])
 
     plt.figure()
     plt.semilogy(obj_vals)

@@ -38,7 +38,7 @@ if __name__ == '__main__':
     tt = time.time()
     wavefields = []
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     objective = TemporalLeastSquares(solver)
 
@@ -68,9 +68,9 @@ if __name__ == '__main__':
                     line_search=line_search,
                     status_configuration=status_configuration, verbose=True)
 
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
 
-    obj_vals = np.array([v for k,v in invalg.objective_history.items()])
+    obj_vals = np.array([v for k,v in list(invalg.objective_history.items())])
 
     plt.figure()
     plt.semilogy(obj_vals)

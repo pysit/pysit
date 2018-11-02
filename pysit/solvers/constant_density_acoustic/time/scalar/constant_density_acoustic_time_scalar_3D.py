@@ -3,7 +3,7 @@ import scipy.sparse as spsp
 import os
 
 from pysit.solvers.wavefield_vector import *
-from constant_density_acoustic_time_scalar_base import *
+from .constant_density_acoustic_time_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
@@ -12,7 +12,7 @@ from pysit.util.matrix_helpers import build_sigma, make_diag_mtx
 
 from pysit.util.solvers import inherit_dict
 
-from constant_density_acoustic_time_scalar_cpp import (
+from ._constant_density_acoustic_time_scalar_cpp import (
     constant_density_acoustic_time_scalar_3D_2os,
     constant_density_acoustic_time_scalar_3D_4os,
     constant_density_acoustic_time_scalar_3D_6os,
@@ -45,8 +45,15 @@ class ConstantDensityAcousticTimeScalar_3D(ConstantDensityAcousticTimeScalarBase
                                                        spatial_accuracy_order=spatial_accuracy_order,
                                                        **kwargs)
         if self.mesh.x.lbc.type == 'pml':
-          if self.mesh.x.lbc.domain_bc.compact:
-            raise NotImplementedError('Compact option is not available for time solvers')
+            if self.mesh.x.lbc.domain_bc.compact:
+                raise NotImplementedError('Compact option is not available for time solvers')
+
+        lpmlz_tmp = self.mesh.z.lbc.sigma.copy()
+        self.mesh.z.lbc.sigma = lpmlz_tmp.copy()
+        lpmlx_tmp = self.mesh.x.lbc.sigma.copy()
+        self.mesh.x.lbc.sigma = lpmlx_tmp.copy()
+        lpmly_tmp = self.mesh.y.lbc.sigma.copy()
+        self.mesh.y.lbc.sigma = lpmly_tmp.copy()
 
     def _rebuild_operators(self):
 
@@ -134,35 +141,38 @@ class ConstantDensityAcousticTimeScalar_3D_numpy(ConstantDensityAcousticTimeScal
             oc.empty = spsp.csr_matrix((dof, dof))
 
             # useful intermediates
-            oc.sigma_sum_pair_prod  = make_diag_mtx(sx*sy + sx*sz + sy*sz)
-            oc.sigma_sum            = make_diag_mtx(sx+sy+sz)
-            oc.sigma_prod           = make_diag_mtx(sx*sy*sz)
+            oc.sigma_sum_pair_prod = make_diag_mtx(sx*sy + sx*sz + sy*sz)
+            oc.sigma_sum = make_diag_mtx(sx+sy+sz)
+            oc.sigma_prod = make_diag_mtx(sx*sy*sz)
             oc.minus_sigma_yPzMx_Dx = make_diag_mtx(sy+sz-sx)*oc.minus_Dx
             oc.minus_sigma_xPzMy_Dy = make_diag_mtx(sx+sz-sy)*oc.minus_Dy
             oc.minus_sigma_xPyMz_Dz = make_diag_mtx(sx+sy-sz)*oc.minus_Dz
 
-            oc.minus_sigma_yz_Dx    = make_diag_mtx(sy*sz)*oc.minus_Dx
-            oc.minus_sigma_zx_Dy    = make_diag_mtx(sz*sx)*oc.minus_Dy
-            oc.minus_sigma_xy_Dz    = make_diag_mtx(sx*sy)*oc.minus_Dz
+            oc.minus_sigma_yz_Dx = make_diag_mtx(sy*sz)*oc.minus_Dx
+            oc.minus_sigma_zx_Dy = make_diag_mtx(sz*sx)*oc.minus_Dy
+            oc.minus_sigma_xy_Dz = make_diag_mtx(sx*sy)*oc.minus_Dz
 
             oc._numpy_components_built = True
 
         C = self.model_parameters.C
         oc.m = make_diag_mtx((C**-2).reshape(-1,))
 
-        K = spsp.bmat([[oc.m*oc.sigma_sum_pair_prod-oc.L, oc.m*oc.sigma_prod,   oc.minus_Dx, oc.minus_Dy, oc.minus_Dz ],
-                       [oc.minus_I,                       oc.empty,             oc.empty,    oc.empty,    oc.empty    ],
-                       [oc.minus_sigma_yPzMx_Dx,          oc.minus_sigma_yz_Dx, oc.sigmax,   oc.empty,    oc.empty    ],
-                       [oc.minus_sigma_xPzMy_Dy,          oc.minus_sigma_zx_Dy, oc.empty,    oc.sigmay,   oc.empty    ],
-                       [oc.minus_sigma_xPyMz_Dz,          oc.minus_sigma_xy_Dz, oc.empty,    oc.empty,    oc.sigmaz   ]])
+        K = spsp.bmat([[oc.m*oc.sigma_sum_pair_prod-oc.L, oc.m*oc.sigma_prod,   oc.minus_Dx, oc.minus_Dy, oc.minus_Dz],
+                       [oc.minus_I,                       oc.empty,
+                           oc.empty,    oc.empty,    oc.empty],
+                       [oc.minus_sigma_yPzMx_Dx,          oc.minus_sigma_yz_Dx,
+                           oc.sigmax,   oc.empty,    oc.empty],
+                       [oc.minus_sigma_xPzMy_Dy,          oc.minus_sigma_zx_Dy,
+                           oc.empty,    oc.sigmay,   oc.empty],
+                       [oc.minus_sigma_xPyMz_Dz,          oc.minus_sigma_xy_Dz, oc.empty,    oc.empty,    oc.sigmaz]])
 
         C = spsp.bmat([[oc.m*oc.sigma_sum, oc.empty, oc.empty, oc.empty, oc.empty],
                        [oc.empty,          oc.I,     oc.empty, oc.empty, oc.empty],
                        [oc.empty,          oc.empty, oc.I,     oc.empty, oc.empty],
                        [oc.empty,          oc.empty, oc.empty, oc.I,     oc.empty],
-                       [oc.empty,          oc.empty, oc.empty, oc.empty, oc.I    ]]) / self.dt
+                       [oc.empty,          oc.empty, oc.empty, oc.empty, oc.I]]) / self.dt
 
-        M = spsp.bmat([[    oc.m, oc.empty, oc.empty, oc.empty, oc.empty],
+        M = spsp.bmat([[oc.m, oc.empty, oc.empty, oc.empty, oc.empty],
                        [oc.empty, oc.empty, oc.empty, oc.empty, oc.empty],
                        [oc.empty, oc.empty, oc.empty, oc.empty, oc.empty],
                        [oc.empty, oc.empty, oc.empty, oc.empty, oc.empty],
@@ -171,9 +181,9 @@ class ConstantDensityAcousticTimeScalar_3D_numpy(ConstantDensityAcousticTimeScal
         Stilde_inv = M+C
         Stilde_inv.data = 1./Stilde_inv.data
 
-        self.A_k   = Stilde_inv*(2*M - K + C)
+        self.A_k = Stilde_inv*(2*M - K + C)
         self.A_km1 = -1*Stilde_inv*(M)
-        self.A_f   = Stilde_inv
+        self.A_f = Stilde_inv
 
 
 @inherit_dict('supports', '_local_support_spec')
@@ -248,15 +258,15 @@ class ConstantDensityAcousticTimeScalar_3D_omp(ConstantDensityAcousticTimeScalar
         nx, ny, nz = self.mesh.shape(include_bc=True, as_grid=True)
 
         try:
-          a = int(os.environ["OMP_NUM_THREADS"])
+            a = int(os.environ["OMP_NUM_THREADS"])
         except ValueError:
-          raise ValueError('The enviroment variable \"OMP_NUM_THREADS\" has no integer\
+            raise ValueError('The enviroment variable \"OMP_NUM_THREADS\" has no integer\
                             set the value and relaunch your script')
         except KeyError:
-          raise KeyError('The enviroment variable \"OMP_NUM_THREADS\" is not defined\
+            raise KeyError('The enviroment variable \"OMP_NUM_THREADS\" is not defined\
                           assign a value and relaunch your script')
         except:
-          raise ImportError('The enviroment variable \"OMP_NUM_THREADS\" is unreadable\
+            raise ImportError('The enviroment variable \"OMP_NUM_THREADS\" is unreadable\
                              please assign it an integer value')
 
         self._omp_funcs[self.spatial_accuracy_order](solver_data.km1.u,

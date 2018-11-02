@@ -55,7 +55,7 @@ if __name__ == '__main__':
     base_model = solver_time.ModelParameters(m,{'C': C})
     tt = time.time()
     generate_seismic_data(shots, solver_time, base_model)
-    print 'Data generation: {0}s'.format(time.time()-tt)
+    print('Data generation: {0}s'.format(time.time()-tt))
 
     # Define and configure the objective function
     if hybrid:
@@ -96,9 +96,9 @@ if __name__ == '__main__':
 
     result = invalg(shots, initial_value, loop_configuration, verbose=True, status_configuration=status_configuration)
 
-    print '...run time:  {0}s'.format(time.time()-tt)
+    print('...run time:  {0}s'.format(time.time()-tt))
 
-    obj_vals = np.array([v for k,v in invalg.objective_history.items()])
+    obj_vals = np.array([v for k,v in list(invalg.objective_history.items())])
 
     plt.figure()
     plt.semilogy(obj_vals)

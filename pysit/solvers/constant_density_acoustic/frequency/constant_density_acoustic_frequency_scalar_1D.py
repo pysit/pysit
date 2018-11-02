@@ -1,7 +1,7 @@
 import scipy.sparse as spsp
 
 from pysit.solvers.wavefield_vector import *
-from constant_density_acoustic_frequency_scalar_base import *
+from .constant_density_acoustic_frequency_scalar_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers
@@ -50,6 +50,8 @@ class ConstantDensityAcousticFrequencyScalar_1D(ConstantDensityAcousticFrequency
 
         built = oc.get('_numpy_components_built', False)
 
+        oc.I = spsp.eye(dof, dof)
+
         # build the static components
         if not built:
             # build laplacian
@@ -70,12 +72,11 @@ class ConstantDensityAcousticFrequencyScalar_1D(ConstantDensityAcousticFrequency
                                             use_shifted_differences=self.spatial_shifted_differences)
 
             # build other useful things
-            oc.I     = spsp.eye(dof, dof)
             oc.empty = spsp.csr_matrix((dof, dof))
 
             # Stiffness matrix K doesn't change
-            self.K = spsp.bmat([[           -oc.L,    -oc.Dz],
-                                [ oc.sigmaz*oc.Dz, oc.sigmaz]])
+            self.K = spsp.bmat([[-oc.L,    -oc.Dz],
+                                [oc.sigmaz*oc.Dz, oc.sigmaz]])
 
             oc._numpy_components_built = True
 
@@ -87,6 +88,10 @@ class ConstantDensityAcousticFrequencyScalar_1D(ConstantDensityAcousticFrequency
 
         self.M = spsp.bmat([[oc.m,     None],
                             [None, oc.empty]])
+
+        self.dM = oc.I
+        self.dC = oc.sigmaz
+        self.dK = 0
 
     class WavefieldVector(WavefieldVectorBase):
 

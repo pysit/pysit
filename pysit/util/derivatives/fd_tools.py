@@ -30,7 +30,7 @@ cd_coeffs = {
 def fd_stencil(base_stencil, dim, axis='all'):
 
     if axis == 'all':
-        axes = range(dim)
+        axes = list(range(dim))
     else:
         if axis >= dim: raise ValueError()
         axes = [axis]
@@ -38,7 +38,7 @@ def fd_stencil(base_stencil, dim, axis='all'):
     ln = len(base_stencil)
     mid = int(np.floor(ln/2))
 
-    stencil = np.zeros([ln for x in xrange(dim)])
+    stencil = np.zeros([ln for x in range(dim)])
 
     for axis in axes:
 
@@ -49,7 +49,7 @@ def fd_stencil(base_stencil, dim, axis='all'):
 #       ax = np.mod(axis+(dim-1),dim)
         ax = axis
 
-        stencil[[mid if x!=ax else slice(None) for x in xrange(dim)]] += base_stencil
+        stencil[[mid if x!=ax else slice(None) for x in range(dim)]] += base_stencil
 
     return stencil
 
@@ -92,24 +92,24 @@ def fd_coeffs(derivative, params):
     C = np.zeros((len(x),m+1))
     C[0,0] = 1.
 
-    for i in xrange(1,n+1):
+    for i in range(1,n+1):
         mn = min(i,m)
         c2 = 1.
         c5 = c4
         c4 = x[i]-z
 
-        for j in xrange(0,i):
+        for j in range(0,i):
 
             c3 = x[i]-x[j]
             c2 *= c3
 
             if j == i-1:
-                for k in xrange(mn,0,-1):
+                for k in range(mn,0,-1):
                     C[i,k] = c1*(k*C[i-1,k-1]-c5*C[i-1,k])/c2
 
                 C[i,0] = -c1*c5*C[i-1,0]/c2
 
-            for k in xrange(mn,0,-1):
+            for k in range(mn,0,-1):
                 C[j,k] = (c4*C[j,k]-k*C[j,k-1])/c3
 
             C[j,0] = c4*C[j,0]/c3
@@ -141,7 +141,7 @@ def build_1D_fd(deriv, order, length, delta, lbc=None, rbc=None, limit_boundary=
         return L.tocsr()
 
     # left side
-    for i in xrange(bulk_center):
+    for i in range(bulk_center):
         boundary_center = i
         if i == 0:
             if lbc != 'dirichlet':
@@ -162,12 +162,12 @@ def build_1D_fd(deriv, order, length, delta, lbc=None, rbc=None, limit_boundary=
             L[i,0:boundary_npoints] = stencil
 
     # right side
-    print boundary_npoints-bulk_center-1
+    print(boundary_npoints-bulk_center-1)
 
-    for i in xrange(-1, -(boundary_npoints-bulk_center-deriv+1), -1):
+    for i in range(-1, -(boundary_npoints-bulk_center-deriv+1), -1):
         boundary_center = boundary_npoints + i
         idx = i
-        print i, boundary_center, idx
+        print(i, boundary_center, idx)
         if idx == -1:
             if lbc != 'dirichlet':
                 warnings.warn('Only Dirichlet boundaries are supported in this matrix construction.')

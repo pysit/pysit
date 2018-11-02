@@ -1,7 +1,7 @@
 import scipy.sparse as spsp
 
 from pysit.solvers.wavefield_vector import *
-from constant_density_acoustic_time_ode_base import *
+from .constant_density_acoustic_time_ode_base import *
 
 from pysit.util import Bunch
 from pysit.util import PositiveEvenIntegers

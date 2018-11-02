@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 
 import copy
 import tarfile
@@ -141,8 +141,8 @@ class LayeredMediumModel(GeneratedGalleryModel):
         z_points = math.ceil(z_length/z_delta)
 
         # Set defualt z boundary conditions
-        z_lbc = kwargs['z_lbc'] if ('z_lbc' in kwargs.keys()) else PML(0.1*z_length, 100.0)
-        z_rbc = kwargs['z_rbc'] if ('z_rbc' in kwargs.keys()) else PML(0.1*z_length, 100.0)
+        z_lbc = kwargs['z_lbc'] if ('z_lbc' in list(kwargs.keys())) else PML(0.1*z_length, 100.0)
+        z_rbc = kwargs['z_rbc'] if ('z_rbc' in list(kwargs.keys())) else PML(0.1*z_length, 100.0)
 
         domain_configs = list()
         mesh_args = list()
@@ -154,8 +154,8 @@ class LayeredMediumModel(GeneratedGalleryModel):
             x_points = math.ceil(float(x_length)/x_delta)
 
             # Set defualt x boundary conditions
-            x_lbc = kwargs['x_lbc'] if ('x_lbc' in kwargs.keys()) else PML(0.1*x_length, 100.0)
-            x_rbc = kwargs['x_rbc'] if ('x_rbc' in kwargs.keys()) else PML(0.1*x_length, 100.0)
+            x_lbc = kwargs['x_lbc'] if ('x_lbc' in list(kwargs.keys())) else PML(0.1*x_length, 100.0)
+            x_rbc = kwargs['x_rbc'] if ('x_rbc' in list(kwargs.keys())) else PML(0.1*x_length, 100.0)
 
             domain_configs.append((0, x_length, x_lbc, x_rbc))
             mesh_args.append(x_points)
@@ -167,8 +167,8 @@ class LayeredMediumModel(GeneratedGalleryModel):
                 y_points = math.ceil(float(y_length)/y_delta)
 
                 # Set defualt y boundary conditions
-                y_lbc = kwargs['y_lbc'] if ('y_lbc' in kwargs.keys()) else PML(0.1*y_length, 100.0)
-                y_rbc = kwargs['y_rbc'] if ('y_rbc' in kwargs.keys()) else PML(0.1*y_length, 100.0)
+                y_lbc = kwargs['y_lbc'] if ('y_lbc' in list(kwargs.keys())) else PML(0.1*y_length, 100.0)
+                y_rbc = kwargs['y_rbc'] if ('y_rbc' in list(kwargs.keys())) else PML(0.1*y_length, 100.0)
 
                 domain_configs.append((0, y_length, y_lbc, y_rbc))
                 mesh_args.append(y_points)

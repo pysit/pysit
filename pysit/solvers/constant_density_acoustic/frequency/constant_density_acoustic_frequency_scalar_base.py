@@ -2,7 +2,7 @@ import numpy as np
 import sys
 from pysit.util.matrix_helpers import make_diag_mtx
 
-from constant_density_acoustic_frequency_base import *
+from .constant_density_acoustic_frequency_base import *
 from pysit.solvers.solver_data import SolverDataFrequencyBase
 
 from pysit.util.solvers import inherit_dict
@@ -32,7 +32,7 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
             _rhs = rhs.data.reshape(-1)
         else:
             _rhs = rhs.reshape(-1)
-
+        
         u = self.solvers[nu](_rhs)
         u.shape = solver_data.k.data.shape
 
@@ -64,7 +64,8 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
                 B = PETSc.Mat().createDense([ndof, nshot])
                 B.setUp()
                 for i in range(nshot):
-                    B.setValues(range(0, ndof), [i], rhs_list[i])
+                    # added by zhilong [0:ndof]
+                    B.setValues(list(range(0, ndof)), [i], rhs_list[i][0:ndof])
 
                 B.assemblyBegin()
                 B.assemblyEnd()
@@ -81,7 +82,8 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
                 numb = 0
                 for solver_data in solver_data_list:
                     u = Uhat[:,numb]
-                    u.shape = solver_data.k.data.shape
+                    u = np.append(u, np.zeros(2*ndof)) # added by zhilong, assume that we do not need the auxiliary wavefields
+                    u.shape = solver_data.k.data.shape 
                     solver_data.k.data = u
                     numb += 1
 
@@ -113,7 +115,7 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
         B = PETSc.Mat().createDense([ndof, nshot])
         B.setUp()
         for i in range(nshot):
-            B.setValues(range(0, ndof), [i], rhs_list[i])
+            B.setValues(list(range(0, ndof)), [i], rhs_list[i][0:ndof]) # added by zhilong [0:ndof]
 
         B.assemblyBegin()
         B.assemblyEnd()
@@ -126,7 +128,7 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
         except:
             raise SyntaxError('petsc = '+str(petsc)+' is not a correct solver you can only use \'superlu_dist\', \'mumps\' or \'mkl_pardiso\' ')               
         
-        Uhat = Uhat[xrange(usize),:]
+        Uhat = Uhat[range(usize),:]
 
         return Uhat
 

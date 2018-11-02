@@ -79,51 +79,51 @@ solver_time = ConstantDensityAcousticWave(m,
                                           trange=trange)
 # Generate Seismic data/ Loading it
 
-print "shot TIME generation..."
+print("shot TIME generation...")
 base_model = solver_time.ModelParameters(m,{'C':C})
 generate_seismic_data(shots, solver_time, base_model)
-print "DONE"
+print("DONE")
 
-print "pickle TIME generation..."
+print("pickle TIME generation...")
 generate_seismic_data(shots, solver_time, base_model,save_method='pickle')
 generate_seismic_data_from_file(shots_pickle, solver_time, save_method='pickle')
-print "DONE"
+print("DONE")
 
-print "savemat TIME generation..."
+print("savemat TIME generation...")
 generate_seismic_data(shots, solver_time, base_model,save_method='savemat')
 generate_seismic_data_from_file(shots_savemat, solver_time, save_method='savemat')
-print "DONE"
-print "h5py TIME generation..."
+print("DONE")
+print("h5py TIME generation...")
 generate_seismic_data(shots, solver_time, base_model,save_method='h5py')
 generate_seismic_data_from_file(shots_h5py, solver_time, save_method='h5py')
-print "DONE"
+print("DONE")
 
 # Now compare the result to be sure of your code catches all the exceptions
 for i in range(1,len(shots)+1):
     if (shots[i-1].receivers.data == shots_pickle[i-1].receivers.data).all():
-        print "Test for receivers %d data of pickle : OK" % i 
+        print("Test for receivers %d data of pickle : OK" % i) 
     else:
-        print("Test for receivers %d data of pickle : fail") % i 
+        print(("Test for receivers %d data of pickle : fail") % i) 
     if (shots[i-1].receivers.data == shots_savemat[i-1].receivers.data).all():
-        print "Test for receivers %d data of savemat : OK" % i 
+        print("Test for receivers %d data of savemat : OK" % i) 
     else:
-        print("Test for receivers %d data of savemat : fail") % i 
+        print(("Test for receivers %d data of savemat : fail") % i) 
     if (shots[i-1].receivers.data == shots_h5py[i-1].receivers.data).all():
-        print "Test for receivers %d data of hdf5 : OK" % i 
+        print("Test for receivers %d data of hdf5 : OK" % i) 
     else:
-        print("Test for receivers %d data of hdf5 : fail") % i 
+        print(("Test for receivers %d data of hdf5 : fail") % i) 
     if (shots[i-1].receivers.ts == shots_pickle[i-1].receivers.ts).all():
-        print "Test for receivers %d ts of pickle : OK" % i 
+        print("Test for receivers %d ts of pickle : OK" % i) 
     else:
-        print("Test for receivers %d ts of pickle : fail") % i
+        print(("Test for receivers %d ts of pickle : fail") % i)
     if (shots[i-1].receivers.ts == shots_savemat[i-1].receivers.ts).all():
-        print "Test for receivers %d ts of savemat : OK" % i 
+        print("Test for receivers %d ts of savemat : OK" % i) 
     else:
-        print("Test for receivers %d ts of savemat : fail") % i 
+        print(("Test for receivers %d ts of savemat : fail") % i) 
     if (shots[i-1].receivers.ts == shots_h5py[i-1].receivers.ts).all():
-        print "Test for receivers %d ts of hdf5 : OK" % i 
+        print("Test for receivers %d ts of hdf5 : OK" % i) 
     else:
-        print("Test for receivers %d ts of hdf5 : fail") % i 
+        print(("Test for receivers %d ts of hdf5 : fail") % i) 
 
 #########################################################
 # raise some error to verify that there are well caught #
@@ -145,22 +145,22 @@ frequencies = [2.0, 3.5, 5.0, 6.5, 8.0, 9.5]
 base_model = solver.ModelParameters(m,{'C': C})
 tt = time.time()
 
-print "shot FREQUENCY generation..."
+print("shot FREQUENCY generation...")
 generate_seismic_data(shots, solver, base_model, frequencies=frequencies)
-print "DONE"
+print("DONE")
 
-print "pickle FREQUENCY generation..."
+print("pickle FREQUENCY generation...")
 generate_seismic_data(shots, solver, base_model,save_method='pickle', frequencies=frequencies)
 generate_seismic_data_from_file(shots_pickle, solver, save_method='pickle')
-print "DONE"
+print("DONE")
 
-print "savemat FREQUENCY generation..."
+print("savemat FREQUENCY generation...")
 generate_seismic_data(shots, solver, base_model,save_method='savemat', frequencies=frequencies)
 generate_seismic_data_from_file(shots_savemat, solver, save_method='savemat', frequencies=frequencies)
-print "DONE"
+print("DONE")
 
 def compare_dict(a,b):
-  if a.keys() == b.keys():
+  if list(a.keys()) == list(b.keys()):
     same = True
     for key in a:
       same = (same and ((a[key]-b[key]) < np.finfo(float).eps).all())
@@ -173,11 +173,11 @@ def compare_dict(a,b):
 # Now compare the result to be sure of your code catches all the exceptions
 for i in range(1,len(shots)+1):
     if compare_dict(shots[i-1].receivers.data_dft, shots_pickle[i-1].receivers.data_dft):
-      print "Test for receivers %d data_dft of pickle : OK" % i 
+      print("Test for receivers %d data_dft of pickle : OK" % i) 
     else:
-      print("Test for receivers %d data_dft of pickle : fail") % i 
+      print(("Test for receivers %d data_dft of pickle : fail") % i) 
     if compare_dict(shots[i-1].receivers.data_dft, shots_savemat[i-1].receivers.data_dft):
-      print "Test for receivers %d data_dft of savemat : OK" % i 
+      print("Test for receivers %d data_dft of savemat : OK" % i) 
     else:
-      print("Test for receivers %d data_dft of savemat : fail") % i 
+      print(("Test for receivers %d data_dft of savemat : fail") % i) 
     

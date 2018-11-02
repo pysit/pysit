@@ -2,10 +2,10 @@ import copy
 
 import numpy as np
 
-from shot import *
+from .shot import *
 
-from receivers import *
-from sources import *
+from .receivers import *
+from .sources import *
 
 from pysit.util.parallel import ParallelWrapShotNull
 
@@ -79,8 +79,10 @@ def equispaced_acquisition(mesh, wavelet,
 
         local_sources = sources[0] / parallel_shot_wrap.size, sources[1] / parallel_shot_wrap.size
 
-    for i in xrange(local_sources[0]):
-        for j in xrange(local_sources[1]):
+    print(type(local_sources[0]))
+
+    for i in range(int(local_sources[0])):
+        for j in range(int(local_sources[1])):
 
             idx = i + local_sources[0]*parallel_shot_wrap.rank
             jdx = j + local_sources[1]*parallel_shot_wrap.rank

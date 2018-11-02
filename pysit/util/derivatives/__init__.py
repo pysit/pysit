@@ -1,2 +1,2 @@
-from derivatives import *
-from fdweight import *
+from .derivatives import *
+from .fdweight import *
