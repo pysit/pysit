@@ -4,15 +4,15 @@
 
 PySIT has the following dependencies
 
-    - Python 3.6 (So far we still need Python 2.7 to install the toolbox ––– PETSC)
+    - Python 3.6 (or greater; So far we still need Python 2.7 to install the toolbox ––– PETSC)
 
-    - NumPy 1.14 (or greater)
+    - NumPy 1.15 (or greater)
 
     - SciPy 1.1 (or greater)
 
-    - matplotlib 2.2 (or greater)
+    - matplotlib 2.2.3 (or greater)
 
-    - PyAMG 3.3 (or greater)
+    - PyAMG 4.0.0 (or greater)
 
     - ObsPy 1.1 (or greater)
 
@@ -72,7 +72,7 @@ On all platforms (Linux, Windows 7 or greater, and MAC OS X), we recommend a pre
 1. Create a Python3 virtual environment named with `myenv` with necessary packages by excuting the following command
 
     ```sh
-    $ conda create -n myenv numpy=1.14.5 scipy=1.1.0 matplotlib=2.2.2 pyamg=3.3.2 
+    $ conda create -n myenv numpy=1.15.1 scipy=1.1.0 matplotlib=2.2.3 pyamg=4.0.0 
     ```
 
     This command will create a virtual Python environment with most of the dependencies.
