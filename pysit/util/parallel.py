@@ -30,7 +30,7 @@ class ParallelWrapShot(ParallelWrapShotBase):
         if MPI.COMM_WORLD.Get_size() <= 1:
             return ParallelWrapShotNull(*args, **kwargs)
 
-        return super(ParallelWrapShot, cls).__new__(cls, *args, **kwargs)
+        return super().__new__(cls)
 
     def __init__(self, comm=None, *args, **kwargs):
         if comm is None:

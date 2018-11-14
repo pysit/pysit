@@ -564,7 +564,7 @@ class MeshBC(object):
 
             return mesh_bc(mesh, domain_bc, *args, **kwargs)
         else:
-            return super(MeshBC, cls).__new__(cls, mesh, domain_bc, *args, **kwargs)
+            return super(cls).__new__(cls)
 
 
 class MeshBCBase(object):
