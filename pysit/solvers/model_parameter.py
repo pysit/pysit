@@ -555,12 +555,14 @@ class ModelPerturbationBase(object):
             n_x_lb = self.mesh.x['lbc']._n
             n_x_rb = self.mesh.x['rbc']._n
 
-            data_in[n_z_lb, :] = data_in[n_z_lb, :] + np.sum(data_in[0:n_z_lb, :], axis=0)
-            data_in[n_z_lb+d_shape_out[0]-1, :] = data_in[n_z_lb+d_shape_out[0]-1, :] + np.sum(data_in[n_z_lb+d_shape_out[0] : d_shape_in[0], :], axis=0)
-            data_in[:, n_x_lb] = data_in[:, n_x_lb] + np.sum(data_in[:, 0:n_x_lb], axis=1)
-            data_in[:, n_x_lb+d_shape_out[1]-1] = data_in[:, n_x_lb+d_shape_out[1]-1] + np.sum(data_in[:, n_x_lb+d_shape_out[1] : d_shape_in[1]], axis=1)
+            data_in[n_x_lb, :] = data_in[n_x_lb, :] + np.sum(data_in[0:n_x_lb, :], axis=0)
+            data_in[n_x_lb+d_shape_out[0]-1, :] = data_in[n_x_lb+d_shape_out[0]-1, :] \
+                                                  + np.sum(data_in[n_x_lb+d_shape_out[0]: d_shape_in[0], :], axis=0)
+            data_in[:, n_z_lb] = data_in[:, n_z_lb] + np.sum(data_in[:, 0:n_z_lb], axis=1)
+            data_in[:, n_z_lb+d_shape_out[1]-1] = data_in[:, n_z_lb+d_shape_out[1]-1] \
+                                                  + np.sum(data_in[:, n_z_lb+d_shape_out[1]: d_shape_in[1]], axis=1)
 
-            data_out = data_in[n_z_lb:n_z_lb+d_shape_out[0], n_x_lb:n_x_lb+d_shape_out[1]]
+            data_out = data_in[n_x_lb:n_x_lb+d_shape_out[0], n_z_lb:n_z_lb+d_shape_out[1]]
 
         else:
 
@@ -571,40 +573,19 @@ class ModelPerturbationBase(object):
             n_y_lb = self.mesh.y['lbc']._n
             n_y_rb = self.mesh.y['rbc']._n
 
-            data_in[n_z_lb, :, :] = data_in[n_z_lb, :, :] + np.sum(data_in[0:n_z_lb, :, :], axis=0)
-            data_in[n_z_lb+d_shape_out[0]-1, :, :] = data_in[n_z_lb+d_shape_out[0]-1, :, :] + np.sum(data_in[n_z_lb+d_shape_out[0]: d_shape_in[0], :, :], axis=0)
-            data_in[:, n_x_lb, :] = data_in[:, n_x_lb, :] + np.sum(data_in[:, 0:n_x_lb, :], axis=1)
-            data_in[:, n_x_lb+d_shape_out[1]-1, :] = data_in[:, n_x_lb+d_shape_out[1]-1, :] + np.sum(data_in[:, n_x_lb+d_shape_out[1]: d_shape_in[1], :], axis=1)
-            data_in[:, :, n_y_lb] = data_in[:, :, n_y_lb] + np.sum(data_in[:, :, 0:n_y_lb], axis=2)
-            data_in[:, :, n_y_lb+d_shape_out[2]-1] = data_in[:, :, n_y_lb+d_shape_out[2]-1] + np.sum(data_in[:, :, n_y_lb+d_shape_out[2]: d_shape_in[2]], axis=2)
+            data_in[n_x_lb, :, :] = data_in[n_x_lb, :, :] + np.sum(data_in[0:n_x_lb, :, :], axis=0)
+            data_in[n_x_lb+d_shape_out[0]-1, :, :] = data_in[n_x_lb+d_shape_out[0]-1, :, :] \
+                                                    + np.sum(data_in[n_x_lb+d_shape_out[0]: d_shape_in[0], :, :], axis=0)
+            data_in[:, n_y_lb, :] = data_in[:, n_y_lb, :] + np.sum(data_in[:, 0:n_y_lb, :], axis=1)
+            data_in[:, n_y_lb+d_shape_out[1]-1, :] = data_in[:, n_y_lb+d_shape_out[1]-1, :] \
+                                                    + np.sum(data_in[:, n_y_lb+d_shape_out[1]: d_shape_in[1], :], axis=1)
+            data_in[:, :, n_z_lb] = data_in[:, :, n_z_lb] + np.sum(data_in[:, :, 0:n_z_lb], axis=2)
+            data_in[:, :, n_z_lb+d_shape_out[2]-1] = data_in[:, :, n_z_lb+d_shape_out[2] - 1] \
+                                                    + np.sum(data_in[:, :, n_z_lb+d_shape_out[2]: d_shape_in[2]], axis=2)
 
-            data_out = data_in[n_z_lb:n_z_lb+d_shape_out[0], n_x_lb:n_x_lb+d_shape_out[1], n_y_lb:n_y_lb+d_shape_out[2]]
-            
-        
-        # # Correct one for 2D
-        # d_shape_in = self.mesh._shapes[(True, True)]
-        # d_shape_out = self.mesh._shapes[(False, True)]
-        # vec_interp_z = np.ones(d_shape_in[0])
-        # vec_interp_x = np.ones(d_shape_in[1])
-
-        # z_row_ind_l = np.zeros(n_z_lb)
-        # z_row_ind_r = (d_shape_out[0]-1) * np.ones(n_z_rb)
-        # z_row_ind_m = np.array(range(0, d_shape_out[0]))
-        # z_row_ind = np.concatenate((z_row_ind_l, z_row_ind_m, z_row_ind_r), axis=0)
-        # z_col_ind = np.array(range(0, d_shape_in[0]))
-        # S_op_z = spsp.csr_matrix((vec_interp_z, (z_row_ind, z_col_ind)), shape=(d_shape_out[0], d_shape_in[0]))
-
-        # x_col_ind_l = np.zeros(n_x_lb)
-        # x_col_ind_r = (d_shape_out[1]-1) * np.ones(n_x_rb)
-        # x_col_ind_m = np.array(range(0, d_shape_out[1]))
-        # x_col_ind = np.concatenate((x_col_ind_l, x_col_ind_m, x_col_ind_r), axis=0)
-        # x_row_ind = np.array(range(0, d_shape_in[1]))
-        # S_op_x = spsp.csr_matrix((vec_interp_x, (x_row_ind, x_col_ind)), shape=(d_shape_in[1], d_shape_out[1]))
-             
-
-        # data = self.data.reshape(d_shape_in)
-        # data = S_op_z * data * S_op_x
-
+            data_out = data_in[n_x_lb:n_x_lb+d_shape_out[0],
+                               n_y_lb:n_y_lb+d_shape_out[1], 
+                               n_z_lb:n_z_lb+d_shape_out[2]]
 
         result = type(self)(self.mesh, padded=False, dtype=self.dtype)
         result.data = data_out.reshape((np.prod(d_shape_out), 1))
