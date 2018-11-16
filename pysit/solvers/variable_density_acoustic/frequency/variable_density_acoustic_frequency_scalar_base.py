@@ -108,7 +108,7 @@ class VariableDensityAcousticFrequencyScalarBase(VariableDensityAcousticFrequenc
             usize = ndof
         else:
             nwfield = len(self.WavefieldVector.aux_names) + 1
-            usize = ndof/nwfield
+            usize = ndof//nwfield
 
         # creating the B rhs Matrix
         B = PETSc.Mat().createDense([ndof, nshot])

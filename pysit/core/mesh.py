@@ -433,7 +433,7 @@ class CartesianMesh(StructuredMesh):
 
             # Make the input array look like a grid
             # and extract the slice is for a grid
-            out_array = in_array.reshape(sh_grid)[sl]
+            out_array = in_array.reshape(sh_grid)[tuple(sl)]
 
         # If the input shape is a vector, the return array has vector shape
         if in_array.shape[1] == 1:
@@ -523,7 +523,7 @@ class CartesianMesh(StructuredMesh):
                 sl.append(slice(nleft, sh_out_grid[i]-nright))
 
             # Copy the source array
-            out_array[sl] = in_array.reshape(sh_in_grid)
+            out_array[tuple(sl)] = in_array.reshape(sh_in_grid)
 
         # If the input shape is a vector, the return array has vector shape
         if in_array.shape == sh_in_vector:
