@@ -59,7 +59,7 @@ def equispaced_acquisition(mesh, wavelet,
         xpos = np.linspace(xmin, xmax, receivers)
         receiversbase = ReceiverSet(m, [PointReceiver(m, (x, receiver_depth), **receiver_kwargs) for x in xpos])
 
-        local_sources = sources / parallel_shot_wrap.size, 1
+        local_sources = sources // parallel_shot_wrap.size, 1
 
     if m.dim == 3:
 
@@ -77,7 +77,7 @@ def equispaced_acquisition(mesh, wavelet,
         ypos = np.linspace(ymin, ymax, receivers[1])
         receiversbase = ReceiverSet(m, [PointReceiver(m, (x, y, receiver_depth), **receiver_kwargs) for x in xpos for y in ypos])
 
-        local_sources = sources[0] / parallel_shot_wrap.size, sources[1] / parallel_shot_wrap.size
+        local_sources = sources[0] // parallel_shot_wrap.size, sources[1] // parallel_shot_wrap.size
 
     for i in range(int(local_sources[0])):
         for j in range(int(local_sources[1])):
