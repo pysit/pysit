@@ -65,15 +65,52 @@ if __name__ == '__main__':
     # Define global domain
     pmlz = PML(0.1, 100, ftype='quadratic')
     z_config = (0.1, 0.7, pmlz, pmlz)
-    d = RectangularDomain(z_config)
+    gd = RectangularDomain(z_config)
 
     # Parallel mesh
-    m = ParallelCartesianMesh(d, solver_padding, MPI.COMM_WORLD, 101)
-  
-    print(f'Rank {m.rank} has mesh delta = {m.mesh_local.z.delta}')
+    pm = ParallelCartesianMesh(gd, solver_padding, MPI.COMM_WORLD, 101)
+    
+    if pm.rank == 0:
+
+        C, C0, m, d = horizontal_reflector(pm.mesh_local)
+
+        # Source/Receiver
+        zpos = 0.15
+        source = PointSource(m, (zpos), RickerWavelet(25.0))
+        receiver = PointReceiver(m, (zpos))
+
+        # Shot
+        shot = Shot(source, receiver)
+        shots = list()
+        shots.append(shot)
+
+        # Solver
+        trange = (0.0,3.0)
+        solver = ConstantDensityAcousticWave(m,
+                                             formulation='scalar',
+                                             spatial_accuracy_order=2,
+                                             trange=trange)
+
+        print('Generating data...')
+        wavefields = []
+        base_model = solver.ModelParameters(m, {'C': C})
+        generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
+
+        tools = TemporalModeling(solver)
+        m0 = solver.ModelParameters(m, {'C': C0})
+
+        m1 = m0.perturbation()
+        m1 += np.random.rand(*m1.data.shape)
+
+        fwdret = tools.forward_model(shot, m0, return_parameters=['wavefield', 'dWaveOp', 'simdata'])
+        dWaveOp0 = fwdret['dWaveOp']
+        inc_field = fwdret['wavefield']
+        data = fwdret['simdata']
+
+        plot_space_time(inc_field, title='test')
 
     # Plot domain decomp
     fig = plt.figure()
-    display_decomposition(m) 
-    if m.rank == 0:
+    display_decomposition(pm) 
+    if pm.rank == 0:
         plt.show()

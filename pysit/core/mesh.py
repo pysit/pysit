@@ -593,9 +593,11 @@ domain decompositions')
 
         # Boundary conditions of local domain
         bczl = self.domain_global.z.lbc if self.rank == 0 \
-                else Ghost(delta=delta, ghost_padding=self.solver_padding)
+                else Dirichlet()
+                #else Ghost(delta=delta, ghost_padding=self.solver_padding)
         bczr = self.domain_global.z.rbc if self.rank == self.size - 1 \
-                else Ghost(delta=delta, ghost_padding=self.solver_padding)
+                else Dirichlet()
+                #else Ghost(delta=delta, ghost_padding=self.solver_padding)
 
         #print(f'Rank {self.rank} has local domain boundary conditions:\
 #\n\tLeft: {bczl}, Right: {bczr}')
