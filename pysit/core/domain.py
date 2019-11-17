@@ -157,6 +157,7 @@ class DomainBC(object):
 class Dirichlet(DomainBC):
     """ Homogeneous Dirichlet domain boundary condition. """
     type = 'dirichlet'
+    length = 0.0
     
 class Neumann(DomainBC):
     """ Neumann domain boundary condition. [Temporarily not supported.]"""
