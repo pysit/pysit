@@ -46,7 +46,6 @@ def plot_space_time(us, title=None):
 
     # Imshow on array of calculated values
     arr = np.array(us)
-    print(arr.max())
     arr = arr.reshape(arr.shape[0], arr.shape[1])
     ax.imshow(arr, cmap='gray')
 
@@ -70,52 +69,11 @@ if __name__ == '__main__':
 
     # Parallel mesh
     m = ParallelCartesianMesh(d, solver_padding, MPI.COMM_WORLD, 101)
-    
+  
+    print(f'Rank {m.rank} has mesh delta = {m.mesh_local.z.delta}')
+
+    # Plot domain decomp
     fig = plt.figure()
     display_decomposition(m) 
-    
     if m.rank == 0:
-
-        C, C0, m.mesh_local, m.domain_local = horizontal_reflector(m.mesh_local)
-
-        zpos = 0.2
-        source = PointSource(m.mesh_local, (zpos), RickerWavelet(25.0))
-        receiver = PointReceiver(m.mesh_local, (zpos))
-
-        shot = Shot(source, receiver)
-        shots = []
-        shots.append(shot)
-
-        trange = (0.0, 3.0)
-        solver = ConstantDensityAcousticWave(m.mesh_local,
-                                             kernel_implementation='cpp',
-                                             model_parameters={'C':C},
-                                             formulation='scalar',
-                                             spatial_accuracy_order=2,
-                                             trange=trange)
-
-        base_model = solver.ModelParameters(m.mesh_local, {'C': C})
-        tt = time.time()
-        wavefields =  []
-        generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
-
-        tmodel = TemporalModeling(solver)
-        m0 = solver.ModelParameters(m.mesh_local, {'C': C0})
-
-        fwdret = tmodel.forward_model(shot, m0, return_parameters=['wavefield', 'dWaveOp', 'simdata'])
-
-        us = fwdret['wavefield']
-
-        plt.figure()
-        plot_space_time(us, title='test')
-        
-
-    if m.rank == 0:
-        plt.figure()
-        plt.subplot(3,1,1)
-        vis.plot(C0, m.mesh_local)
-        plt.title('Initial Model')
-        plt.subplot(3,1,2)
-        vis.plot(C, m.mesh_local)
-        plt.title('True Model')
         plt.show()

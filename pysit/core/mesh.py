@@ -593,11 +593,9 @@ domain decompositions')
 
         # Boundary conditions of local domain
         bczl = self.domain_global.z.lbc if self.rank == 0 \
-                else Dirichlet()
-      #          else Ghost(delta=delta, ghost_padding=self.solver_padding)
+                else Ghost(delta=delta, ghost_padding=self.solver_padding)
         bczr = self.domain_global.z.rbc if self.rank == self.size - 1 \
-                else Dirichlet()
-      #          else Ghost(delta=delta, ghost_padding=self.solver_padding)
+                else Ghost(delta=delta, ghost_padding=self.solver_padding)
 
         #print(f'Rank {self.rank} has local domain boundary conditions:\
 #\n\tLeft: {bczl}, Right: {bczr}')
@@ -610,7 +608,13 @@ domain decompositions')
         self.domain_local = RectangularDomain(zconfig)
 
         # Local mesh
-        self.mesh_local = CartesianMesh(self.domain_local, nz_local)
+
+        # Hack to get delta correct
+        local_nodes = nz_local + 1 if self.rank < self.size - 1 else nz_local
+
+        # Form mesh
+        self.mesh_local = CartesianMesh(self.domain_local, local_nodes)
+        self.mesh_local.z.n = nz_local
 
         #print(f'Rank {self.rank} has local mesh dof \
 #= {self.mesh_local.dof(include_bc=True)} (with bc)')
