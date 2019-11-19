@@ -594,6 +594,7 @@ domain decompositions')
 
         # Define local mesh
         self.mesh_local = CartesianMesh(self.domain_local, nz_local)
+        self.mesh_local.z.delta = delta
 
         print(f'Local mesh delta = {self.mesh_local.z.delta} on rank {self.rank}')
         comm.Barrier()

@@ -117,8 +117,17 @@ class TemporalModelingParallel(object):
         rhs_k = np.zeros(mesh.shape(include_bc=True))
         rhs_kp1 = np.zeros(mesh.shape(include_bc=True))
 
-        comm = mesh.z.lbc
-        rank = comm.Get_rank()
+        comm = None
+        
+        if mesh.z.lbc.type == 'ghost':
+            comm = mesh.z.lbc.domain_bc.comm
+            rank = comm.Get_rank()
+            pad  = mesh.z.lbc.n
+
+        if mesh.z.rbc.type == 'ghost':
+            comm = mesh.z.rbc.domain_bc.comm
+            rank = comm.Get_rank()
+            pad  = mesh.z.rbc.n
         
         for k in range(nsteps):
 
@@ -157,19 +166,28 @@ class TemporalModelingParallel(object):
                 lghost = ukp1[ : pad]
                 rbulk  = ukp1[-2*pad : -pad]
                 rghost = ukp1[-pad : ]
-                
+            
+                print(f'iteration = {k}, rank = {rank}, marker = 1')
+
                 if mesh.z.lbc.type == 'ghost':
                     req1 = comm.Irecv(lghost, source=rank-1, tag=1)
                     req2 = comm.Isend(lbulk.copy(), dest=rank-1, tag=0)
 
                     MPI.Request.Waitall([req1, req2])
 
+                    print(f'iteration = {k}, rank = {rank}, marker = 2')
+
                 if mesh.z.rbc.type == 'ghost':
                     req3 = comm.Irecv(rghost, source=rank+1, tag=0)
                     req4 = comm.Isend(rbulk.copy(), dest=rank+1, tag=1)
 
                     MPI.Request.Waitall([req3, req4])
+                    
+                    print(f'iteration = {k}, rank = {rank}, marker = 3')
+                
+                print(f'iteration = {k}, rank = {rank}, marker = 4')
 
+            
             # Compute time derivative of p at time k
             # Note that this is is returned as a PADDED array
             if 'dWaveOp' in return_parameters:

@@ -85,9 +85,11 @@ def test_model_parallel_forward_solver():
         
         field_all = field
         for i in range(1, pm.size):
+
             field_curr = data[i]['field']
             if field_curr.shape[0] != field_all.shape[0]:
                 field_curr = field_curr[:-1,:]
+
             field_all = np.hstack((field_all, field_curr))
         
         plt.figure()
