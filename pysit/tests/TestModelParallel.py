@@ -6,6 +6,7 @@ import numpy as np
 from pysit import *
 from pysit.core.mesh import ParallelCartesianMesh
 from pysit.gallery import horizontal_reflector
+from pysit.modeling.temporal_modeling_parallel import TemporalModelingParallel
 
 def test_model_parallel_forward_solver():
     
@@ -40,7 +41,8 @@ def test_model_parallel_forward_solver():
     
     # Set up horizontal reflector problem
     C, C0, m, d = horizontal_reflector(m)
-
+    
+    # Set up source and receiver
     zpos = 0.2
     source = PointSource(m, (zpos), RickerWavelet(25.0))
     receiver = PointReceiver(m, (zpos))
@@ -62,7 +64,7 @@ def test_model_parallel_forward_solver():
     base_model = solver.ModelParameters(m, {'C': C})
     generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
 
-    tools = TemporalModeling(solver)
+    tools = TemporalModelingParallel(solver)
     m0 = solver.ModelParameters(m, {'C': C0})
 
     fwdret = tools.forward_model(shot, m0, return_parameters=['wavefield', 'dWaveOp', 'simdata'])

@@ -307,7 +307,12 @@ class Ghost(DomainBC):
 
     type = 'ghost'
 
-    def __init__(self, delta, ghost_padding=1):
+    def __init__(self, comm, delta, ghost_padding=1):
+
+        self.comm = comm
+        self.rank = comm.Get_rank()
+        self.size = comm.Get_size()
+
         self.delta = delta
         self.ghost_padding = ghost_padding
         self.solver_padding = ghost_padding
