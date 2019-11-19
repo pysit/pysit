@@ -73,7 +73,7 @@ def test_model_parallel_forward_solver():
     # Getthe incedent field as an array
     field = np.array(inc_field)
     field = np.squeeze(field)
-    field = np.flip(field)
+    field = np.flip(field, axis=0)
 
 
     data = {'field':field} 
