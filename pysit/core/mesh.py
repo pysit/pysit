@@ -582,11 +582,9 @@ domain decompositions')
 
         # Boundary conditions of local domain
         bczl_local = self.domain_global.z.lbc if self.rank == 0 else \
-                Dirichlet()
-                #Ghost(delta=delta, ghost_padding=self.solver_padding)
+                Ghost(delta=delta, ghost_padding=self.solver_padding)
         bczr_local = self.domain_global.z.rbc if self.rank == self.size - 1 else \
-                Dirichlet()
-                #Ghost(delta=delta, ghost_padding=self.solver_padding)
+                Ghost(delta=delta, ghost_padding=self.solver_padding)
 
         # Configuration tuple for local domain
         zconfig_local = (lbound_local, rbound_local, bczl_local, bczr_local) 
@@ -938,6 +936,8 @@ class StructuredGhost(StructuredBCBase):
 
         self.solver_padding = domain_bc.ghost_padding
         self._n = self.solver_padding
+
+        self.sigma = [0]
 
     n = property(lambda self: self.solver_padding,
                  None,

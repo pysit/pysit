@@ -34,56 +34,66 @@ def test_model_parallel_forward_solver():
     comm = MPI.COMM_WORLD
     pm = ParallelCartesianMesh(domain_global, solver_padding, comm,
             n_nodes_global)
+
+    # Get the local mesh
+    m = pm.mesh_local
     
+    # Set up horizontal reflector problem
+    C, C0, m, d = horizontal_reflector(m)
+
+    zpos = 0.2
+    source = PointSource(m, (zpos), RickerWavelet(25.0))
+    receiver = PointReceiver(m, (zpos))
+
+    shot = Shot(source, receiver)
+    shots = list()
+    shots.append(shot)
+
+    # Define and configure the wave solver
+    trange = (0.0,3.0)
+    solver = ConstantDensityAcousticWave(m,
+                                         formulation='scalar',
+                                         kernel_implementation='numpy',
+                                         spatial_accuracy_order=solver_accuracy_order,
+                                         trange=trange)
+
+    print('Generating data...')
+    wavefields = []
+    base_model = solver.ModelParameters(m, {'C': C})
+    generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
+
+    tools = TemporalModeling(solver)
+    m0 = solver.ModelParameters(m, {'C': C0})
+
+    fwdret = tools.forward_model(shot, m0, return_parameters=['wavefield', 'dWaveOp', 'simdata'])
+    dWaveOp0 = fwdret['dWaveOp']
+    inc_field = fwdret['wavefield']
+    data = fwdret['simdata']
+
+    # Getthe incedent field as an array
+    field = np.array(inc_field)
+    field = np.squeeze(field)
+    field = np.flip(field)
+
+
+    data = {'field':field} 
+    data = comm.gather(data, root=0)
+
     if pm.rank == 0:
-
-        m = pm.mesh_local
-
-        C, C0, m, d = horizontal_reflector(m)
-
-        zpos = 0.2
-        source = PointSource(m, (zpos), RickerWavelet(25.0))
-        receiver = PointReceiver(m, (zpos))
-
-        shot = Shot(source, receiver)
-        shots = list()
-        shots.append(shot)
-
-        # Define and configure the wave solver
-        trange = (0.0,3.0)
-        solver = ConstantDensityAcousticWave(m,
-                                             formulation='scalar',
-                                             spatial_accuracy_order=solver_accuracy_order,
-                                             trange=trange)
-
-        np.random.seed(1)
-        print('Generating data...')
-        wavefields = []
-        base_model = solver.ModelParameters(m, {'C': C})
-        generate_seismic_data(shots, solver, base_model, wavefields=wavefields)
-
-        tools = TemporalModeling(solver)
-        m0 = solver.ModelParameters(m, {'C': C0})
-
-        m1 = m0.perturbation()
-        m1 += np.random.rand(*m1.data.shape)
-
-        fwdret = tools.forward_model(shot, m0, return_parameters=['wavefield', 'dWaveOp', 'simdata'])
-        dWaveOp0 = fwdret['dWaveOp']
-        inc_field = fwdret['wavefield']
-        data = fwdret['simdata']
-
-        field = np.array(inc_field)
-        field = np.squeeze(field)
-        field = np.flip(field)
-
+        
+        field_all = field
+        for i in range(1, pm.size):
+            field_curr = data[i]['field']
+            if field_curr.shape[0] != field_all.shape[0]:
+                field_curr = field_curr[:-1,:]
+            field_all = np.hstack((field_all, field_curr))
+        
         plt.figure()
-        plt.imshow(field, cmap='gray')
+        plt.imshow(field_all, cmap='gray')
         ax = plt.gca()
         ax.set_aspect(0.05)
-
+        
         plt.show()
-
 
 def main():
     test_model_parallel_forward_solver()
