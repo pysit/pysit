@@ -45,9 +45,6 @@ class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase
                                                        spatial_accuracy_order=spatial_accuracy_order,
                                                        **kwargs)
 
-        lpmlz_tmp = self.mesh.z.lbc.sigma.copy()
-        self.mesh.z.lbc.sigma = lpmlz_tmp.copy()
-
     def _rebuild_operators(self):
 
         oc = self.operator_components
