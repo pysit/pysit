@@ -560,68 +560,48 @@ domain decompositions')
         self.rank = self.comm.Get_rank()
         self.size = self.comm.Get_size()
 
-
         # Do domain decomposition based on grid structure (i.e. delta)
         nz_global = configs[0]
         delta = self.domain_global.z.length / (nz_global - 1) 
-
+        
         nz_local  = nz_global // self.size
         remainder = nz_global % self.size
         if self.rank < remainder:
             nz_local += 1
-       
-        #print(f'Rank {self.rank} has nz_local = {nz_local}')
-        #self.comm.Barrier()
-
-        # Length of local domain
-        lz = nz_local * delta if self.rank != self.size - 1 else (nz_local - 1) * delta
-
-        #print(f'Rank {self.rank} has local domain length = {lz}')
-        #self.comm.Barrier()
-
-        # Offset of local domain relative to local domain
-        oz = nz_local * delta * self.rank
-        if self.rank >= remainder:
-            oz += remainder * delta
-
-        #print(f'Rank {self.rank} has local domain offset = {oz}')
-        #self.comm.Barrier()
         
-        # Left and right start positions in global space
-        zlbound = self.domain_global.z.lbound + oz
-        zrbound = zlbound + lz
+        # Length of local domain
+        lz_local  = (nz_local - 1) * delta
+
+        # Offset of local domain relative to global domain
+        oz_local = nz_local * delta * self.rank if self.rank < remainder else \
+                nz_local * delta * self.rank + remainder * delta
+
+        # Left and right bounds of local domain 
+        lbound_local = self.domain_global.z.lbound + oz_local
+        rbound_local = lbound_local + lz_local
 
         # Boundary conditions of local domain
-        bczl = self.domain_global.z.lbc if self.rank == 0 \
-                else Dirichlet()
-                #else Ghost(delta=delta, ghost_padding=self.solver_padding)
-        bczr = self.domain_global.z.rbc if self.rank == self.size - 1 \
-                else Dirichlet()
-                #else Ghost(delta=delta, ghost_padding=self.solver_padding)
+        bczl_local = self.domain_global.z.lbc if self.rank == 0 else \
+                Dirichlet()
+                #Ghost(delta=delta, ghost_padding=self.solver_padding)
+        bczr_local = self.domain_global.z.rbc if self.rank == self.size - 1 else \
+                Dirichlet()
+                #Ghost(delta=delta, ghost_padding=self.solver_padding)
 
-        #print(f'Rank {self.rank} has local domain boundary conditions:\
-#\n\tLeft: {bczl}, Right: {bczr}')
-        #self.comm.Barrier()
+        # Configuration tuple for local domain
+        zconfig_local = (lbound_local, rbound_local, bczl_local, bczr_local) 
 
-        # z-config for domain
-        zconfig = (zlbound, zrbound, bczl, bczr)
+        # Define local domain
+        self.domain_local = RectangularDomain(zconfig_local)
 
-        # Local domain
-        self.domain_local = RectangularDomain(zconfig)
+        # Define local mesh
+        self.mesh_local = CartesianMesh(self.domain_local, nz_local)
 
-        # Local mesh
+        print(f'Local mesh delta = {self.mesh_local.z.delta} on rank {self.rank}')
+        comm.Barrier()
 
-        # Hack to get delta correct
-        local_nodes = nz_local + 1 if self.rank < self.size - 1 else nz_local
-
-        # Form mesh
-        self.mesh_local = CartesianMesh(self.domain_local, local_nodes)
-        self.mesh_local.z.n = nz_local
-
-        #print(f'Rank {self.rank} has local mesh dof \
-#= {self.mesh_local.dof(include_bc=True)} (with bc)')
-
-
+        print(f'mesh lbc = {self.mesh_local.z.lbc}, rbc = {self.mesh_local.z.rbc} on rank {self.rank}')
+       
 class UnstructuredMesh(MeshBase):
     """ [NotImplemented] Base class for specifying unstructured meshes in
     PySIT.

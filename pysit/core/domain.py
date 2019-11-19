@@ -311,5 +311,4 @@ class Ghost(DomainBC):
         self.delta = delta
         self.ghost_padding = ghost_padding
         self.solver_padding = ghost_padding
-        
         self.length = self.delta * self.ghost_padding
