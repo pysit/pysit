@@ -4,6 +4,9 @@ import numpy as np
 from pysit.core.domain import Dirichlet
 from pysit.core.domain import Ghost
 from pysit.core.domain import RectangularDomain
+from pysit.util.parallel import ParallelWrapCartesianMeshBase
+from pysit.util.parallel import ParallelWrapCartesianMeshNull
+from pysit.util.parallel import ParallelWrapCartesianMesh
 
 __all__ = ['MeshBase', 'CartesianMesh',
            'StructuredNeumann', 'StructuredDirichlet', 'StructuredPML']
@@ -171,7 +174,50 @@ class CartesianMesh(StructuredMesh):
         """ String describing the type of mesh, e.g., structured."""
         return 'structured-cartesian'
 
-    def __init__(self, domain, *configs):
+    def __init__(self, domain, *configs, solver_padding=1, pwrap=ParallelWrapCartesianMeshNull()):
+
+        # If the parallel wrapper has size 1, then we don't need to do anything
+        if (pwrap.size > 1):
+            
+            # Create new domain based on mesh delta, for now we divide only on
+            # the z axis
+
+            # Get the number of local elements
+            nz_global = configs[0]
+            nz_local  = nz_global // pwrap.size
+            remainder = nz_global % pwrap.size
+            if (pwrap.rank < remainder):
+                nz_local += 1
+            
+            # Get the length of the local domain. This is manually updated after
+            # construction, but is intentionally set to the wrong value at first
+            # for ease of creating the local domain
+            del_global = domain.parameters[0].length / (nz_global - 1)
+            lz_local   = (nz_local - 1) * del_global
+
+            # Get the offset of the start of the local domain relative to the
+            # start of the global domain
+            oz_local = nz_local * del_global * pwrap.rank if pwrap.rank < remainder else \
+                nz_local * del_global * pwrap.rank + remainder * del_global
+            
+            # Compute the left and right bounds of the local domain
+            lbound_local = domain.z.lbound + oz_local
+            rbound_local = lbound_local + lz_local
+
+            # Compute the left and right boundary conditions of the local
+            # domain
+            lbc_local = domain.z.lbc if pwrap.rank == 0 else \
+                    Ghost(comm=pwrap.comm, delta=del_global, ghost_padding=solver_padding)
+            rbc_local = domain.z.lbc if pwrap.rank == pwrap.size - 1 else \
+                    Ghost(comm=pwrap.comm, delta=del_global, ghost_padding=solver_padding)
+
+            # Assemble local domain
+            zconfig_local = (lbound_local, rbound_local, lbc_local, rbc_local)
+            domain = RectangularDomain(zconfig_local)
+            
+            lconfigs = list(configs)
+            lconfigs[0] = nz_local
+            configs = tuple(lconfigs)
 
         # Initialize the base class
         StructuredMesh.__init__(self, domain, *configs)
@@ -539,67 +585,6 @@ class CartesianMesh(StructuredMesh):
         """ Compute the correct scaled inner product on the mesh."""
 
         return np.dot(arg1.T, arg2).squeeze() * np.prod(self.deltas)
-
-class ParallelCartesianMesh(StructuredMesh):
-    """Domain decomposition for Cartesian Mesh"""
-
-    def __init__(self, domain, solver_padding, comm, *configs):
-
-        # For now, support only 1d meshes
-        if len(configs) != 1 or domain.dim != 1:
-            raise ValueError('ParallelCartesianMesh currently supports 1d \
-domain decompositions')
-
-        # Global domain
-        self.domain_global = domain
-        
-        self.solver_padding = solver_padding
-
-        # MPI info
-        self.comm = comm
-        self.rank = self.comm.Get_rank()
-        self.size = self.comm.Get_size()
-
-        # Do domain decomposition based on grid structure (i.e. delta)
-        nz_global = configs[0]
-        delta = self.domain_global.z.length / (nz_global - 1) 
-        
-        nz_local  = nz_global // self.size
-        remainder = nz_global % self.size
-        if self.rank < remainder:
-            nz_local += 1
-        
-        # Length of local domain
-        lz_local  = (nz_local - 1) * delta
-
-        # Offset of local domain relative to global domain
-        oz_local = nz_local * delta * self.rank if self.rank < remainder else \
-                nz_local * delta * self.rank + remainder * delta
-
-        # Left and right bounds of local domain 
-        lbound_local = self.domain_global.z.lbound + oz_local
-        rbound_local = lbound_local + lz_local
-
-        # Boundary conditions of local domain
-        bczl_local = self.domain_global.z.lbc if self.rank == 0 else \
-                Ghost(comm=self.comm, delta=delta, ghost_padding=self.solver_padding)
-        bczr_local = self.domain_global.z.rbc if self.rank == self.size - 1 else \
-                Ghost(comm=self.comm, delta=delta, ghost_padding=self.solver_padding)
-
-        # Configuration tuple for local domain
-        zconfig_local = (lbound_local, rbound_local, bczl_local, bczr_local) 
-
-        # Define local domain
-        self.domain_local = RectangularDomain(zconfig_local)
-
-        # Define local mesh
-        self.mesh_local = CartesianMesh(self.domain_local, nz_local)
-        self.mesh_local.z.delta = delta
-
-        print(f'Local mesh delta = {self.mesh_local.z.delta} on rank {self.rank}')
-        comm.Barrier()
-
-        print(f'mesh lbc = {self.mesh_local.z.lbc}, rbc = {self.mesh_local.z.rbc} on rank {self.rank}')
        
 class UnstructuredMesh(MeshBase):
     """ [NotImplemented] Base class for specifying unstructured meshes in
