@@ -175,6 +175,10 @@ class CartesianMesh(StructuredMesh):
         return 'structured-cartesian'
 
     def __init__(self, domain, *configs, solver_padding=1, pwrap=ParallelWrapCartesianMeshNull()):
+        
+        # This object needs a refernce to the parallel wrapper so that the mesh
+        # object's wrapper can be obtained by other functions
+        self.pwrap = pwrap
 
         # If the parallel wrapper has size 1, then we don't need to do anything
         if (pwrap.size > 1):
