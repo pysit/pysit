@@ -325,4 +325,3 @@ if __name__ == '__main__':
 
     display_on_grid(XX, domain=d)
     display_on_grid(XX, domain=d, shade_pml=True)
-

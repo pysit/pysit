@@ -32,7 +32,7 @@ class ConstantDensityAcousticTimeScalar_1D(ConstantDensityAcousticTimeScalarBase
 
     _local_support_spec = {'spatial_discretization': 'finite-difference',
                            'spatial_dimension': 1,
-                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet']}
+                           'boundary_conditions': ['pml', 'pml-sim', 'dirichlet', 'ghost']}
 
     def __init__(self, mesh, spatial_accuracy_order=4, **kwargs):
 

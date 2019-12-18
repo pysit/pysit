@@ -67,6 +67,7 @@ class ConstantDensityAcousticTimeScalarBase(ConstantDensityAcousticTimeBase):
         ConstantDensityAcousticTimeBase.__init__(self, mesh, **kwargs)
 
     def time_step(self, solver_data, rhs_k, rhs_kp1):
+
         u_km1 = solver_data.km1
         u_k   = solver_data.k
         u_kp1 = solver_data.kp1

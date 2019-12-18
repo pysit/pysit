@@ -1,6 +1,12 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 
 import numpy as np
+from pysit.core.domain import Dirichlet
+from pysit.core.domain import Ghost
+from pysit.core.domain import RectangularDomain
+from pysit.util.parallel import ParallelWrapCartesianMeshBase
+from pysit.util.parallel import ParallelWrapCartesianMeshNull
+from pysit.util.parallel import ParallelWrapCartesianMesh
 
 __all__ = ['MeshBase', 'CartesianMesh',
            'StructuredNeumann', 'StructuredDirichlet', 'StructuredPML']
@@ -168,7 +174,54 @@ class CartesianMesh(StructuredMesh):
         """ String describing the type of mesh, e.g., structured."""
         return 'structured-cartesian'
 
-    def __init__(self, domain, *configs):
+    def __init__(self, domain, *configs, solver_padding=1, pwrap=ParallelWrapCartesianMeshNull()):
+        
+        # This object needs a refernce to the parallel wrapper so that the mesh
+        # object's wrapper can be obtained by other functions
+        self.pwrap = pwrap
+
+        # If the parallel wrapper has size 1, then we don't need to do anything
+        if (pwrap.size > 1):
+            
+            # Create new domain based on mesh delta, for now we divide only on
+            # the z axis
+
+            # Get the number of local elements
+            nz_global = configs[0]
+            nz_local  = nz_global // pwrap.size
+            remainder = nz_global % pwrap.size
+            if (pwrap.rank < remainder):
+                nz_local += 1
+            
+            # Get the length of the local domain. This is manually updated after
+            # construction, but is intentionally set to the wrong value at first
+            # for ease of creating the local domain
+            del_global = domain.parameters[0].length / (nz_global - 1)
+            lz_local   = (nz_local - 1) * del_global
+
+            # Get the offset of the start of the local domain relative to the
+            # start of the global domain
+            oz_local = nz_local * del_global * pwrap.rank if pwrap.rank < remainder else \
+                nz_local * del_global * pwrap.rank + remainder * del_global
+            
+            # Compute the left and right bounds of the local domain
+            lbound_local = domain.z.lbound + oz_local
+            rbound_local = lbound_local + lz_local
+
+            # Compute the left and right boundary conditions of the local
+            # domain
+            lbc_local = domain.z.lbc if pwrap.rank == 0 else \
+                    Ghost(comm=pwrap.comm, delta=del_global, ghost_padding=solver_padding)
+            rbc_local = domain.z.lbc if pwrap.rank == pwrap.size - 1 else \
+                    Ghost(comm=pwrap.comm, delta=del_global, ghost_padding=solver_padding)
+
+            # Assemble local domain
+            zconfig_local = (lbound_local, rbound_local, lbc_local, rbc_local)
+            domain = RectangularDomain(zconfig_local)
+            
+            lconfigs = list(configs)
+            lconfigs[0] = nz_local
+            configs = tuple(lconfigs)
 
         # Initialize the base class
         StructuredMesh.__init__(self, domain, *configs)
@@ -536,8 +589,7 @@ class CartesianMesh(StructuredMesh):
         """ Compute the correct scaled inner product on the mesh."""
 
         return np.dot(arg1.T, arg2).squeeze() * np.prod(self.deltas)
-
-
+       
 class UnstructuredMesh(MeshBase):
     """ [NotImplemented] Base class for specifying unstructured meshes in
     PySIT.
@@ -870,15 +922,15 @@ class StructuredGhost(StructuredBCBase):
 
     def __init__(self, mesh, domain_bc, dim, side, ghost_padding, *args, **kwargs):
 
-        StructuredBCBase.__init__(self, mesh, domain_bc, dim, side, ghost_padding, *args, **kwargs)
+        StructuredBCBase.__init__(self, mesh, domain_bc, dim, side, *args, **kwargs)
 
-        self.solver_padding = ghost_padding
+        self.solver_padding = domain_bc.ghost_padding
+        self._n = self.solver_padding
 
-    n = property(lambda self: self.ghost_padding,
+    n = property(lambda self: self.solver_padding,
                  None,
                  None,
                  "Number of padding nodes on the boundary.")
-
 
 class UnstructuredBCBase(MeshBCBase):
     """ [NotImplemented] Base class for specifying boundary conditions on

@@ -42,6 +42,42 @@ class ParallelWrapShot(ParallelWrapShotBase):
         self.size = self.comm.Get_size()
         self.rank = self.comm.Get_rank()
 
+class ParallelWrapCartesianMeshBase(object):
+
+    def __init__(slf, *args, **kwargs):
+        raise NotImplementedError('ParallelWrapCartesianMeshBase.__init__ \
+should never be called')
+
+class ParallelWrapCartesianMeshNull(ParallelWrapCartesianMeshBase):
+
+    def __init__(self, *args, **kwargs):
+        self.comm = None
+        self.use_parallel = False
+
+        self.size = 1
+        self.rank = 0
+
+class ParallelWrapCartesianMesh(ParallelWrapCartesianMeshBase):
+
+    def __new__(cls, *args, **kwargs):
+        
+        if not hasmpi:
+            return ParallelWrapCartesianMeshNull(*args, **kwargs)
+
+        if MPI.COMM_WORLD.Get_size() <= 1:
+            return ParallelWrapShotNull(*args, **kwargs)
+
+        return super().__new__(cls)
+
+    def __init__(self, comm=None, *args, **kwargs):
+        if comm is None:
+            self.comm = MPI.COMM_WORLD
+        else:
+            self.comm = comm
+
+        self.use_parallel = True
+        self.size = self.comm.Get_size()
+        self.rank = self.comm.Get_rank()
 
 
 if __name__ == '__main__':

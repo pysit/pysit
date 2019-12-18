@@ -145,7 +145,6 @@ class RectangularDomain(DomainBase):
         """Returns the physical size of the domain as a ndim-tuple."""
         return self.collect('length')
 
-
 class PolarDomain(DomainBase):
     """ [NotImplemented] Class for describing polar domains in `pysit`."""
 
@@ -158,7 +157,8 @@ class DomainBC(object):
 class Dirichlet(DomainBC):
     """ Homogeneous Dirichlet domain boundary condition. """
     type = 'dirichlet'
-
+    length = 0.0
+    
 class Neumann(DomainBC):
     """ Neumann domain boundary condition. [Temporarily not supported.]"""
     type = 'neumann'
@@ -290,3 +290,30 @@ class PML(DomainBC):
 #
 #       # candidate for sparse matrix
 #       return pml
+
+class Ghost(DomainBC):
+    """Physical ghost exchange boundary condition
+    
+    Parameters
+    ----------
+
+    delta : double
+        Rectangular domain grid spacing
+    
+    solver_padding : int
+        Padding needed by the solver. Usually solver_accuracy_order // 2
+    
+    """
+
+    type = 'ghost'
+
+    def __init__(self, comm, delta, ghost_padding=1):
+
+        self.comm = comm
+        self.rank = comm.Get_rank()
+        self.size = comm.Get_size()
+
+        self.delta = delta
+        self.ghost_padding = ghost_padding
+        self.solver_padding = ghost_padding
+        self.length = self.delta * self.ghost_padding
