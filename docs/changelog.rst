@@ -4,6 +4,11 @@
 Changelog
 *********
 
+Version 1.0.1
+-------------
+
+- Minor clean-up of citations, docs, and external resources
+
 Version 1.0
 -----------
 

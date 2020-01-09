@@ -50,22 +50,7 @@ Cite all versions:
 	  url          = {https://doi.org/10.5281/zenodo.3603367}
 	}
 
-Cite v1.0:
-
-.. code::
-
-	@software{Pysit,
-	  author       = {Russell J. Hewett and
-	                  Laurent Demanet and
-	                  The PySIT Team},
-	  title        = {{PySIT}: {Python} Seismic Imaging Toolbox},
-	  month        = jan,
-	  year         = 2020,
-	  publisher    = {Zenodo},
-	  doi          = {10.5281/zenodo.3603368},
-	  url          = {https://doi.org/10.5281/zenodo.3603368}
-	  version      = {v1.0},
-	}
+To cite a specific version, find the correct DOI on `Zenodo <https://doi.org/10.5281/zenodo.3603367>`_.
 
 
 The PySIT Team
