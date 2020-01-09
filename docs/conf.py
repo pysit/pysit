@@ -162,3 +162,8 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 #     edit_on_github_branch = "master"
 # edit_on_github_source_root = ""
 # edit_on_github_doc_root = "docs"
+
+
+
+
+autodoc_mock_imports = ["mpi4py"]
