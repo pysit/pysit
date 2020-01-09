@@ -54,16 +54,16 @@ templates_path.append('_templates')
 # General information about the project.
 project = u'PySIT'
 author = u'MIT, Russell J. Hewett, and The PySIT Developers'
-copyright = u'2011 - 2013, ' + author
+copyright = u'2011 - 2020, ' + author
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
 # The short X.Y version.
-version = '0.6'
+version = '1.0'
 # The full version, including alpha/beta/rc tags.
-release = '0.6dev'
+release = '1.0'
 
 # Add any Sphinx extension module names here, as strings. They can be extensions
 # coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
