@@ -135,14 +135,16 @@ extensions = [
     'sphinx.ext.viewcode',
     'sphinx.ext.inheritance_diagram',
     # Astropy extensions
-    'pysit._sphinx.from_astropy.ext.numpydoc',
-    'pysit._sphinx.from_astropy.ext.astropyautosummary',
-    'pysit._sphinx.from_astropy.ext.automodsumm',
-    'pysit._sphinx.from_astropy.ext.automodapi',
-    'pysit._sphinx.from_astropy.ext.tocdepthfix',
+    # 'pysit._sphinx.from_astropy.ext.numpydoc',
+    # 'pysit._sphinx.from_astropy.ext.astropyautosummary',
+    # 'pysit._sphinx.from_astropy.ext.automodsumm',
+    # 'pysit._sphinx.from_astropy.ext.automodapi',
+    # 'pysit._sphinx.from_astropy.ext.tocdepthfix',
     # cloud_sptheme extensions
     'pysit._sphinx.from_cloud_sptheme.ext.index_styling',
     'pysit._sphinx.from_cloud_sptheme.ext.relbar_toc',
+    # other
+    'numpydoc'
     ]
 
 try:
