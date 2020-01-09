@@ -255,10 +255,10 @@ class TemporalModeling(object):
         -----
         * q is the adjoint field.
         * ic is the imaging component.  Because this function computes many of
-        the things required to compute the imaging condition, there is an option
-        to compute the imaging condition as we go.  This should be used to save
-        computational effort.  If the imaging condition is to be computed, the
-        optional argument utt must be present.
+           the things required to compute the imaging condition, there is an option
+           to compute the imaging condition as we go.  This should be used to save
+           computational effort.  If the imaging condition is to be computed, the
+           optional argument utt must be present.
 
         Imaging Condition for variable density has components:
             ic.m1 = u_tt * q

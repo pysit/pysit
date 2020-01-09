@@ -30,7 +30,7 @@ Getting Started
 
 
 Using `acquisition`
-==================
+===================
 
 .. THIS SECTION SHOULD BE EITHER
 
@@ -38,7 +38,7 @@ More details
 
 
 Extending `acquisition`
-======================
+=======================
 
 Define the required interface:
 
