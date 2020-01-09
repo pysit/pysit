@@ -316,3 +316,6 @@ latex_preamble = r"""
 
 # A timeout value, in seconds, for the linkcheck builder
 linkcheck_timeout = 60
+
+
+autodoc_mock_imports = ["mpi4py"]
