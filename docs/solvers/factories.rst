@@ -81,13 +81,13 @@ Extending `solvers`
 Define the required interface:
 
 Time Domain
-^^^^^^^^^^^
+-----------
 
 * time_step()
 
 
 Frequency Domain
-^^^^^^^^^^^^^^^^
+----------------
 
 * solve()
 

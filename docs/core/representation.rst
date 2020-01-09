@@ -61,7 +61,7 @@ Sparse or Dense?
 
 
 Extending `mesh_representation`
-==============================
+===============================
 
 * Define `sampling_operator` attribute
 * Define `adjoint_sampling_operator` attribute
