@@ -57,8 +57,8 @@ def blur_image(im, sigma=None, freq=None, mesh_deltas=None, n_sigma=1.0):
     n_sigma : float
         Width of the blur kernel in standard deviations.
 
-    Note
-    ----
+    Notes
+    -----
     * One of `sigma` or `freq` must be specified.  If both are specified,
       `freq` takes priority.
     """

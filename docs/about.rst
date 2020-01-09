@@ -34,27 +34,59 @@ Acknowledgements
 Citing PySIT
 ------------
 
+Cite all versions:
+
 .. code::
 
-	@MISC{PySIT2013,
-	      author = "Hewett, R.J. and Demanet, L. and the PySIT Team",
-	      title = "{PySIT}: {Python} Seismic Imaging Toolbox v0.5",
-	      year = "2013",
-	      url = "http://www.pysit.org",
-	      note = "Release 0.5"
-	      }
+	@software{Pysit,
+	  author       = {Russell J. Hewett and
+	                  Laurent Demanet and
+	                  The PySIT Team},
+	  title        = {{PySIT}: {Python} Seismic Imaging Toolbox},
+	  month        = jan,
+	  year         = 2020,
+	  publisher    = {Zenodo},
+	  doi          = {10.5281/zenodo.3603367},
+	  url          = {https://doi.org/10.5281/zenodo.3603367}
+	}
+
+Cite v1.0:
+
+.. code::
+
+	@software{Pysit,
+	  author       = {Russell J. Hewett and
+	                  Laurent Demanet and
+	                  The PySIT Team},
+	  title        = {{PySIT}: {Python} Seismic Imaging Toolbox},
+	  month        = jan,
+	  year         = 2020,
+	  publisher    = {Zenodo},
+	  doi          = {10.5281/zenodo.3603368},
+	  url          = {https://doi.org/10.5281/zenodo.3603368}
+	  version      = {v1.0},
+	}
+
 
 The PySIT Team
 --------------
 
-The PySIT Team:
+Principles:
 
-* Russell J. Hewett (MIT)
-* Laurent Demanet (MIT)
+* Russell J. Hewett
+* Laurent Demanet
 
 Contributors:
 
-* Lucas Willemsen (MIT)
+* Thomas Grady
+* Zhilong Fang
+* Leonardo Zepeda-Nunez
+* Leo Lebrat
+* Antoine Paris
+* mtcli
+* Ian McBrearty
+* Lucas Willemsen
+* Georgia Stuart
 
 Acknowledgements
 ----------------

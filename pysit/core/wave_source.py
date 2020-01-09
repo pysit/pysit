@@ -96,8 +96,8 @@ class DerivativeGaussianPulse(SourceWaveletBase):
     References
     ----------
 
-    [1] N.  Ricker, "The form and laws of propagation of seismic wavelets,"
-    Geophysics, vol. 18, pp. 10-40, 1953.
+    .. [1] N.  Ricker, "The form and laws of propagation of seismic wavelets,"
+       Geophysics, vol. 18, pp. 10-40, 1953.
 
     """
 
@@ -179,8 +179,8 @@ class RickerWavelet(DerivativeGaussianPulse):
     References
     ----------
 
-    [1] N.  Ricker, "The form and laws of propagation of seismic wavelets,"
-    Geophysics, vol. 18, pp. 10-40, 1953.
+    .. [1] N.  Ricker, "The form and laws of propagation of seismic wavelets,"
+       Geophysics, vol. 18, pp. 10-40, 1953.
 
     """
 

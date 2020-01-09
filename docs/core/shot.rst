@@ -40,7 +40,7 @@ More details
 * Accessing receivers
 
 Shots as `list` Objects
-^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------
 
 * PySIT variables `shots` (plural) assume more than one shot in an iterable container
 * PySIT variables `shot` (singular) assume a single instance of a `~pysit.core.shot.Shot` object

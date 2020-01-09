@@ -1,7 +1,8 @@
-numpy>=1.7
-scipy
-pyamg>=2.0.5
-obspy>=0.8.4
+numpy>=1.15.1
+scipy>=1.1
+pyamg>=4.0.0
+obspy>=1.1.0
 lxml
-matplotlib>=1.3 
-mpi4py
+matplotlib>=2.2.3
+numpydoc
+sphinx_automodapi

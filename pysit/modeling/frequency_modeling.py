@@ -372,10 +372,10 @@ class FrequencyModeling(object):
         * q is the adjoint field.
         * qhat is the DFT of oq at the specified frequencies
         * ic is the imaging component.  Because this function computes many of
-        the things required to compute the imaging condition, there is an option
-        to compute the imaging condition as we go.  This should be used to save
-        computational effort.  If the imaging condition is to be computed, the
-        optional argument utt must be present.
+          the things required to compute the imaging condition, there is an option
+          to compute the imaging condition as we go.  This should be used to save
+          computational effort.  If the imaging condition is to be computed, the
+          optional argument utt must be present.
 
         Imaging Condition for variable density has terms:
             ic.m1 = omegas**2 * conj(u) * q
@@ -523,10 +523,10 @@ class FrequencyModeling(object):
         * q is the adjoint field.
         * qhat is the DFT of oq at the specified frequencies
         * ic is the imaging component.  Because this function computes many of
-        the things required to compute the imaging condition, there is an option
-        to compute the imaging condition as we go.  This should be used to save
-        computational effort.  If the imaging condition is to be computed, the
-        optional argument utt must be present.
+          the things required to compute the imaging condition, there is an option
+          to compute the imaging condition as we go.  This should be used to save
+          computational effort.  If the imaging condition is to be computed, the
+          optional argument utt must be present.
 
         Imaging Condition for variable density has terms:
             ic.m1 = omegas**2 * conj(u) * q
