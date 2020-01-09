@@ -4,4 +4,3 @@ pyamg>=4.0.0
 obspy>=1.1.0
 lxml
 matplotlib>=2.2.3
-mpi4py
