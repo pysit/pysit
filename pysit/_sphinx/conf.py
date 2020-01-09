@@ -141,10 +141,11 @@ extensions = [
     # 'pysit._sphinx.from_astropy.ext.automodapi',
     # 'pysit._sphinx.from_astropy.ext.tocdepthfix',
     # cloud_sptheme extensions
-    'pysit._sphinx.from_cloud_sptheme.ext.index_styling',
-    'pysit._sphinx.from_cloud_sptheme.ext.relbar_toc',
+    # 'pysit._sphinx.from_cloud_sptheme.ext.index_styling',
+    # 'pysit._sphinx.from_cloud_sptheme.ext.relbar_toc',
     # other
-    'numpydoc'
+    'numpydoc',
+    'sphinx_automodapi.automodapi',
     ]
 
 try:

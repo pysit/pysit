@@ -25,7 +25,7 @@ from pysit._sphinx.conf import *
 
 import pysit
 
-html_theme = 'cloud-pysit'
+# html_theme = 'cloud-pysit'
 # html_theme = 'redcloud'
 
 # -- General configuration -----------------------------------------------------
