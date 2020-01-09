@@ -19,7 +19,7 @@ __all__ = ['GalleryModel', 'GeneratedGalleryModel', 'PrecomputedGalleryModel']
 class GalleryModel(object):
     """ Base class for gallery models in PySIT.
 
-    Attribtues
+    Attributes
     ----------
     model_name : string, class attribute
         Long form name of the model.
@@ -112,7 +112,7 @@ class PrecomputedGalleryModel(GalleryModel):
     Any rescalings and crops are cached in the user's specified cache folder to
     speed up computation.
 
-    Attribtues
+    Attributes
     ----------
     fs_full_name : string, class attribute
         Longer name for use in file system calls.

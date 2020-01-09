@@ -43,8 +43,8 @@ class RectangularDomain(DomainBase):
         A variable number of config tuples, see Notes for details. One tuple for
         each desired problem dimension.
 
-    Attribute
-    ---------
+    Attributes
+    ----------
 
     type : str
         class attribute, identifies the type of domain as 'rectangular'
