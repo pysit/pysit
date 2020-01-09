@@ -47,14 +47,21 @@ Citing PySIT
 The PySIT Team
 --------------
 
-The PySIT Team:
+Principles:
 
-* Russell J. Hewett (MIT)
-* Laurent Demanet (MIT)
+* Russell J. Hewett
+* Laurent Demanet
 
 Contributors:
 
-* Lucas Willemsen (MIT)
+* Thomas Grady
+* Zhilong Fang
+* Leonardo Zepeda-Nunez
+* Leo Lebrat
+* mtcli
+* Ian McBrearty
+* Lucas Willemsen
+* Georgia Stuart
 
 Acknowledgements
 ----------------

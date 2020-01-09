@@ -9,7 +9,7 @@ Dependencies
 
 PySIT has the following dependencies:
 
-- Python 2.7 (May work with Python 3.X, but is not explicitely compatible)
+- Python 3.7
 - NumPy 1.7 (or greater)
 - SciPy 0.12 (or greater)
 - matplotlib 1.3 (or greater)
@@ -71,8 +71,8 @@ scientific Python distributions, one should be included, otherwise you will
 need to install an approprate version of MinGW.  MacOS X users will need to
 install XCode.
 
-From Mercurial (hg) clone
->>>>>>>>>>>>>>>>>>>>>>>>>
+From Git clone
+>>>>>>>>>>>>>>
 
 This is the recommended way to install from source, as it will make it easiest
 to keep up with the latest bug fixes.
@@ -83,28 +83,24 @@ to keep up with the latest bug fixes.
 
 .. note::
 
-	This section assumes that you have a version of `Mercurial (hg)
-	<http://mercurial.selenic.com/>`_ installed for your operating system. 
-	Mercurial is a distributed version control system (DVCS).  For an
-	introduction to Mercurial and DVCS, see `hginit <http://www.hginit.com>`_.
+	This section assumes that you have git installed for your system.
 
+1. Clone PySIT from the master repository, hosted on `github
+   <https://github.com/pysit/pysit>`_::
 
-1. Clone PySIT from the master repository, hosted on `bitbucket.org
-   <http://www.bitbucket.org>`_::
-
-	hg clone https://bitbucket.org/pysit/pysit
+	git clone https://github.com/pysit/pysit.git
 
 2. From the root of directory of your PySIT clone, run::
 
 	python setup.py install
 
-From source tarball
->>>>>>>>>>>>>>>>>>>
+.. From source tarball
+.. >>>>>>>>>>>>>>>>>>>
 
-1. Download the latest `source tarball from pysit.org <http://www.pysit.org>`_
-   and unpack it.
-2. From the root of directory where you unpacked PySIT, run::
+.. 1. Download the latest `source tarball from pysit.org <http://www.pysit.org>`_
+..    and unpack it.
+.. 2. From the root of directory where you unpacked PySIT, run::
 
-	python setup.py install
+.. 	python setup.py install
 
 

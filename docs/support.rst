@@ -1,13 +1,7 @@
 .. _support:
 
-Mailing List
-============
+Bug Reporting & Discussion
+==========================
 
-Questions can be posted on our Google Groups list:
-`<https://groups.google.com/d/forum/pysit>`_
-
-Bug Reporting
-=============
-
-Bugs and feature requests can be reported on the PySIT BitBucket issue page:
-`<https://bitbucket.org/pysit/pysit/issues>`_
+Bugs, feature requests, and questions can be reprtoed on the PySIT issue tracker:
+`<https://github.com/pysit/pysit/issues>`_

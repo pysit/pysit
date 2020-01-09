@@ -16,50 +16,35 @@ package.
     <http://docs.astropy.org/en/stable/index.html#developer-documentation>`_,
     upon which future versions of this documentation will be based. Many of
     their specifications are not applicable for this project, but many more
-    are. Studying their guide is a very good way to get started.  Note that
-    many of their `git` specific directives have Mercurial (`hg`) equivalents.
+    are. Studying their guide is a very good way to get started.
 
 
 DVCS and Hosting
 ================
 
-PySIT uses Mercurial (`hg`) for version control and `BitBucket.org
-<http://www.bitbucket.org>`_ for code and project hosting.  You will need to
-install the appropriate version of Mercurial for your platform.  If you are
-new to distributed version control (DVCS) or Mercurial,
-`<http://www.hginit.com>`_ is a good place to get started.
+PySIT uses Git for version control and `github.com
+<https://www.github.com>`_ for code and project hosting.  You will need to
+install the appropriate version of Git for your platform.
 
-.. note::
-
-    If you are an academic, be sure to use your academic e-mail to register
-    with BitBucket.  The benefits are worth it.
-
-.. note::
-
-    For Windows and Mac OSX users, `Atlassian's SourceTree
-    <http://www.sourcetreeapp.com/>`_ is a nice all-in-one Mercurial and Git
-    tool.  On Windows, we've also had success with `TortoiseHg
-    <http://tortoisehg.bitbucket.org/>`_.
-
-PySIT's `documentation <http://example.com>`_ is hosted by ReadTheDocs.
+PySIT's is hosted by ReadTheDocs.
 
 
 Forking PySIT
 =============
 
-PySIT development will take place in your own "fork" of the `main PySIT
-repository <https://bitbucket.org/pysit/pysit>`_.  A fork is a "clone" of the
-repository and is hosted on your personal BitBucket account.  You will use
+PySIT development will take place in your own fork of the `main PySIT
+repository <https://www.github.com/pysit/pysit>`_.  A fork is a "clone" of the
+repository and is hosted on your personal Github account.  You will use
 this fork for developing new PySIT features.  Your changes will migrate to the
 core repository (for review and merging) by requesting that the main
 repository "pull" in your changes.  This is known as a *pull request* and is
-facilitated through the BitBucket website.
+facilitated through the GitHub website.
 
 After creating your fork, you will need to create a local clone:
 
 .. code::
 
-    hg clone https://<username>@bitbucket.org/<username>/pysit <target_dir>
+    git clone https://github.com/<username>/pysit.git <target_dir>
 
 Your development will occur in your local clone.
 
@@ -83,12 +68,12 @@ in PySIT, please ask or use a PySIT Extension package.
 .. note::
 
     We will refer to the `main PySIT repository
-    <https://bitbucket.org/pysit/pysit>`_ as the `upstream` repository.  You
-    can add this to, add the following line to your `.hg/hgrc` file:
+    <https://github.com/pysit/pysit>`_ as the `upstream` repository.  You
+    can add this to your local repository:
 
     .. code::
 
-        upstream = https://<username>@bitbucket.org/pysit/pysit
+        git remote add upstream upstream https://github.com/pysit/pysit.git
 
     and substitute your username.
 
@@ -96,7 +81,7 @@ Roughly, the procedure for adding a new feature or fixing a bug is:
 
 1) In your local clone of *your* fork of the main PySIT repository, create a
    branch for the feature or bug.  If the bug has been `reported
-   <https://bitbucket.org/pysit/pysit/issues?status=new&status=open>`_,
+   <https://github.com/pysit/pysit/issues>`_,
    reference the issue number in the branch name.
 
 2) Develop your feature or fix the bug.  In this branch, avoid any other
@@ -113,7 +98,7 @@ Roughly, the procedure for adding a new feature or fixing a bug is:
    `develop` branch of the main PySIT repository.
 
 6) Comments may be given.  Address them locally and push them to your
-   repository on BitBucket.  The pull request will update automatically.
+   repository on GitHub.  The pull request will update automatically.
 
 7) Once the pull request is accepted and merged, you may close your branch.
 
