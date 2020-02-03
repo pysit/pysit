@@ -144,24 +144,6 @@ class ConstantDensityAcousticTimeScalar_1D_cpp(ConstantDensityAcousticTimeScalar
         # rpmlz2 = np.linspace(-0.1, 11.1, 43)
         nz = self.mesh.dof(include_bc=True)
 
-        # self._cpp_funcs[self.spatial_accuracy_order](solver_data.km1.u,
-        #                                              solver_data.k.Phiz,
-        #                                              solver_data.k.u,
-        #                                              self.model_parameters.C,
-        #                                              rhs_k,
-        #                                              lpmlz, rpmlz,
-        #                                              self.dt,
-        #                                              self.mesh.z.delta,
-        #                                              nz,
-        #                                              solver_data.kp1.Phiz,
-        #                                              solver_data.kp1.u)
-
-        # print('uk-1 =',    np.linalg.norm(solver_data.km1.u))
-        # print('phizk-1 =', np.linalg.norm(solver_data.k.Phiz))
-        # print('uk =',      np.linalg.norm(solver_data.k.u))
-        # print('Phizk+1 =', np.linalg.norm(solver_data.kp1.Phiz))
-        # print('uk+1 =',    np.linalg.norm(solver_data.kp1.u))
-
         self._cpp_funcs[self.spatial_accuracy_order](solver_data.km1.u,
                                                      solver_data.k.Phiz,
                                                      solver_data.k.u,
@@ -173,12 +155,6 @@ class ConstantDensityAcousticTimeScalar_1D_cpp(ConstantDensityAcousticTimeScalar
                                                      nz,
                                                      solver_data.kp1.Phiz,
                                                      solver_data.kp1.u)
-        print('uk-1 =',    np.linalg.norm(solver_data.km1.u))
-        print('phizk-1 =', np.linalg.norm(solver_data.k.Phiz))
-        print('uk =',      np.linalg.norm(solver_data.k.u))
-        print('Phizk+1 =', np.linalg.norm(solver_data.kp1.Phiz))
-        print('uk+1 =',    np.linalg.norm(solver_data.kp1.u))
-        a=3
 
 
 @inherit_dict('supports', '_local_support_spec')
